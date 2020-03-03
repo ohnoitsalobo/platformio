@@ -1,0 +1,218 @@
+#include <ESP8266WiFi.h>   // 
+#include <ESP8266mDNS.h>   // ESP8266 stuff
+#include <ArduinoOTA.h>
+
+#define FASTLED_ALLOW_INTERRUPTS 0
+// #define FASTLED_INTERRUPT_RETRY_COUNT 0
+#include <FastLED.h>
+
+FASTLED_USING_NAMESPACE
+
+#if defined(FASTLED_VERSION) && (FASTLED_VERSION < 3001000)
+    #warning "Requires FastLED 3.1 or later; check github for latest code."
+#endif
+
+// #define LED_TYPE    LPD8806
+// #define LED_PINS    2, 3 // 13, 12  
+// #define COLOR_ORDER BRG
+// #define NUM_LEDS    48
+#define LED_TYPE    WS2812    // LED strip type
+#define COLOR_ORDER GRB       // order of color in data stream
+#define LED_PINS    2         // data output pin
+#define NUM_LEDS    60        // number of LEDs in strip
+#define BRIGHTNESS  25       // overall brightness (0-255)
+#define FRAMES_PER_SECOND  120
+// CRGB leds[NUM_LEDS];          // array of LED color values
+CRGBArray<NUM_LEDS> leds;
+CRGBSet LEFT  (leds (0,            NUM_LEDS/2-1)   );  // < subset containing only left  LEDs
+CRGBSet RIGHT (leds (NUM_LEDS/2,   NUM_LEDS)       );  // < subset containing only right LEDs
+CRGB lastPressed;             // holder for last-detected key color
+uint8_t _hue = 0;             // modifier for key color cycling
+bool sustain = false;         // is sustain pedal on?
+
+uint8_t gHue1 = 0, gHue2 = 0; // rotating "base color" used by many of the patterns
+
+
+#include <WiFiUdp.h>
+#include <AppleMidi.h>
+APPLEMIDI_CREATE_INSTANCE(WiFiUDP, AppleMIDI); // see definition in AppleMidi_Defs.h
+bool isConnected = false;
+String temp = "wirelessMIDI_" + String(ESP.getChipId());
+const char* sessionID = temp.c_str(); // "wirelessMIDI";
+
+void wifiStuff() {
+    Serial.print("\r\nStarting WiFi ... ");
+    WiFi.disconnect();
+    WiFi.mode(WIFI_STA);
+    // WiFi.softAP("keyboard", "password");
+    WiFi.begin("linksys1", "9182736450");
+
+    if (MDNS.begin(sessionID)) {
+        Serial.print("\r\nMDNS responder started\r\n");
+    }
+    MDNS.addService("http", "tcp", 80);
+}
+
+void wifiLoop(){
+    ArduinoOTA.handle();
+    yield();
+}
+
+void OTAsetup(){
+    ArduinoOTA.setPort(8266);
+    // ArduinoOTA.setHostname("keyboard");
+    
+    ArduinoOTA.onStart([]() {
+        Serial.println("Start");
+        fill_solid (leds, NUM_LEDS, CRGB::Black);
+        FastLED.show();
+    });
+    
+    ArduinoOTA.onEnd([]() {
+        Serial.println("\nEnd");
+        fill_solid (leds, NUM_LEDS, CRGB::Black);
+        FastLED.show();
+    });
+    
+    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+        uint32_t temp = progress / (total / 100);
+        Serial.printf("Progress: %u%%\r", temp);
+        leds[map(temp, 0, 100, 0, NUM_LEDS)] = 0x111111;
+        FastLED.show();
+    });
+    
+    ArduinoOTA.onError([](ota_error_t error) {
+        Serial.printf("Error[%u]: ", error);
+        if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+        else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+        else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+        else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+        else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    });
+    ArduinoOTA.begin();
+}
+
+
+
+void LEDsetup(){
+    FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
+    FastLED.setBrightness(BRIGHTNESS);
+    
+    // for(int i = 0; i < NUM_LEDS; i++){
+        // leds[i] = CHSV((i/double(NUM_LEDS))*255, 255, 255);
+    // }
+    fill_solid(leds, NUM_LEDS, CRGB::Black);
+    FastLED.show();        
+
+    AppleMIDI.begin(sessionID);
+
+    AppleMIDI.OnConnected(OnAppleMidiConnected);
+    AppleMIDI.OnDisconnected(OnAppleMidiDisconnected);
+
+    AppleMIDI.OnReceiveNoteOn(handleNoteOn);
+    // AppleMIDI.OnReceiveNoteOff(handleNoteOff);
+}
+
+void LEDloop(){
+    AppleMIDI.run();
+    EVERY_N_MILLISECONDS(20){ 
+        fadeToBlackBy( leds, NUM_LEDS, ( sustain ? 3 : 10) );
+    }
+    FastLED.show();
+    EVERY_N_MILLISECONDS(50){ _hue++; gHue1++; gHue2--;}
+    yield();
+}
+
+// -----------------------------------------------------------------------------
+
+// do X when a key is pressed
+void handleNoteOn(byte channel, byte pitch, byte velocity) {
+    // MIDI note values 0 - 127 
+    // 36-96 (for 61-key) mapped to LED 0-60
+    Serial.println(pitch);
+    int temp = map(pitch, 36, 96, 60, 0);
+    
+    if(temp < 0)
+        temp = -temp;                   // if note goes above 60 or below 0
+    else if(temp > 60)                  //      reverse it
+        temp = 60 - (temp%60);
+    
+    uint8_t _pitch = map(temp, 0, 60, 0, 224); // map note to color 'hue'
+    uint8_t _pos = map(temp, 0, 60, 0, NUM_LEDS-1);
+    // assign color based on note position and intensity (velocity)
+    leds[_pos] = CHSV(_pitch + _hue, 255 - velocity, velocity/127.0 * 255);
+    lastPressed = leds[_pos]; // remember last-detected note color
+    yield();
+}
+
+// do X when a key is released
+void handleNoteOff(byte channel, byte pitch, byte velocity) {
+    yield();
+}
+
+// do X when pitch bend is used
+void handlePitchBend(byte channel, int bend) {
+    // fill strip with solid color based on pitch bend amount
+    fill_solid(leds, NUM_LEDS, CHSV(map(bend, -8192, 8192, 0, 224), 255, 125)); // 0  8192  16383
+    // FastLED.show();
+}
+
+// do X when control channels are used
+void handleControlChange(byte channel, byte number, byte value){
+    // channel 1 = modulation
+    if( number == 1 ){
+        fill_solid( leds, NUM_LEDS, 0x222222 );
+        // fill_rainbow(leds, NUM_LEDS, hue);
+    }
+    // channel 64 = damper / sustain pedal
+    if( number == 64 ){
+        if( value >= 64 ){
+            fill_solid( leds, NUM_LEDS, lastPressed );
+            sustain = true;
+        } else {
+            sustain = false;
+        }
+    }
+    // FastLED.show();
+}
+
+// ====================================================================================
+// Event handlers for incoming MIDI messages
+// ====================================================================================
+
+// -----------------------------------------------------------------------------
+// rtpMIDI session. Device connected
+// -----------------------------------------------------------------------------
+void OnAppleMidiConnected(uint32_t ssrc, char* name) {
+  isConnected  = true;
+  Serial.print(F("Connected to session "));
+  Serial.println(name);
+}
+
+// -----------------------------------------------------------------------------
+// rtpMIDI session. Device disconnected
+// -----------------------------------------------------------------------------
+void OnAppleMidiDisconnected(uint32_t ssrc) {
+  isConnected  = false;
+  Serial.println(F("Disconnected"));
+}
+
+void setup(){
+    
+    Serial.begin(115200);
+    wifiStuff();
+
+    OTAsetup();
+
+    LEDsetup();
+    
+}
+
+void loop(){
+    wifiLoop();
+
+    LEDloop();
+        
+    yield();
+
+}

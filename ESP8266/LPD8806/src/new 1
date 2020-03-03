@@ -1,0 +1,160 @@
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+
+ESP8266WebServer server(80);
+const char* ssid="yourSSID";
+const char* password="yourPASSWORD";
+String webSite,javaScript,XML;
+unsigned long wait000=0UL,wait001=1000UL;
+int LED=16;
+const int sliderMAX=10;                         // This sets the number of sliders you want
+int sliderVal[sliderMAX]={60},ESPval[sliderMAX];
+
+void buildWebsite(){
+  buildJavascript();
+  webSite="<!DOCTYPE HTML>\n";
+  webSite+="<META name='viewport' content='width=device-width, initial-scale=1'>\n";
+  webSite+=javaScript;
+  webSite+="<BODY onload='process()'>\n";
+  webSite+="<BR>This is the ESP website ...<BR>\n";
+  webSite+="Runtime = <A ID='runtime'></A><BR><BR>\n";
+  webSite+="<TABLE BORDER=1 style='text-align:center;border-collapse:collapse'>\n";
+  for(int i=0;i<sliderMAX;i++){
+    webSite+="<TR>\n";
+    webSite+="<TD><BR><INPUT ID='slider"+(String)i+"' TYPE='range' ONCHANGE='Slider("+(String)i+")'></TD>\n";  //in Firefox, Chrome and Edge use ONINPUT  
+    webSite+="<TD>Slidervalue"+(String)i+" = <A ID='Sliderval"+(String)i+"'></A><BR>\n";
+    webSite+="ESPval"+(String)i+" = <A ID='ESPval"+(String)i+"'></A> milliseconds</TD>\n";
+    webSite+="</TR>\n";
+  }
+  webSite+="</TABLE>\n";
+  webSite+="</BODY>\n";
+  webSite+="</HTML>\n";
+}
+
+void buildJavascript(){
+  javaScript="<SCRIPT>\n";
+  javaScript+="xmlHttp=createXmlHttpObject();\n";
+
+  javaScript+="function createXmlHttpObject(){\n";
+  javaScript+="  if(window.XMLHttpRequest){\n";
+  javaScript+="    xmlHttp=new XMLHttpRequest();\n";
+  javaScript+="  }else{\n";
+  javaScript+="    xmlHttp=new ActiveXObject('Microsoft.XMLHTTP');\n";
+  javaScript+="  }\n";
+  javaScript+="  return xmlHttp;\n";
+  javaScript+="}\n";
+
+  javaScript+="function process(){\n";
+  javaScript+="  if(xmlHttp.readyState==0||xmlHttp.readyState==4){\n";
+  javaScript+="    xmlHttp.onreadystatechange=function(){\n";
+  javaScript+="      if(xmlHttp.readyState==4&&xmlHttp.status==200){\n";
+  javaScript+="        xmlDoc=xmlHttp.responseXML;\n";
+  javaScript+="        xmlmsg=xmlDoc.getElementsByTagName('millistime')[0].firstChild.nodeValue;\n";
+  javaScript+="        document.getElementById('runtime').innerHTML=xmlmsg;\n";
+  javaScript+="        for(i=0;i<"+(String)sliderMAX+";i++){\n";
+  javaScript+="          xmlmsg=xmlDoc.getElementsByTagName('sliderval'+i)[0].firstChild.nodeValue;\n";
+  javaScript+="          document.getElementById('slider'+i).value=xmlmsg;\n";
+  javaScript+="          document.getElementById('Sliderval'+i).innerHTML=xmlmsg;\n";
+  javaScript+="          xmlmsg=xmlDoc.getElementsByTagName('ESPval'+i)[0].firstChild.nodeValue;\n";
+  javaScript+="          document.getElementById('ESPval'+i).innerHTML=xmlmsg;\n";
+  javaScript+="        }\n";
+  javaScript+="      }\n";
+  javaScript+="    }\n";
+  javaScript+="    xmlHttp.open('PUT','xml',true);\n";
+  javaScript+="    xmlHttp.send(null);\n";
+  javaScript+="  }\n";
+  javaScript+="  setTimeout('process()',1000);\n";
+  javaScript+="}\n";
+
+  javaScript+="function Slider(cnt){\n";
+  javaScript+="  sliderVal=document.getElementById('slider'+cnt).value;\n";
+  javaScript+="  document.getElementById('Sliderval'+cnt).innerHTML=sliderVal;\n";
+  javaScript+="  document.getElementById('ESPval'+cnt).innerHTML=9*(100-sliderVal)+100;\n";
+  javaScript+="  if(xmlHttp.readyState==0||xmlHttp.readyState==4){\n";
+  javaScript+="    xmlHttp.open('PUT','setESPval?cnt='+cnt+'&val='+sliderVal,true);\n";
+  javaScript+="    xmlHttp.send(null);\n";
+  javaScript+="  }\n";
+  javaScript+="}\n";
+
+  javaScript+="</SCRIPT>\n";
+}
+
+void buildXML(){
+  XML="<?xml version='1.0'?>";
+  XML+="<xml>";
+  XML+="<millistime>";
+  XML+=millis2time();
+  XML+="</millistime>";
+  for(int i=0;i<sliderMAX;i++){
+    XML+="<sliderval"+(String)i+">";
+    XML+=String(sliderVal[i]);
+    XML+="</sliderval"+(String)i+">";
+    XML+="<ESPval"+(String)i+">";
+    ESPval[i]=9*(100-sliderVal[i])+100;
+    XML+=String(ESPval[i]);
+    XML+="</ESPval"+(String)i+">";
+  }
+  XML+="</xml>";
+}
+String millis2time(){
+  String Time="";
+  unsigned long ss;
+  byte mm,hh;
+  ss=millis()/1000;
+  hh=ss/3600;
+  mm=(ss-hh*3600)/60;
+  ss=(ss-hh*3600)-mm*60;
+  if(hh<10)Time+="0";
+  Time+=(String)hh+":";
+  if(mm<10)Time+="0";
+  Time+=(String)mm+":";
+  if(ss<10)Time+="0";
+  Time+=(String)ss;
+  return Time;
+}
+
+void handleWebsite(){
+  buildWebsite();
+  server.send(200,"text/html",webSite);
+}
+
+void handleXML(){
+  buildXML();
+  server.send(200,"text/xml",XML);
+}
+
+void handleESPval(){
+  int sliderCNT=server.arg("cnt").toInt();
+  sliderVal[sliderCNT]=server.arg("val").toInt();
+  buildXML();
+  server.send(200,"text/xml",XML);
+}
+
+void setup() {
+  Serial.begin(115200); 
+  pinMode(LED,OUTPUT);
+  WiFi.begin(ssid,password);
+  while(WiFi.status()!=WL_CONNECTED)delay(500);
+  WiFi.mode(WIFI_STA);
+  Serial.println("\n\nBOOTING ESP8266 ...");
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+  Serial.print("Station IP address: ");
+  Serial.println(WiFi.localIP());
+  server.on("/",handleWebsite);
+  server.on("/xml",handleXML);
+  server.on("/setESPval",handleESPval);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+  if(millis()>wait000){
+    buildXML();
+    wait000=millis()+1000UL;
+  }
+  if(millis()>wait001){
+    digitalWrite(LED,!digitalRead(LED));
+    wait001=millis()+ESPval[0];
+  }
+}

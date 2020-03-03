@@ -1,0 +1,8 @@
+            1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
+                    0   1   2   3   4   5   6   7   8   9   10
+                    3   4   5   6   7   8   9   10  11  12  13
+                    15  14                              2   1s
+width = 5
+i = 1; i <= num_leds+width*2
+int pos = i;
+leds[i%NUM_LEDS] = val[i]
