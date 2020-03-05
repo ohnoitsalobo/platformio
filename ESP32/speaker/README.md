@@ -11,4 +11,7 @@ Libraries needed:
 - Blynk: https://github.com/blynkkk/blynk-library
 - Built-in WiFi and ArduinoOTA libraries
 
+See the lights in action here: [Instagram](https://www.instagram.com/p/BfJb-3ajXb_/)
+
+Speaker front view
 ![Speaker front](./img/speaker_front.jpg)
