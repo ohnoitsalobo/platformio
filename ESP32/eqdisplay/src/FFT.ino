@@ -1,8 +1,8 @@
 #include <arduinoFFT.h>
 
 #define audio_in 36
-#define samples 512
-#define samplingFrequency 25000
+#define samples 256 // 512
+#define samplingFrequency 10000 // 25000
 
 #define noise 1500
 #define MAX 35000

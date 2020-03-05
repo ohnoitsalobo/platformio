@@ -67,10 +67,10 @@ void audio_spectrum(){
         double temp = spectrum[1][i]/MAX;
         uint8_t s = 255 - (temp*30.0);
         uint8_t v = temp*255.0;
-        if(i < 12){
-            int temp = v*12/i;
-            v = temp > 255 ? 255 : temp;
-        }
+        // if(i < 12){
+            // int temp = v*12/i;
+            // v = temp > 255 ? 255 : temp;
+        // }
         RIGHT[pos] = CHSV(h, s, v);
         RIGHT(1,2) = RIGHT[0];
         RIGHT[3] = RIGHT[4];

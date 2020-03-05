@@ -7,6 +7,6 @@ The code is written in Notepad++ and compiled using Platformio (in my case, comm
 Libraries needed:
 
 - ArduinoFFT: https://github.com/kosme/arduinoFFT
-- FastLED: https://github.com/samguyer/FastLED (this is a fork better suited for the ESP32)
+- FastLED: https://github.com/FastLED/FastLED
 - Blynk: https://github.com/blynkkk/blynk-library
 - Built-in WiFi and ArduinoOTA libraries
