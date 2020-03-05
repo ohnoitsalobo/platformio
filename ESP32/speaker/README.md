@@ -10,3 +10,5 @@ Libraries needed:
 - FastLED: https://github.com/FastLED/FastLED
 - Blynk: https://github.com/blynkkk/blynk-library
 - Built-in WiFi and ArduinoOTA libraries
+
+![Speaker front](./img/speaker_front.jpg)
