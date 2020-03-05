@@ -15,3 +15,18 @@ See the lights in action here: [Instagram](https://www.instagram.com/p/BfJb-3ajX
 
 Speaker front view
 ![Speaker front](./img/speaker_front.jpg)
+
+Speaker rear view
+![Speaker back](./img/speaker_back.jpg)
+
+Mixer close up
+![Speaker mixer](./img/speaker_mixer.jpg)
+
+Front panel open
+![Speaker open](./img/speaker_inside.jpg)
+
+Arduino/MSGEQ7 wiring
+![Speaker arduino](./img/speaker_arduino.jpg)
+
+ESP32 wiring
+![Speaker esp32](./img/speaker_front.jpg)
