@@ -29,4 +29,4 @@ See the lights in action here: [Instagram](https://www.instagram.com/p/BfJb-3ajX
 ![Speaker arduino](./img/speaker_arduino.jpg)
 
 ### ESP32 wiring
-![Speaker esp32](./img/speaker_front.jpg)
+![Speaker esp32](./img/speaker_esp32.jpg)
