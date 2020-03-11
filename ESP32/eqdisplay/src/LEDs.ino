@@ -61,6 +61,7 @@ void ledLoop(){
 
 void audio_spectrum(){
     eqBroadcast = "";
+    uint8_t pos = 0;
     for(int i = 2; i < samples/2; i++){
         uint8_t pos = spectrum[0][i];
         uint8_t h = pos/(NUM_LEDS/2.0)*224;
@@ -72,10 +73,15 @@ void audio_spectrum(){
             // v = temp > 255 ? 255 : temp;
         // }
         RIGHT[pos] = CHSV(h, s, v);
-        RIGHT(1,2) = RIGHT[0];
-        RIGHT[3] = RIGHT[4];
-        RIGHT[5] = RIGHT[6];
-        RIGHT[8] = RIGHT[7];
+        // RIGHT(1,2) = RIGHT[0];
+        // RIGHT[3] = RIGHT[4];
+        // RIGHT[5] = RIGHT[6];
+        // RIGHT[8] = RIGHT[7];
+        RIGHT(1, 5) = RIGHT[0];
+        RIGHT(7, 8) = RIGHT[6];
+        RIGHT[10]   = RIGHT[9];
+        RIGHT[13]   = RIGHT[12];
+        RIGHT[17]   = RIGHT[16];
         LEFT = -RIGHT;
 
         if(music && webSocketConn()){
