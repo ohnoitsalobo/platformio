@@ -1,6 +1,6 @@
 var temp = [0], audiodata;
-var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
-// var connection = new WebSocket('ws://eqdisplay.local:81/', ['arduino']);
+// var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
+var connection = new WebSocket('ws://192.168.43.34:81/', ['arduino']);
 
 connection.onopen = function () {
     connection.send('Connect ' + new Date());
@@ -84,15 +84,15 @@ function process(){
     document.getElementById('sval' ).innerHTML = _s.toFixed(0) + '%' ;
     document.getElementById('vval' ).innerHTML = _v.toFixed(0) + '%' ;
     
-    var en = false;
-    if(m != 2){
-        en = true;
-    }
-    document.getElementById('r' ).disabled = en;
-    document.getElementById('g' ).disabled = en;
-    document.getElementById('b' ).disabled = en;
-    document.getElementById('h' ).disabled = en;
-    document.getElementById('s' ).disabled = en;
+    // var en = false;
+    // if(m != 2){
+        // en = true;
+    // }
+    // document.getElementById('r' ).disabled = en;
+    // document.getElementById('g' ).disabled = en;
+    // document.getElementById('b' ).disabled = en;
+    // document.getElementById('h' ).disabled = en;
+    // document.getElementById('s' ).disabled = en;
 }
 
 function setup(){

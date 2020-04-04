@@ -1,9 +1,11 @@
 const char* ssid = "linksys1";
 const char* password = "9182736450";
+const char* APssid = "ledPanel";
+const char* APpassword = "9182736450";
 
 String WSdata = "";
 File fsUploadFile;
-WebServer server(80); const char* host = "eqdisplay";
+WebServer server(80); const char* host = "ledPanel";
 WebSocketsServer webSocket(81);    // create a websocket server on port 81
 bool connectedClient = 0;
 
@@ -11,9 +13,10 @@ void setupWiFi(){
     Serial.println("\nStarting Wifi");
 
     WiFi.disconnect();
-    WiFi.mode(WIFI_STA);
+    WiFi.mode(WIFI_AP_STA);
     WiFi.begin(ssid, password);
-
+    WiFi.softAP(APssid, APpassword);
+    
     setupOTA();
     
     startSPIFFS();
@@ -55,13 +58,12 @@ void setupOTA(){
             Serial.printf("Progress: %u%%\r", temp);
             if(temp<99){
                 fill_solid (leds, map(temp, 0, 99, 0, NUM_LEDS), 0x020202);
-                FastLED.show();
             }else if(temp == 99){
                 fill_solid (leds, NUM_LEDS, 0x020202);
                 FastLED.show();
                 fill_solid (leds, NUM_LEDS, CRGB::Black);
-                FastLED.show();
             }
+            FastLED.show();
         })
         .onError([](ota_error_t error) {
             fill_solid (leds, NUM_LEDS, CRGB::Red);
@@ -269,17 +271,27 @@ void handleSliders(){
         manual = temp.endsWith("2") ? true : false;
         // gCurrentPatternNumber = 0;
         if(_auto)
-            FastLED.setBrightness(30);
-        else
+            FastLED.setBrightness(50);
+        else{
             FastLED.setBrightness(255);
+            fill_solid (leds, NUM_LEDS, CRGB::Black);
+        }
     }if(WSdata.startsWith("V")){
         int x = temp.toInt();
         x = (x*x)/255.0;
         FastLED.setBrightness(x);
     }
-    // FastLED.show();
+    if(_auto){
+        // if(WSdata.startsWith("R")){
+            // int x = temp.toInt();
+            // speed = x/2.55;
+        // }else if(WSdata.startsWith("G")){
+            // int x = temp.toInt();
+            // scale = x/0.127;
+        // }        
+    }
     if(manual){
-         if(WSdata.startsWith("R")){
+        if(WSdata.startsWith("R")){
             int x = temp.toInt();
             x = (x*x)/255.0;
             manualColor.r = x;

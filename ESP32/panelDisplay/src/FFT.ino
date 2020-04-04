@@ -4,7 +4,7 @@
 #define samples 256 // 512
 #define samplingFrequency 10000 // 25000
 
-#define noise 1500
+#define _noise 1500
 #define MAX 35000
 
 unsigned int sampling_period_us;
@@ -47,9 +47,9 @@ void fftLoop(){
 void PrintVector(double *vData, uint16_t bufferSize)
 {
     for (uint16_t i = 2; i < bufferSize; i++){
-        if(vData[i] > noise){
+        if(vData[i] > _noise){
             // Serial.println(vData[i], 4);
-            spectrum[1][i] = vData[i]-noise;
+            spectrum[1][i] = vData[i]-_noise;
             if(spectrum[1][i] > MAX)
                 spectrum[1][i] = MAX;
         }else{
