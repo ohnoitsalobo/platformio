@@ -1,27 +1,25 @@
-// #define DEBUGGER 1
+#include <FastLED.h>
+
+FASTLED_USING_NAMESPACE
+
+bool MidiEventReceived = false;
 
 void setup(){
-#ifdef DEBUGGER
-    Serial.begin(115200);
-#endif
+
     setupLED();
 
     setupWiFi();
     
     setupMIDI();
-    
-    // setupBlynk();
-#ifdef DEBUGGER
-    delay(5000);
-#endif
+
 }
 
 void loop(){
+
     runLED();
     
     wifiLoop();
     
     runMIDI();
     
-    // runBlynk();
 }

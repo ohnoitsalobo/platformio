@@ -1,24 +1,21 @@
 #include <WiFi.h>
-#include <WiFiMulti.h>
 #include <ESPmDNS.h>
 #include <ArduinoOTA.h>
 
-// const char* ssid = "linksys1";
-// const char* password = "9182736450";
+const char* ssid = "linksys1";
+const char* password = "9182736450";
+const char* APssid = "wirelessMIDI";
+const char* APpassword = "9182736450";
 
-WiFiMulti wifiMulti;
+// WiFiMulti wifiMulti;
 
 void setupWiFi(){
-    wifiMulti.addAP("linksys1", "9182736450");
-    wifiMulti.addAP("HaikuJAM GF", "jeetkumar");
-
     Serial.println("\nStarting Wifi");
 
     WiFi.disconnect();
-    WiFi.mode(WIFI_STA);
-    // WiFi.begin(ssid, password);
-    wifiMulti.run();
-
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.begin(ssid, password);
+    WiFi.softAP(APssid);
     setupOTA();
 }
     
@@ -38,8 +35,8 @@ void setupOTA(){
 
             // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
             Serial.println("\nStart updating " + type);
-            // fill_solid (leds, NUM_LEDS, CRGB::Black);
-            // FastLED.show();
+            fill_solid (leds, NUM_LEDS, CRGB::Black);
+            FastLED.show();
         })
         .onEnd([]() {
             digitalWrite(2, LOW);
@@ -51,17 +48,17 @@ void setupOTA(){
             digitalWrite(2, !digitalRead(2));
             // Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
             Serial.printf("Progress: %u%%\r", temp);
-            // if(temp<99){
-                // fill_solid (leds, map(temp, 0, 99, 0, NUM_LEDS), 0x111111);
-                // FastLED.show();
-            // }else if(temp == 99){
-                // fill_solid (leds, NUM_LEDS, CRGB::Black);
-                // FastLED.show();
-            // }
+            if(temp<99){
+                fill_solid (leds, map(temp, 0, 99, 0, NUM_LEDS), 0x111111);
+                FastLED.show();
+            }else if(temp == 99){
+                fill_solid (leds, NUM_LEDS, CRGB::Black);
+                FastLED.show();
+            }
         })
         .onError([](ota_error_t error) {
-            // fill_solid (leds, NUM_LEDS, CRGB::Red);
-            // FastLED.show();
+            fill_solid (leds, NUM_LEDS, CRGB::Red);
+            FastLED.show();
             Serial.printf("Error[%u]: ", error);
             if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
             else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
@@ -80,7 +77,9 @@ void wifiLoop(){
         // webSocket.loop();
     }
     if(WiFi.status() != WL_CONNECTED){
-        wifiMulti.run();
+        EVERY_N_MILLISECONDS(5000){
+            WiFi.begin(ssid, password);
+        }
     }
     yield();
 }

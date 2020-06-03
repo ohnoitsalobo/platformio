@@ -1,5 +1,4 @@
 #include <FastLED.h>
-
 FASTLED_USING_NAMESPACE
 
 #define MAX_DIMENSION ((kMatrixWidth>kMatrixHeight) ? kMatrixWidth : kMatrixHeight)
@@ -7,7 +6,7 @@ FASTLED_USING_NAMESPACE
 #define COLOR_ORDER GRB
 #define LED_PINS    13
 #define NUM_LEDS    NUMBER_OF_LEDS
-#define BRIGHTNESS  222//110*110/255
+#define BRIGHTNESS  50 //110*110/255
 #define FRAMES_PER_SECOND 60
 
 CRGBArray<NUM_LEDS> leds;                              // LED array containing all LEDs
@@ -20,7 +19,6 @@ TBlendType    currentBlending;
 uint8_t maxChanges = 24;        // Value for blending between palettes.
 
 typedef void (*SimplePatternList[])();
-// SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, dot_beat, juggle, bpm };
 SimplePatternList gPatterns = { confetti, fillNoise, noise_noise2, Fire2018, matrixTest };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
@@ -41,11 +39,11 @@ void ledSetup(){
     FastLED.setBrightness(BRIGHTNESS);
     FastLED.setMaxPowerInVoltsAndMilliamps(5,1500);
 
+    randomSeed(analogRead(5));
     x = random16();
     y = random16();
     z = random16();
     
-    randomSeed(analogRead(5));
     setup_tables();
 }
 
@@ -345,7 +343,7 @@ void Fire2018() {
       // It depends on the framerate which number is best.
       // If the number is not right you loose the uplifting fire clouds
       // which seperate themself while rising up.
-      dim = dim / 1.4;
+      dim = dim / 1.2;
 
       dim = 255 - dim;
 

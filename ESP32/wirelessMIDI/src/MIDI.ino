@@ -1,5 +1,6 @@
 #include <WiFiUdp.h>
 #include <AppleMidi.h>
+
 APPLEMIDI_CREATE_INSTANCE(WiFiUDP, AppleMIDI); // see definition in AppleMidi_Defs.h
 bool isConnected = false;
 
@@ -11,7 +12,8 @@ bool isConnected = false;
     // Serial.print(F("Connected to session "));
     Serial.print("Connected to session ");
     Serial.println(name);
-    delay(1000);
+    // delay(1000);
+    yield();
 }
 
 // -----------------------------------------------------------------------------
@@ -21,13 +23,15 @@ void handleDisconnected(uint32_t ssrc) {
     isConnected  = false;
     // Serial.println(F("Disconnected"));
     Serial.println("Disconnected");
-    delay(1000);
+    // delay(1000);
+    yield();
+}
+
+bool MidiConnected(){
+    return isConnected;
 }
 
 void setupMIDI(){
-#ifdef DEBUGGER
-    Serial.print("Setting up MIDI ... ");
-#endif
     AppleMIDI.begin("wirelessMIDI");
 
     AppleMIDI.OnConnected(handleConnected);
@@ -36,20 +40,32 @@ void setupMIDI(){
     AppleMIDI.OnReceiveNoteOn(handleNoteOn);
     AppleMIDI.OnReceiveNoteOff(handleNoteOff);
     AppleMIDI.OnReceiveControlChange(handleControlChange);
-#ifdef DEBUGGER
-    Serial.println("done!\n");  
-#endif
+
 }
 
+byte note = 0, velocity = 127, channel = 1;
+bool dir = true;
 void runMIDI(){
-#ifdef DEBUGGER
-    Serial.print("MIDI loop ... ");
-#endif
-    // AppleMIDI.run();
+
     AppleMIDI.read();
-#ifdef DEBUGGER
-    Serial.print("done!\n");
-#endif
+    
+    if(isConnected){
+        EVERY_N_MILLISECONDS(100){
+            AppleMIDI.sendNoteOn(note, velocity, channel);
+            AppleMIDI.sendNoteOn((note+ 3)%127, velocity, channel);
+            AppleMIDI.sendNoteOn((note+ 6)%127, velocity, channel);
+            AppleMIDI.sendNoteOn((note+ 9)%127, velocity, channel);
+            AppleMIDI.sendNoteOn((note+12)%127, velocity, channel);
+            AppleMIDI.sendNoteOff(note, velocity, channel);
+            AppleMIDI.sendNoteOff((note+ 3)%127, velocity, channel);
+            AppleMIDI.sendNoteOff((note+ 6)%127, velocity, channel);
+            AppleMIDI.sendNoteOff((note+ 9)%127, velocity, channel);
+            AppleMIDI.sendNoteOff((note+12)%127, velocity, channel);
+            note = dir ? note + 1 : note - 1;
+            if     (note == 0  ) dir =  true;
+            else if(note == 127) dir = false;
+        }
+    }
 }
 
 // ====================================================================================
