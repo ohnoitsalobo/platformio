@@ -84,8 +84,40 @@ void wifiLoop(){
         ArduinoOTA.handle();
         server.handleClient();
         webSocket.loop();
-        if(music && webSocketConn()){
-            webSocket.broadcastTXT(eqBroadcast);
+        // EVERY_N_MILLISECONDS(20){
+            // if(music && webSocketConn()){
+                // eqBroadcast = "E";
+                // for(uint8_t i = 0; i < NUM_LEDS/4; i++){
+                    // eqBroadcast += ",";
+                    // eqBroadcast += String(eq[0][i]);
+                    // if(eq[0][i] != 0) eq[0][i] /= 5.0;
+                // }
+                // for(uint8_t i = 0; i < NUM_LEDS/4; i++){
+                    // eqBroadcast += ",";
+                    // eqBroadcast += String(eq[1][i]);
+                    // if(eq[1][i] != 0) eq[1][i] /= 5.0;
+                // }
+                // webSocket.broadcastTXT(eqBroadcast);
+                // eqBroadcast = "";
+            // }
+        EVERY_N_MILLISECONDS(1500){
+            if(music && webSocketConn()){
+                eqBroadcast = "E";
+                for (uint16_t i = 2; i < samples/2; i++){
+                    // spectrum[0][i] = pow((i-2)/(samples/2.0-2), 0.5) * NUMBER_OF_LEDS/4;
+                    // spectrum[1][i] = 0;
+                    // spectrum[2][i] = 0;
+
+                    eqBroadcast += String(i);
+                    eqBroadcast += ("\t");
+                    eqBroadcast += String(((i-1) * 1.0 * samplingFrequency) / samples);
+                    eqBroadcast += ("  \t");
+                    eqBroadcast += String((int)spectrum[0][i]);
+                    eqBroadcast += ("\r\n");
+                }
+                webSocket.broadcastTXT(eqBroadcast);
+                eqBroadcast = "";
+            }
         }
         if(!digitalRead(2))
             digitalWrite(2, HIGH);

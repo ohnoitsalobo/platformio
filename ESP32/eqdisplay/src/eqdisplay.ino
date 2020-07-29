@@ -25,9 +25,6 @@ void setup(){
 void loop(){
 
     wifiLoop();
-    
-    if(music)
-        fftLoop();
 
     ledLoop();
     

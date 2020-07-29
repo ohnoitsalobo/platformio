@@ -40,7 +40,7 @@ uint16_t yscale = 30;           // Wouldn't recommend changing this on the fly, 
 
 typedef void (*SimplePatternList[])();
 SimplePatternList gPatterns = { simplePattern1 };
-SimplePatternList gPatterns1 = { rainbow_LCM, rainbow, rainbowWithGlitter, bpm, confetti, sinelon, inoise8_mover};
+SimplePatternList gPatterns1 = { rainbow_LCM, rainbow, rainbowWithGlitter, confetti, bpm, sinelon, inoise8_mover};
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 uint8_t gHue = 0, gHue1 = 0, gHue2 = 0; // rotating "base color" used by many of the patterns
 bool autoadv = false, LL = false, RR = false;

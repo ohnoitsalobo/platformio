@@ -8,9 +8,13 @@ FASTLED_USING_NAMESPACE
 #define NUM_LEDS    NUMBER_OF_LEDS
 #define BRIGHTNESS  255*225/255
 
-CRGBArray<NUM_LEDS> leds;                              // LED array containing all LEDs
-CRGBSet LEFT  (leds (0,          NUM_LEDS/2-1 ) );  // < subset containing only left  LEDs
-CRGBSet RIGHT (leds (NUM_LEDS/2, NUM_LEDS-1)  );  // < subset containing only right LEDs
+CRGBArray<NUM_LEDS> leds;                            // LED array containing all LEDs
+CRGBSet RIGHT (leds ( 0*NUM_LEDS/2, 1*NUM_LEDS/2-1 ) );   // < subset containing only left  LEDs
+CRGBSet LEFT  (leds ( 1*NUM_LEDS/2, 2*NUM_LEDS/2-1 ) );   // < subset containing only right LEDs
+CRGBSet R1    (leds ( 0*NUM_LEDS/4, 1*NUM_LEDS/4-1 ) );   // < < subset containing only R1   LEDs
+CRGBSet R2    (leds ( 1*NUM_LEDS/4, 2*NUM_LEDS/4-1 ) );   // < < subset containing only R2   LEDs
+CRGBSet L1    (leds ( 2*NUM_LEDS/4, 3*NUM_LEDS/4-1 ) );   // < < subset containing only L1   LEDs
+CRGBSet L2    (leds ( 3*NUM_LEDS/4, 4*NUM_LEDS/4-1 ) );   // < < subset containing only L2   LEDs
 
 CRGBPalette16 currentPalette, randomPalette1;
 CRGBPalette16 targetPalette, randomPalette2;
@@ -27,16 +31,30 @@ CHSV manualHSV (0, 255, 255);
 uint8_t gHue = 0, gHue1 = 0, gHue2 = 0; // rotating "base color" used by many of the patterns
 
 String eqBroadcast = "";
+uint8_t eq[2][samples/2-2];
+#define movingAvg 100
+uint8_t audioReadIndex = 0;
+uint32_t audioReads[2][movingAvg+2];
 
 void ledSetup(){
     FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness(BRIGHTNESS);
-    FastLED.setMaxPowerInVoltsAndMilliamps(5,1500);
+    FastLED.setMaxPowerInVoltsAndMilliamps(5,1000);
+    
+    for(int i = 0; i < samples/2-2; i++){
+        eq[0][i] = 0;
+        eq[1][i] = 0;
+    }
+    for(int i = 0; i < movingAvg+2; i++){
+        audioReads[0][i] = 0;
+        audioReads[1][i] = 0;
+    }
 }
 
 void ledLoop(){
     if(music){
-        audio_spectrum();
+        // audio_spectrum();
+        audioLight();
     }
     else if(_auto){
         EVERY_N_SECONDS(20){
@@ -60,35 +78,135 @@ void ledLoop(){
 }
 
 void audio_spectrum(){
+    fftLoop();
     eqBroadcast = "";
-    uint8_t pos = 0;
+    nscale8(leds, NUM_LEDS, 10); // smaller = faster fade
+    CRGB tempRGB1, tempRGB2;
+    uint8_t pos = 0, h = 0, s = 0, v = 0;
+    double temp1 = 0, temp2 = 0;
     for(int i = 2; i < samples/2; i++){
-        uint8_t pos = spectrum[0][i];
-        uint8_t h = pos/(NUM_LEDS/2.0)*224;
-        double temp = spectrum[1][i]/MAX;
-        uint8_t s = 255 - (temp*30.0);
-        uint8_t v = temp*255.0;
-        // if(i < 12){
-            // int temp = v*12/i;
-            // v = temp > 255 ? 255 : temp;
-        // }
-        RIGHT[pos] = CHSV(h, s, v);
-        // RIGHT(1,2) = RIGHT[0];
-        // RIGHT[3] = RIGHT[4];
-        // RIGHT[5] = RIGHT[6];
-        // RIGHT[8] = RIGHT[7];
-        RIGHT(1, 5) = RIGHT[0];
-        RIGHT(7, 8) = RIGHT[6];
-        RIGHT[10]   = RIGHT[9];
-        RIGHT[13]   = RIGHT[12];
-        RIGHT[17]   = RIGHT[16];
-        LEFT = -RIGHT;
-
-        if(music && webSocketConn()){
-            eqBroadcast += ",";
-            eqBroadcast += String(v);
+        pos = spectrum[0][i];
+        h = pos/(NUM_LEDS/2.0)*224;
+        temp1 = spectrum[1][i]/MAX;
+        s = 255 - (temp1*30.0);
+        v = temp1*255.0;
+        tempRGB1 = CHSV(h, s, v);
+        if(tempRGB1 > RIGHT[pos]){
+            RIGHT[pos] = tempRGB1;
         }
+        eq[0][i-2] = v;
+        temp2 = spectrum[2][i]/MAX;
+        s = 255 - (temp2*30.0);
+        v = temp2*255.0;
+        tempRGB2 = CHSV(h, s, v);
+        uint8_t p = NUM_LEDS/2-1-pos;
+        if(tempRGB2 > LEFT[p]){
+            LEFT[p] = tempRGB2;
+        }
+        eq[1][i-2] = v;
+        
+        yield();
     }
+    uint8_t p = NUM_LEDS/2-1;
+    RIGHT[ 1]    = RIGHT[ 0];   RIGHT[ 1]   %= 0.8*256;
+    RIGHT[ 2]    = RIGHT[ 1];   RIGHT[ 2]   %= 0.8*256;
+    RIGHT[ 3]    = RIGHT[ 2];   RIGHT[ 3]   %= 0.8*256;
+    RIGHT[ 4]    = RIGHT[ 3];   RIGHT[ 4]   %= 0.8*256;
+    RIGHT[ 5]    = RIGHT[ 4];   RIGHT[ 5]   %= 0.8*256;
+    RIGHT[ 7]    = RIGHT[ 6];   RIGHT[ 7]   %= 0.8*256;
+    RIGHT[ 8]    = RIGHT[ 7];   RIGHT[ 8]   %= 0.8*256;
+    RIGHT[10]    = RIGHT[ 9];   RIGHT[10]   %= 0.8*256;
+    RIGHT[13]    = RIGHT[12];   RIGHT[13]   %= 0.8*256;
+    RIGHT[17]    = RIGHT[16];   RIGHT[17]   %= 0.8*256;
+    LEFT [p- 1]  = LEFT [p- 0]; LEFT [p- 1] %= 0.8*256;
+    LEFT [p- 2]  = LEFT [p- 1]; LEFT [p- 2] %= 0.8*256;
+    LEFT [p- 3]  = LEFT [p- 2]; LEFT [p- 3] %= 0.8*256;
+    LEFT [p- 4]  = LEFT [p- 3]; LEFT [p- 4] %= 0.8*256;
+    LEFT [p- 5]  = LEFT [p- 4]; LEFT [p- 5] %= 0.8*256;
+    LEFT [p- 7]  = LEFT [p- 6]; LEFT [p- 7] %= 0.8*256;
+    LEFT [p- 8]  = LEFT [p- 7]; LEFT [p- 8] %= 0.8*256;
+    LEFT [p-10]  = LEFT [p- 9]; LEFT [p-10] %= 0.8*256;
+    LEFT [p-13]  = LEFT [p-12]; LEFT [p-13] %= 0.8*256;
+    LEFT [p-17]  = LEFT [p-16]; LEFT [p-17] %= 0.8*256;
+}
+uint16_t maxR = 0, minR = 4096, maxL = 0, minL = 4096;
+void audioLight(){
+    // audioReads[0][movingAvg] -= audioReads[0][audioReadIndex];
+    // audioReads[0][audioReadIndex] = analogRead( LeftPin);
+    // audioReads[0][movingAvg] += audioReads[0][audioReadIndex];
+    
+    // audioReads[0][movingAvg+1] = audioReads[0][movingAvg]/movingAvg;
+    // minL = (audioReads[0][audioReadIndex] < minL) ? audioReads[0][audioReadIndex] : minL++;
+    // maxL = (audioReads[0][audioReadIndex] > maxL) ? audioReads[0][audioReadIndex] : maxL--;
+    
+    // audioReads[1][movingAvg] -= audioReads[1][audioReadIndex];
+    // audioReads[1][audioReadIndex] = analogRead( RightPin);
+    // audioReads[1][movingAvg] += audioReads[1][audioReadIndex];
+    
+    // audioReads[1][movingAvg+1] = audioReads[1][movingAvg]/movingAvg;
+    // minR = (audioReads[1][audioReadIndex] < minR) ? audioReads[1][audioReadIndex] : minR++;
+    // maxR = (audioReads[1][audioReadIndex] > maxR) ? audioReads[1][audioReadIndex] : maxR--;
+    
+    // audioReadIndex = (audioReadIndex+1)%movingAvg;
+    
+    // for(int i = NUM_LEDS/2-1; i > 0; i--){
+        // RIGHT[i] = RIGHT[i-1].nscale8(254);
+        // LEFT [NUM_LEDS/2-i] = LEFT [NUM_LEDS/2-i+1].nscale8(254);
+    // }
+    // uint16_t mid = 1800, _noise = 180;
+    // uint8_t _hue = 0, _sat = 255, _val = 0;
+    // int temp1 = abs(mid - analogRead( RightPin));
+    // if(temp1 > _noise){
+        // _val = (temp1-_noise)/float(mid) * 255;
+        // _hue = _val/255.0 * 224;
+    // }
+    // RIGHT[0] = CHSV( _hue, _sat, _val);
+    
+    // _hue = 0; _val = 0;
+    // int temp2 = abs(mid - analogRead( LeftPin));
+    // if(temp2 > _noise){
+        // _val = (temp2-_noise)/float(mid) * 255;
+        // _hue = _val/255.0 * 224;
+    // }
+    // LEFT[NUM_LEDS/2-1] = CHSV( _hue, _sat, _val);
+    
+    for(int i = NUM_LEDS/4-1; i > 0; i--){
+        R2[i] = R2[i-1].nscale8(254);
+        R1[NUM_LEDS/4-i] = R2[i];
+        L1[NUM_LEDS/4-i] = L1[NUM_LEDS/4-i+1].nscale8(254);
+        L2[i] = L1[NUM_LEDS/4-i];
+    }
+    uint16_t mid = 1800, _noise = 180;
+    uint8_t _hue = 0, _sat = 255, _val = 0;
+    int temp1 = abs(mid - analogRead( RightPin));
+    if(temp1 > _noise){
+        _val = (temp1-_noise)/float(mid) * 255;
+        _hue = _val/255.0 * 224;
+    }
+    R2[0] = CHSV( _hue, _sat, _val);
+    R1[NUM_LEDS/4-1] = R2[0];
+    
+    _hue = 0; _val = 0;
+    int temp2 = abs(mid - analogRead( LeftPin));
+    if(temp2 > _noise){
+        _val = (temp2-_noise)/float(mid) * 255;
+        _hue = _val/255.0 * 224;
+    }
+    L1[NUM_LEDS/4-1] = CHSV( _hue, _sat, _val);
+    L2[0] = L1[NUM_LEDS/4-1];
+    
+    // Serial.print(minL);
+    // Serial.print("\t");
+    // Serial.print(audioReads[0][movingAvg+1]);
+    // Serial.print("\t");
+    // Serial.print(maxL);
+    // Serial.print("\t");
+    // Serial.print(minR);
+    // Serial.print("\t");
+    // Serial.print(audioReads[1][movingAvg+1]);
+    // Serial.print("\t");
+    // Serial.print(maxR);
+    // Serial.print("\t\r");
 }
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
