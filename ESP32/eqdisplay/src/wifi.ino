@@ -11,8 +11,11 @@ void setupWiFi(){
     Serial.println("\nStarting Wifi");
 
     WiFi.disconnect();
+    // WiFi.mode(WIFI_AP_STA);
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
+    // WiFi.softAP(host, password);
+
 
     setupOTA();
     
@@ -100,23 +103,18 @@ void wifiLoop(){
                 // webSocket.broadcastTXT(eqBroadcast);
                 // eqBroadcast = "";
             // }
-        EVERY_N_MILLISECONDS(1500){
+        EVERY_N_MILLISECONDS(500){
             if(music && webSocketConn()){
-                eqBroadcast = "E";
-                for (uint16_t i = 2; i < samples/2; i++){
-                    // spectrum[0][i] = pow((i-2)/(samples/2.0-2), 0.5) * NUMBER_OF_LEDS/4;
-                    // spectrum[1][i] = 0;
-                    // spectrum[2][i] = 0;
-
-                    eqBroadcast += String(i);
-                    eqBroadcast += ("\t");
-                    eqBroadcast += String(((i-1) * 1.0 * samplingFrequency) / samples);
-                    eqBroadcast += ("  \t");
-                    eqBroadcast += String((int)spectrum[0][i]);
-                    eqBroadcast += ("\r\n");
-                }
-                webSocket.broadcastTXT(eqBroadcast);
-                eqBroadcast = "";
+                // eqBroadcast = "";
+                // for (uint16_t i = 2; i < samples/2; i++){
+                    // eqBroadcast += i;
+                    // eqBroadcast += "\t";
+                    // eqBroadcast += ((i-1) * 1.0 * samplingFrequency) / samples;
+                    // eqBroadcast += "  \t";
+                    // eqBroadcast += (int)spectrum[0][i];
+                    // eqBroadcast += "\r\n";
+                // }
+                // webSocket.broadcastTXT(eqBroadcast);
             }
         }
         if(!digitalRead(2))
@@ -299,7 +297,7 @@ void handleSliders(){
         music = temp.endsWith("0") ? true : false;
         _auto = temp.endsWith("1") ? true : false;
         manual = temp.endsWith("2") ? true : false;
-        // gCurrentPatternNumber = 0;
+        gCurrentPatternNumber = 0;
         if(_auto)
             FastLED.setBrightness(30);
         else

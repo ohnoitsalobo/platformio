@@ -105,8 +105,10 @@ void wifiLoop(){
                 // eqBroadcast = "";
             // }
         // }
-        if(!digitalRead(2))
+        if(!digitalRead(2)){
             digitalWrite(2, HIGH);
+            Serial_1.println("Wifi connected!");
+        }
     }
     
     if(WiFi.status() != WL_CONNECTED){
@@ -115,6 +117,7 @@ void wifiLoop(){
         }
         if(digitalRead(2))
             digitalWrite(2, LOW);
+            Serial_1.println("Wifi disconnected");
     }
     yield();
 #ifdef debug
@@ -124,6 +127,10 @@ void wifiLoop(){
 
 void beginServer(){
     // server.on("/upload", HTTP_POST, [](){ server.send(200); }, handleFileUpload);
+    server.on("/reset", []() {
+        server.send(200, "text/html", "Restart ESP32<br /><br /><a href=\"http:\\\\speaker.local\">Click to go to speaker LED control</a>");
+        ESP.restart();
+    });
     server.onNotFound(handleNotFound);          // if someone requests any other file or page, go to function 'handleNotFound'
     server.begin();
     Serial_1.print("\r\nServer started\r\n");
@@ -293,7 +300,7 @@ void handleSliders(){
         music = temp.endsWith("0") ? true : false;
         _auto = temp.endsWith("1") ? true : false;
         manual = temp.endsWith("2") ? true : false;
-        // gCurrentPatternNumber = 0;
+        gCurrentPatternNumber = 0;
         if(_auto)
             FastLED.setBrightness(30);
         else

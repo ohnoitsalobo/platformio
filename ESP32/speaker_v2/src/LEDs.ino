@@ -9,12 +9,12 @@ FASTLED_USING_NAMESPACE
 #define BRIGHTNESS  255*225/255
 
 CRGBArray<NUM_LEDS> leds;                              // LED array containing all LEDs
-CRGBSet LEFT  (leds (0,            NUM_LEDS/2-1)   );  // < subset containing only left  LEDs
-CRGBSet L1    (leds (0,            NUM_LEDS/4-1)   );  // < subset containing only left  side of left  LEDs
-CRGBSet L2    (leds (NUM_LEDS/4,   NUM_LEDS/2-1)   );  // < subset containing only right side of left  LEDs
-CRGBSet RIGHT (leds (NUM_LEDS/2,   NUM_LEDS)       );  // < subset containing only right LEDs
-CRGBSet R1    (leds (NUM_LEDS/2,   3*NUM_LEDS/4-1) );  // < subset containing only left  side of right LEDs
-CRGBSet R2    (leds (3*NUM_LEDS/4, NUM_LEDS)       );  // < subset containing only right side of right LEDs
+CRGBSet RIGHT (leds (0,            NUM_LEDS/2-1)   );  // < subset containing only left  LEDs
+CRGBSet R1    (leds (0,            NUM_LEDS/4-1)   );  // < subset containing only left  side of left  LEDs
+CRGBSet R2    (leds (NUM_LEDS/4,   NUM_LEDS/2-1)   );  // < subset containing only right side of left  LEDs
+CRGBSet LEFT  (leds (NUM_LEDS/2,   NUM_LEDS)       );  // < subset containing only right LEDs
+CRGBSet L1    (leds (NUM_LEDS/2,   3*NUM_LEDS/4-1) );  // < subset containing only left  side of right LEDs
+CRGBSet L2    (leds (3*NUM_LEDS/4, NUM_LEDS)       );  // < subset containing only right side of right LEDs
 
 CRGBPalette16 currentPalette, randomPalette1;
 CRGBPalette16 targetPalette, randomPalette2;
@@ -23,7 +23,8 @@ uint8_t maxChanges = 24;        // Value for blending between palettes.
 
 typedef void (*SimplePatternList[])();
 // SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, dot_beat, juggle, bpm, inoise8_mover};
-SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, dot_beat, bpm, inoise8_mover};
+SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, dot_beat, bpm };
+SimplePatternList gPatterns1 = { audio_spectrum, audioLight };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
 bool manual = 0, _auto = 0;
@@ -49,45 +50,44 @@ void ledLoop(){
 #ifdef debug
     Serial_1.println("Starting ledLoop");
 #endif
-    if(music){
-        audio_spectrum();
-        // audioLight();
-        EVERY_N_MILLISECONDS(20){
-            if(webSocketConn()){
-                eqBroadcast = "E";
-                for(uint8_t i = 0; i < samples/2-2; i++){
-                    eqBroadcast += ",";
-                    eqBroadcast += String(eq[0][i]);
-                    if(eq[0][i] != 0) eq[0][i] /= 5.0;
-                }
-                for(uint8_t i = 0; i < samples/2-2; i++){
-                    eqBroadcast += ",";
-                    eqBroadcast += String(eq[1][i]);
-                    if(eq[1][i] != 0) eq[1][i] /= 5.0;
-                }
-                wsBroadcast();
-                eqBroadcast = "";
+    if(MIDIconnected()){
+        runLED();
+    }else{
+        if(music){
+            gPatterns1[gCurrentPatternNumber]();
+            EVERY_N_MILLISECONDS(20){
+                // if(webSocketConn()){
+                    // eqBroadcast = "E";
+                    // for(uint8_t i = 0; i < samples/2-2; i++){
+                        // eqBroadcast += ",";
+                        // eqBroadcast += String(eq[0][i]);
+                        // if(eq[0][i] != 0) eq[0][i] /= 5.0;
+                    // }
+                    // for(uint8_t i = 0; i < samples/2-2; i++){
+                        // eqBroadcast += ",";
+                        // eqBroadcast += String(eq[1][i]);
+                        // if(eq[1][i] != 0) eq[1][i] /= 5.0;
+                    // }
+                    // wsBroadcast();
+                    // eqBroadcast = "";
+                // }
             }
         }
-    }
-    else if(_auto){
-        EVERY_N_SECONDS(20){
-            targetPalette = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
-            randomPalette1 = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
-            randomPalette2 = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
+        else if(_auto){
+            EVERY_N_MILLISECONDS( 35 ) { gHue1++; }
+            EVERY_N_MILLISECONDS( 37 ) { gHue2--; }
+            EVERY_N_SECONDS(20){
+                targetPalette = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
+                randomPalette1 = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
+                randomPalette2 = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
+            }
+            gPatterns[gCurrentPatternNumber]();
         }
-        EVERY_N_MILLISECONDS( 29 ) {
-            gHue1++;
+        else if(manual){
+            
         }
-        EVERY_N_MILLISECONDS( 23 ) {
-            gHue2--;
-        }
-        gPatterns[gCurrentPatternNumber]();
+        FastLED.show();
     }
-    else if(manual){
-        
-    }
-    FastLED.show();
 #ifdef debug
     Serial_1.println("Ending ledLoop");
 #endif
@@ -97,8 +97,9 @@ void audio_spectrum(){
 #ifdef debug
     Serial_1.println("Starting audio_spectrum");
 #endif
-
-    nscale8(leds, NUM_LEDS, 10); // smaller = faster fade
+    fftLoop();
+    uint8_t fadeval = 90;
+    nscale8(leds, NUM_LEDS, fadeval); // smaller = faster fade
     CRGB tempRGB1, tempRGB2;
     uint8_t pos = 0, h = 0, s = 0, v = 0;
     double temp1 = 0, temp2 = 0;
@@ -112,17 +113,22 @@ void audio_spectrum(){
         uint8_t p = NUM_LEDS/4-pos;
         if(tempRGB1 > R1[pos]){
             R1[pos] = tempRGB1;
-            R2[p] = R1[pos];
+        }else{
+            // R1[pos].nscale8(fadeval);
         }
+        R2[p] = R1[pos];
         eq[0][i-2] = v;
+
         temp2 = spectrum[2][i]/MAX;
         s = 255 - (temp2*30.0);
         v = temp2*255.0;
         tempRGB2 = CHSV(h, s, v);
         if(tempRGB2 > L1[pos]){
             L1[pos] = tempRGB2;
-            L2[p] = L1[pos];
+        }else{
+            // L1[pos].nscale8(fadeval);
         }
+        L2[p] = L1[pos];
         eq[1][i-2] = v;
         yield();
     }
@@ -135,7 +141,37 @@ void audioLight(){
 #ifdef debug
     Serial_1.println("Starting audioLight");
 #endif
-    
+    EVERY_N_MILLISECONDS( 55 ) { gHue1++; }
+    EVERY_N_MILLISECONDS( 57 ) { gHue2--; }
+    EVERY_N_MILLISECONDS( 15 ) {
+        uint8_t fadeval = 200;
+        for(int i = 0; i < NUM_LEDS/4; i++){
+            R1[NUM_LEDS/4-i] = R1[NUM_LEDS/4-1-i].nscale8(fadeval);
+            R2[i] = R1[NUM_LEDS/4-i];
+            L1[NUM_LEDS/4-i] = L1[NUM_LEDS/4-1-i].nscale8(fadeval);
+            L2[i] = L1[NUM_LEDS/4-i];
+        }
+        uint16_t mid = 1800, _noise = 180;
+        uint8_t _hue = 0, _sat = 255, _val = 0;
+        int temp1 = abs(mid - analogRead( RightPin));
+        if(temp1 > _noise){
+            _val = (temp1-_noise)/float(mid) * 255;
+            // _hue = _val/255.0 * 224;
+            _hue = _val/255.0 * 65;
+        }
+        R1[0] = CHSV( _hue+gHue1, _sat, _val);
+        R2[NUM_LEDS/4] = R1[0];
+        
+        _hue = 0; _val = 0;
+        int temp2 = abs(mid - analogRead( LeftPin));
+        if(temp2 > _noise){
+            _val = (temp2-_noise)/float(mid) * 255;
+            // _hue = _val/255.0 * 224;
+            _hue = _val/255.0 * 65;
+        }
+        L2[NUM_LEDS/4] = CHSV( _hue+gHue2, _sat, _val);
+        L1[0] = L2[NUM_LEDS/4];
+    }
 #ifdef debug
     Serial_1.println("Ending audioLight");
 #endif
@@ -144,7 +180,10 @@ void audioLight(){
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
 void nextPattern(){
-    gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns );
+    if(music)
+        gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns1 );
+    else
+        gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns );
 }
 
 void rainbow() {
@@ -251,4 +290,83 @@ void inoise8_mover() {
     dist2 += beatsin8(13,1,4);                                                // Moving along the distance (that random number we started out with). Vary it a bit with a sine wave.                                             
     FastLED.show();
     fadeToBlackBy(leds, NUM_LEDS, 10);     
+}
+
+//////// MIDI stuff
+
+CRGB lastPressed;             // holder for last-detected key color
+
+void runLED(){
+    EVERY_N_MILLISECONDS(50){ _hue++; gHue1++; gHue2--;}
+    EVERY_N_MILLISECONDS(20){ 
+        // fadeToBlackBy( leds, NUM_LEDS, 10); // ( sustain ? 3 : 10) );
+        nscale8( leds, NUM_LEDS, 240); // ( sustain ? 3 : 10) );
+    }
+    // if(MidiEventReceived)
+        MIDI2LED();
+    FastLED.show();
+    yield();
+}
+
+void MIDI2LED(){
+    // MIDI note values 0 - 127 
+    // 36-96 (for 61-key) mapped to LED 0-60
+    // Serial.println(pitch);
+    // int temp = map(pitch, 36, 96, 0, NUM_LEDS-1);
+    
+    // if(temp < 0)
+        // temp = -temp;                   // if note goes above 60 or below 0
+    // else if(temp > NUM_LEDS)                  //      reverse it
+        // temp = NUM_LEDS - (temp%NUM_LEDS);
+    
+    // uint8_t _pitch = map(temp, 0, NUM_LEDS, 0, 224); // map note to color 'hue'
+    uint8_t _pos = MIDIdata[1]/127.0 * (NUM_LEDS/2-1); // map note to position
+    uint8_t _col = MIDIdata[1]/127.0 * 224; // map note to position
+    
+    // uint8_t _pos = map(temp, 0, NUM_LEDS, 0, NUM_LEDS-1);
+    // assign color based on note position and intensity (velocity)
+    RIGHT[_pos] = CHSV(_col + _hue, 255 - (MIDIdata[2]/2.0), MIDIdata[2]/127.0 * 255);
+    LEFT [_pos] = RIGHT[_pos];
+    if(MIDIdata[2] > 0 && millis()%2 == 0)
+        MIDIdata[2]--;
+    lastPressed = RIGHT[_pos]; // remember last-detected note color
+    // MidiEventReceived = false;
+}
+
+void handleNoteOn(byte channel, byte pitch, byte velocity) {
+    MIDIdata[0] = channel;
+    MIDIdata[1] = pitch;
+    MIDIdata[2] = velocity;
+    MidiEventReceived = true;
+}
+
+void handleNoteOff(byte channel, byte pitch, byte velocity) {
+    MIDIdata[0] = channel;
+    MIDIdata[1] = pitch;
+    MIDIdata[2] = velocity;
+    MidiEventReceived = true;
+}
+
+void handlePitchBend(byte channel, int bend) {
+    // fill strip with solid color based on pitch bend amount
+    fill_solid(leds, NUM_LEDS, CHSV(map(bend, -8192, 8192, 0, 224), 255, 125)); // 0  8192  16383
+    yield();
+}
+
+void handleControlChange(byte channel, byte number, byte value){
+    // channel 1 = modulation
+    if( number == 1 ){
+        fill_solid( leds, NUM_LEDS, 0x222222 );
+        // fill_rainbow(leds, NUM_LEDS, hue);
+    }
+    // channel 64 = damper / sustain pedal
+    if( number == 64 ){
+        if( value >= 64 ){
+            fill_solid( leds, NUM_LEDS, lastPressed );
+            sustain = true;
+        } else {
+            sustain = false;
+        }
+    }
+    yield();
 }

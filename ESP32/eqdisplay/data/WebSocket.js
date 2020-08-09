@@ -1,6 +1,6 @@
 var temp = [0], audiodata;
-// var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
-var connection = new WebSocket('ws://eqdisplay.local:81/', ['arduino']);
+var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
+// var connection = new WebSocket('ws://eqdisplay.local:81/', ['arduino']);
 
 connection.onopen = function () {
     connection.send('Connect ' + new Date());
