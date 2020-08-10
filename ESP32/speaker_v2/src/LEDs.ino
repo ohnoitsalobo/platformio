@@ -86,8 +86,8 @@ void ledLoop(){
         else if(manual){
             
         }
-        FastLED.show();
     }
+    FastLED.show();
 #ifdef debug
     Serial_1.println("Ending ledLoop");
 #endif
@@ -208,9 +208,10 @@ void confetti()
 {
   // random colored speckles that blink in and fade smoothly
     fadeToBlackBy( leds, NUM_LEDS, 10);
-    int pos = random16(NUM_LEDS);
-    leds[pos] += CHSV( random8(255), 255, 255);
-    FastLED.show();
+    int pos = random16(NUM_LEDS/2);
+    // leds[pos] += CHSV( random8(255), 255, 255);
+    RIGHT[pos] += CHSV( gHue1 + random8(64), 190+random8(65), 255);
+    LEFT [pos] += CHSV( gHue2 + random8(64), 190+random8(65), 255);
 }
 
 void sinelon()
@@ -225,7 +226,6 @@ void sinelon()
     RIGHT[pos2] = ColorFromPalette(randomPalette2, pos2, 255, LINEARBLEND);   // Use that value for both the location as well as the palette index colour for the pixel.
     LEFT [pos3] += CHSV( gHue2, 255, 255);
     RIGHT[pos4] += CHSV( gHue1, 255, 255);
-    FastLED.show();
 }
 
 void dot_beat() {
@@ -276,6 +276,7 @@ uint16_t xscale = 30;           // Wouldn't recommend changing this on the fly, 
 uint16_t yscale = 30;           // Wouldn't recommend changing this on the fly, or the animation will be really blocky.
 
 void inoise8_mover() {
+    fadeToBlackBy(leds, NUM_LEDS, 10);     
     uint8_t locn = 0, pixlen = 0;
     
     locn = inoise8(xscale, dist1+yscale) % 255;          // Get a new pixel location from moving noise.
@@ -288,8 +289,6 @@ void inoise8_mover() {
 
     dist1 += beatsin8(10,1,4);                                                // Moving along the distance (that random number we started out with). Vary it a bit with a sine wave.                                             
     dist2 += beatsin8(13,1,4);                                                // Moving along the distance (that random number we started out with). Vary it a bit with a sine wave.                                             
-    FastLED.show();
-    fadeToBlackBy(leds, NUM_LEDS, 10);     
 }
 
 //////// MIDI stuff
@@ -303,8 +302,7 @@ void runLED(){
         nscale8( leds, NUM_LEDS, 240); // ( sustain ? 3 : 10) );
     }
     // if(MidiEventReceived)
-        MIDI2LED();
-    FastLED.show();
+    MIDI2LED();
     yield();
 }
 

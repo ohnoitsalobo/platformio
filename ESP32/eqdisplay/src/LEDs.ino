@@ -76,8 +76,8 @@ void ledLoop(){
         else if(manual){
             
         }
-        FastLED.show();
     }
+    FastLED.show();
 }
 
 void audio_spectrum(){
@@ -237,11 +237,14 @@ void addGlitter() {
 
 void confetti() 
 {
-  // random colored speckles that blink in and fade smoothly
-    fadeToBlackBy( leds, NUM_LEDS, 10);
-    int pos = random16(NUM_LEDS);
-    leds[pos] += CHSV( random8(255), 255, 255);
-    FastLED.show();
+    // random colored speckles that blink in and fade smoothly
+    EVERY_N_MILLISECONDS(1000/30){
+        fadeToBlackBy( leds, NUM_LEDS, 50);
+        int pos = random16(NUM_LEDS/2);
+        // leds[pos] += CHSV( random8(255), 255, 255);
+        RIGHT[pos] += CHSV( gHue1 + random8(64), 190+random8(65), 255);
+        LEFT [pos] += CHSV( gHue2 + random8(64), 190+random8(65), 255);
+    }
 }
 
 void sinelon()
@@ -256,7 +259,6 @@ void sinelon()
     RIGHT[pos2] = ColorFromPalette(randomPalette2, pos2, 255, LINEARBLEND);   // Use that value for both the location as well as the palette index colour for the pixel.
     LEFT [pos3] += CHSV( gHue2, 255, 255);
     RIGHT[pos4] += CHSV( gHue1, 255, 255);
-    FastLED.show();
 }
 
 void dot_beat() {
@@ -312,8 +314,7 @@ void runLED(){
         fadeToBlackBy( leds, NUM_LEDS, 10); // ( sustain ? 3 : 10) );
     }
     // if(MidiEventReceived)
-        MIDI2LED();
-    FastLED.show();
+    MIDI2LED();
     yield();
 }
 

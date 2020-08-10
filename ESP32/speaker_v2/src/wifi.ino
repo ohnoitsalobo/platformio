@@ -55,14 +55,12 @@ void setupOTA(){
             digitalWrite(2, !digitalRead(2));
             Serial_1.printf("Progress: %u%%\r", temp);
             if(temp<99){
-                fill_solid (leds, map(temp, 0, 99, 0, NUM_LEDS), 0x020202);
-                FastLED.show();
+                fill_solid (LEFT, map(temp, 0, 99, 0, NUM_LEDS/2), 0x020202);
+                fill_solid (RIGHT, map(temp, 0, 99, 0, NUM_LEDS/2), 0x020202);
             }else if(temp == 99){
                 fill_solid (leds, NUM_LEDS, 0x020202);
-                FastLED.show();
-                fill_solid (leds, NUM_LEDS, CRGB::Black);
-                FastLED.show();
             }
+            FastLED.show();
         })
         .onError([](ota_error_t error) {
             fill_solid (leds, NUM_LEDS, CRGB::Red);
