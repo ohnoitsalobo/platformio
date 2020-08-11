@@ -8,7 +8,7 @@ WebSocketsServer webSocket(81);    // create a websocket server on port 81
 bool connectedClient = 0;
 
 void setupWiFi(){
-    Serial_1.println("\nStarting Wifi");
+    _serial_.println("\nStarting Wifi");
 
     WiFi.disconnect();
     WiFi.mode(WIFI_STA);
@@ -41,19 +41,19 @@ void setupOTA(){
             }
 
             // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-            Serial_1.println("\nStart updating " + type);
+            _serial_.println("\nStart updating " + type);
             fill_solid (leds, NUM_LEDS, CRGB::Black);
             FastLED.show();
         })
         .onEnd([]() {
             digitalWrite(2, LOW);
-            Serial_1.println("\nEnd");
+            _serial_.println("\nEnd");
             delay(10);
         })
         .onProgress([](unsigned int progress, unsigned int total) {
             uint32_t temp = progress / (total / 100);
             digitalWrite(2, !digitalRead(2));
-            Serial_1.printf("Progress: %u%%\r", temp);
+            _serial_.printf("Progress: %u%%\r", temp);
             if(temp<99){
                 fill_solid (LEFT, map(temp, 0, 99, 0, NUM_LEDS/2), 0x020202);
                 fill_solid (RIGHT, map(temp, 0, 99, 0, NUM_LEDS/2), 0x020202);
@@ -65,12 +65,12 @@ void setupOTA(){
         .onError([](ota_error_t error) {
             fill_solid (leds, NUM_LEDS, CRGB::Red);
             FastLED.show();
-            Serial_1.printf("Error[%u]: ", error);
-            if (error == OTA_AUTH_ERROR) Serial_1.println("Auth Failed");
-            else if (error == OTA_BEGIN_ERROR) Serial_1.println("Begin Failed");
-            else if (error == OTA_CONNECT_ERROR) Serial_1.println("Connect Failed");
-            else if (error == OTA_RECEIVE_ERROR) Serial_1.println("Receive Failed");
-            else if (error == OTA_END_ERROR) Serial_1.println("End Failed");
+            _serial_.printf("Error[%u]: ", error);
+            if (error == OTA_AUTH_ERROR) _serial_.println("Auth Failed");
+            else if (error == OTA_BEGIN_ERROR) _serial_.println("Begin Failed");
+            else if (error == OTA_CONNECT_ERROR) _serial_.println("Connect Failed");
+            else if (error == OTA_RECEIVE_ERROR) _serial_.println("Receive Failed");
+            else if (error == OTA_END_ERROR) _serial_.println("End Failed");
             fill_solid (leds, NUM_LEDS, CRGB::Black);
             FastLED.show();
         });
@@ -79,7 +79,7 @@ void setupOTA(){
 
 void wifiLoop(){
 #ifdef debug
-    Serial_1.println("Starting wifiLoop");
+    _serial_.println("Starting wifiLoop");
 #endif
 
     if(WiFi.status() == WL_CONNECTED){
@@ -105,7 +105,7 @@ void wifiLoop(){
         // }
         if(!digitalRead(2)){
             digitalWrite(2, HIGH);
-            Serial_1.println("Wifi connected!");
+            _serial_.println("Wifi connected!");
         }
     }
     
@@ -115,11 +115,11 @@ void wifiLoop(){
         }
         if(digitalRead(2))
             digitalWrite(2, LOW);
-            Serial_1.println("Wifi disconnected");
+            _serial_.println("Wifi disconnected");
     }
     yield();
 #ifdef debug
-    Serial_1.println("Ending wifiLoop");
+    _serial_.println("Ending wifiLoop");
 #endif
 }
 
@@ -131,9 +131,9 @@ void beginServer(){
     });
     server.onNotFound(handleNotFound);          // if someone requests any other file or page, go to function 'handleNotFound'
     server.begin();
-    Serial_1.print("\r\nServer started\r\n");
+    _serial_.print("\r\nServer started\r\n");
     if (MDNS.begin(host)) {
-        Serial_1.print("\r\nMDNS responder started\r\n");
+        _serial_.print("\r\nMDNS responder started\r\n");
     }
     MDNS.addService("http", "tcp", 80);
     MDNS.addService("ws", "tcp", 81);
@@ -146,7 +146,7 @@ void handleNotFound(){ // if the requested file or page doesn't exist, return a 
 }
 
 bool handleFileRead(String path) { // send the right file to the client (if it exists)
-    Serial_1.println("handleFileRead: " + path);
+    _serial_.println("handleFileRead: " + path);
     if (path.endsWith("/")) path += "index.html";          // If a folder is requested, send the index file
     String contentType = getContentType(path);             // Get the MIME type
     String pathWithGz = path + ".gz";
@@ -157,10 +157,10 @@ bool handleFileRead(String path) { // send the right file to the client (if it e
         File file = SPIFFS.open(path, "r");                    // Open the file
         sent = server.streamFile(file, contentType);    // Send it to the client
         file.close();                                          // Close the file again
-        Serial_1.println(String("\tSent file: ") + path);
+        _serial_.println(String("\tSent file: ") + path);
         return true;
     }
-    Serial_1.println(String("\tFile Not Found: ") + path);   // If the file doesn't exist, return false
+    _serial_.println(String("\tFile Not Found: ") + path);   // If the file doesn't exist, return false
     return false;
 }
 
@@ -176,31 +176,31 @@ String getContentType(String filename) { // determine the filetype of a given fi
 ////////////////////////////////////
 
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
-    Serial_1.printf("Listing directory: %s\r\n", dirname);
+    _serial_.printf("Listing directory: %s\r\n", dirname);
 
     File root = fs.open(dirname);
     if(!root){
-        Serial_1.println("- failed to open directory");
+        _serial_.println("- failed to open directory");
         return;
     }
     if(!root.isDirectory()){
-        Serial_1.println(" - not a directory");
+        _serial_.println(" - not a directory");
         return;
     }
 
     File file = root.openNextFile();
     while(file){
         if(file.isDirectory()){
-            Serial_1.print("  DIR : ");
-            Serial_1.println(file.name());
+            _serial_.print("  DIR : ");
+            _serial_.println(file.name());
             if(levels){
                 listDir(fs, file.name(), levels -1);
             }
         } else {
-            Serial_1.print("  FILE: ");
-            Serial_1.print(file.name());
-            Serial_1.print("\tSIZE: ");
-            Serial_1.println(file.size());
+            _serial_.print("  FILE: ");
+            _serial_.print(file.name());
+            _serial_.print("\tSIZE: ");
+            _serial_.println(file.size());
         }
         file = root.openNextFile();
     }
@@ -208,7 +208,7 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
 
 void startSPIFFS() { // Start the SPIFFS and list all contents
     if(!SPIFFS.begin()){
-        Serial_1.println("SPIFFS Mount Failed");
+        _serial_.println("SPIFFS Mount Failed");
         return;
     }
     
@@ -219,19 +219,19 @@ void startSPIFFS() { // Start the SPIFFS and list all contents
 void startWebSocket() { // Start a WebSocket server
     webSocket.begin();                          // start the websocket server
     webSocket.onEvent(webSocketEvent);          // if there's an incomming websocket message, go to function 'webSocketEvent'
-    Serial_1.println("WebSocket server started.");
+    _serial_.println("WebSocket server started.");
 }
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) { // When a WebSocket message is received
     switch(type) {
     case WStype_DISCONNECTED:
-        Serial_1.printf("[%u] Disconnected!\n", num);
+        _serial_.printf("[%u] Disconnected!\n", num);
         connectedClient = 0;
         break;
     case WStype_CONNECTED:
         {
             IPAddress ip = webSocket.remoteIP(num);
-            Serial_1.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+            _serial_.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
 
             // send message to client
             webSocket.sendTXT(num, "Connected");
@@ -239,15 +239,15 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         }
         break;
     case WStype_TEXT:
-        Serial_1.printf("[%u] get Text: %s\n", num, payload);
+        _serial_.printf("[%u] get Text: %s\n", num, payload);
         WSdata = "";
         for(int i = 0; i < length; i++)
             WSdata += String(char(payload[i])); 
-        // Serial_1.println(WSdata);
+        // _serial_.println(WSdata);
         handleSliders();
         break;
     case WStype_BIN:
-        Serial_1.printf("[%u] get binary length: %u\n", num, length);
+        _serial_.printf("[%u] get binary length: %u\n", num, length);
 
         // send message to client
         // webSocket.sendBIN(num, payload, length);

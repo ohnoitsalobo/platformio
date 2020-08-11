@@ -3,8 +3,11 @@
 #include <WebSocketsServer.h>
 #include <ESPmDNS.h>
 #include <ArduinoOTA.h>
+#include <TelnetStream.h>
 #include <FS.h>
 #include <SPIFFS.h>
+
+#define _serial_ Serial_1
 
 #define NUMBER_OF_LEDS 66
 
@@ -44,15 +47,17 @@ void setup(){
     
     MIDIsetup();
 
-    // Serial_1.print("\nCPU is running at ");
-    // Serial_1.print(getCpuFrequencyMhz());
-    // Serial_1.print(" MHz\n\n");
+    TelnetStream.begin();
+    
+    // _serial_.print("\nCPU is running at ");
+    // _serial_.print(getCpuFrequencyMhz());
+    // _serial_.print(" MHz\n\n");
     
 }
 
 void loop(){
 #ifdef debug
-    Serial_1.println("Starting loop");
+    _serial_.println("Starting loop");
 #endif
     // long now = micros();
     
@@ -64,14 +69,14 @@ void loop(){
     
 // if(millis()%500 > 450){
     // long t = micros() - now;
-    // Serial_1.print("Loop time : ");
-    // Serial_1.print(t);
-    // Serial_1.print(" us (");
-    // Serial_1.print(1000000.0/t);
-    // Serial_1.print("Hz)\t\r");
+    // _serial_.print("Loop time : ");
+    // _serial_.print(t);
+    // _serial_.print(" us (");
+    // _serial_.print(1000000.0/t);
+    // _serial_.print("Hz)\t\r");
 // }
 #ifdef debug
-    Serial_1.println("Ending loop");
+    _serial_.println("Ending loop");
 #endif
 }
 

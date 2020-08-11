@@ -8,7 +8,7 @@ WebSocketsServer webSocket(81);    // create a websocket server on port 81
 bool connectedClient = 0;
 
 void setupWiFi(){
-    Serial.println("\nStarting Wifi");
+    _serial_.println("\nStarting Wifi");
 
     WiFi.disconnect();
     // WiFi.mode(WIFI_AP_STA);
@@ -42,20 +42,20 @@ void setupOTA(){
             type = "filesystem";
 
             // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-            Serial.println("\nStart updating " + type);
+            _serial_.println("\nStart updating " + type);
             fill_solid (leds, NUM_LEDS, CRGB::Black);
             FastLED.show();
         })
         .onEnd([]() {
             digitalWrite(2, LOW);
-            Serial.println("\nEnd");
+            _serial_.println("\nEnd");
             delay(10);
         })
         .onProgress([](unsigned int progress, unsigned int total) {
             uint32_t temp = progress / (total / 100);
             digitalWrite(2, !digitalRead(2));
-            // Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-            Serial.printf("Progress: %u%%\r", temp);
+            // _serial_.printf("Progress: %u%%\r", (progress / (total / 100)));
+            _serial_.printf("Progress: %u%%\r", temp);
             if(temp<99){
                 fill_solid (LEFT, map(temp, 0, 99, 0, NUM_LEDS/2), 0x020202);
                 fill_solid (RIGHT, map(temp, 0, 99, 0, NUM_LEDS/2), 0x020202);
@@ -67,12 +67,12 @@ void setupOTA(){
         .onError([](ota_error_t error) {
             fill_solid (leds, NUM_LEDS, CRGB::Red);
             FastLED.show();
-            Serial.printf("Error[%u]: ", error);
-            if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-            else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-            else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-            else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-            else if (error == OTA_END_ERROR) Serial.println("End Failed");
+            _serial_.printf("Error[%u]: ", error);
+            if (error == OTA_AUTH_ERROR) _serial_.println("Auth Failed");
+            else if (error == OTA_BEGIN_ERROR) _serial_.println("Begin Failed");
+            else if (error == OTA_CONNECT_ERROR) _serial_.println("Connect Failed");
+            else if (error == OTA_RECEIVE_ERROR) _serial_.println("Receive Failed");
+            else if (error == OTA_END_ERROR) _serial_.println("End Failed");
             fill_solid (leds, NUM_LEDS, CRGB::Black);
             FastLED.show();
         });
@@ -133,9 +133,9 @@ void beginServer(){
     // server.on("/upload", HTTP_POST, [](){ server.send(200); }, handleFileUpload);
     server.onNotFound(handleNotFound);          // if someone requests any other file or page, go to function 'handleNotFound'
     server.begin();
-    Serial.print("\r\nServer started\r\n");
+    _serial_.print("\r\nServer started\r\n");
     if (MDNS.begin(host)) {
-        Serial.print("\r\nMDNS responder started\r\n");
+        _serial_.print("\r\nMDNS responder started\r\n");
     }
     MDNS.addService("http", "tcp", 80);
     MDNS.addService("ws", "tcp", 81);
@@ -148,7 +148,7 @@ void handleNotFound(){ // if the requested file or page doesn't exist, return a 
 }
 
 bool handleFileRead(String path) { // send the right file to the client (if it exists)
-    Serial.println("handleFileRead: " + path);
+    _serial_.println("handleFileRead: " + path);
     if (path.endsWith("/")) path += "index.html";          // If a folder is requested, send the index file
     String contentType = getContentType(path);             // Get the MIME type
     String pathWithGz = path + ".gz";
@@ -158,10 +158,10 @@ bool handleFileRead(String path) { // send the right file to the client (if it e
         File file = SPIFFS.open(path, "r");                    // Open the file
         size_t sent = server.streamFile(file, contentType);    // Send it to the client
         file.close();                                          // Close the file again
-        Serial.println(String("\tSent file: ") + path);
+        _serial_.println(String("\tSent file: ") + path);
         return true;
     }
-    Serial.println(String("\tFile Not Found: ") + path);   // If the file doesn't exist, return false
+    _serial_.println(String("\tFile Not Found: ") + path);   // If the file doesn't exist, return false
     return false;
 }
 
@@ -177,31 +177,31 @@ String getContentType(String filename) { // determine the filetype of a given fi
 ////////////////////////////////////
 
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
-    Serial.printf("Listing directory: %s\r\n", dirname);
+    _serial_.printf("Listing directory: %s\r\n", dirname);
 
     File root = fs.open(dirname);
     if(!root){
-        Serial.println("- failed to open directory");
+        _serial_.println("- failed to open directory");
         return;
     }
     if(!root.isDirectory()){
-        Serial.println(" - not a directory");
+        _serial_.println(" - not a directory");
         return;
     }
 
     File file = root.openNextFile();
     while(file){
         if(file.isDirectory()){
-            Serial.print("  DIR : ");
-            Serial.println(file.name());
+            _serial_.print("  DIR : ");
+            _serial_.println(file.name());
             if(levels){
                 listDir(fs, file.name(), levels -1);
             }
         } else {
-            Serial.print("  FILE: ");
-            Serial.print(file.name());
-            Serial.print("\tSIZE: ");
-            Serial.println(file.size());
+            _serial_.print("  FILE: ");
+            _serial_.print(file.name());
+            _serial_.print("\tSIZE: ");
+            _serial_.println(file.size());
         }
         file = root.openNextFile();
     }
@@ -209,7 +209,7 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
 
 void startSPIFFS() { // Start the SPIFFS and list all contents
     if(!SPIFFS.begin()){
-        Serial.println("SPIFFS Mount Failed");
+        _serial_.println("SPIFFS Mount Failed");
         return;
     }
     
@@ -220,19 +220,19 @@ void startSPIFFS() { // Start the SPIFFS and list all contents
 void startWebSocket() { // Start a WebSocket server
     webSocket.begin();                          // start the websocket server
     webSocket.onEvent(webSocketEvent);          // if there's an incomming websocket message, go to function 'webSocketEvent'
-    Serial.println("WebSocket server started.");
+    _serial_.println("WebSocket server started.");
 }
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) { // When a WebSocket message is received
     switch(type) {
     case WStype_DISCONNECTED:
-        Serial.printf("[%u] Disconnected!\n", num);
+        _serial_.printf("[%u] Disconnected!\n", num);
         connectedClient = 0;
         break;
     case WStype_CONNECTED:
         {
             IPAddress ip = webSocket.remoteIP(num);
-            Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+            _serial_.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
 
             // send message to client
             webSocket.sendTXT(num, "Connected");
@@ -240,15 +240,15 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         }
         break;
     case WStype_TEXT:
-        Serial.printf("[%u] get Text: %s\n", num, payload);
+        _serial_.printf("[%u] get Text: %s\n", num, payload);
         WSdata = "";
         for(int i = 0; i < length; i++)
             WSdata += String(char(payload[i])); 
-        // Serial.println(WSdata);
+        // _serial_.println(WSdata);
         handleSliders();
         break;
     case WStype_BIN:
-        Serial.printf("[%u] get binary length: %u\n", num, length);
+        _serial_.printf("[%u] get binary length: %u\n", num, length);
 
         // send message to client
         // webSocket.sendBIN(num, payload, length);

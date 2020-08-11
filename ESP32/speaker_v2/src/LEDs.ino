@@ -48,7 +48,7 @@ void ledSetup(){
 
 void ledLoop(){
 #ifdef debug
-    Serial_1.println("Starting ledLoop");
+    _serial_.println("Starting ledLoop");
 #endif
     if(MIDIconnected()){
         runLED();
@@ -89,13 +89,13 @@ void ledLoop(){
     }
     FastLED.show();
 #ifdef debug
-    Serial_1.println("Ending ledLoop");
+    _serial_.println("Ending ledLoop");
 #endif
 }
 
 void audio_spectrum(){
 #ifdef debug
-    Serial_1.println("Starting audio_spectrum");
+    _serial_.println("Starting audio_spectrum");
 #endif
     fftLoop();
     uint8_t fadeval = 90;
@@ -133,13 +133,13 @@ void audio_spectrum(){
         yield();
     }
 #ifdef debug
-    Serial_1.println("Ending audio_spectrum");
+    _serial_.println("Ending audio_spectrum");
 #endif
 }
 
 void audioLight(){
 #ifdef debug
-    Serial_1.println("Starting audioLight");
+    _serial_.println("Starting audioLight");
 #endif
     EVERY_N_MILLISECONDS( 55 ) { gHue1++; }
     EVERY_N_MILLISECONDS( 57 ) { gHue2--; }
@@ -173,7 +173,7 @@ void audioLight(){
         L1[0] = L2[NUM_LEDS/4];
     }
 #ifdef debug
-    Serial_1.println("Ending audioLight");
+    _serial_.println("Ending audioLight");
 #endif
 }
 

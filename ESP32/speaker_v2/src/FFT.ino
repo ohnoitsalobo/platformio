@@ -25,18 +25,18 @@ void fftSetup(){
         spectrum[1][i] = 0;
         spectrum[2][i] = 0;
 
-        // Serial_1.print(i);
-        // Serial_1.print("\t");
-        // Serial_1.print(((i-1) * 1.0 * samplingFrequency) / samples);
-        // Serial_1.print("  \t");
-        // Serial_1.print((int)spectrum[0][i]);
-        // Serial_1.print("\r\n");
+        // _serial_.print(i);
+        // _serial_.print("\t");
+        // _serial_.print(((i-1) * 1.0 * samplingFrequency) / samples);
+        // _serial_.print("  \t");
+        // _serial_.print((int)spectrum[0][i]);
+        // _serial_.print("\r\n");
     }
 }
 
 void fftLoop(){
 #ifdef debug
-    Serial_1.println("Starting fftLoop");
+    _serial_.println("Starting fftLoop");
 #endif
 
     microseconds = micros();
@@ -62,14 +62,14 @@ void fftLoop(){
 
     // delay(1000);
 #ifdef debug
-    Serial_1.println("Ending fftLoop");
+    _serial_.println("Ending fftLoop");
 #endif
 }
 
 void PrintVector(double *vData, uint16_t bufferSize, int leftRight) {
     for (uint16_t i = 2; i < bufferSize; i++){
         if(vData[i] > noise){
-            // Serial_1.println(vData[i], 4);
+            // _serial_.println(vData[i], 4);
             spectrum[leftRight][i] = vData[i]-noise;
             if(spectrum[leftRight][i] > MAX)
                 spectrum[leftRight][i] = MAX;

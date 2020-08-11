@@ -3,10 +3,13 @@
 #include <WebSocketsServer.h>
 #include <ESPmDNS.h>
 #include <ArduinoOTA.h>
+#include <TelnetStream.h>
 #include <FS.h>
 #include <SPIFFS.h>
 
-#define NUMBER_OF_LEDS 72
+#define _serial_ TelnetStream
+
+#define NUMBER_OF_LEDS 144
 
 bool music = 1;
 
@@ -37,10 +40,12 @@ void setup(){
     
     MIDIsetup();
     
+    TelnetStream.begin();
+    
 }
 
 void loop(){
-    // long now = micros();
+    long now = micros();
 
     wifiLoop();
 
@@ -48,14 +53,14 @@ void loop(){
     
     ledLoop();
     
-    // if(millis()%500 > 450){
-        // long t = micros() - now;
-        // Serial.print("Loop time : ");
-        // Serial.print(t);
-        // Serial.print(" us (");
-        // Serial.print(1000000.0/t);
-        // Serial.print("Hz)\t\r");
-    // }
+    if(millis()%500 > 450){
+        long t = micros() - now;
+        _serial_.print("Loop time : ");
+        _serial_.print(t);
+        _serial_.print(" us (");
+        _serial_.print(1000000.0/t);
+        _serial_.print("Hz)\t\r");
+    }
 }
 
 void MIDIsetup(){
@@ -91,8 +96,8 @@ bool MIDIconnected(){
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
     isConnected = true;
-    Serial.print(F("Connected to session "));
-    Serial.println(name);
+    _serial_.print(F("Connected to session "));
+    _serial_.println(name);
 }
 
 // -----------------------------------------------------------------------------
@@ -100,21 +105,21 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
     isConnected = false;
-    Serial.println(F("Disconnected"));
+    _serial_.println(F("Disconnected"));
 }
 
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
 void OnAppleMidiError(const ssrc_t& ssrc, int32_t err) {
-    Serial.print  (F("Exception "));
-    Serial.print  (err);
-    Serial.print  (F(" from ssrc 0x"));
-    Serial.println(ssrc, HEX);
+    _serial_.print  (F("Exception "));
+    _serial_.print  (err);
+    _serial_.print  (F(" from ssrc 0x"));
+    _serial_.println(ssrc, HEX);
 
     switch (err){
         case Exception::NoResponseFromConnectionRequestException:
-            Serial.println(F("xxx:yyy did't respond to the connection request. Check the address and port, and any firewall or router settings. (time)"));
+            _serial_.println(F("xxx:yyy did't respond to the connection request. Check the address and port, and any firewall or router settings. (time)"));
         break;
         }
     }
@@ -123,23 +128,23 @@ void OnAppleMidiError(const ssrc_t& ssrc, int32_t err) {
 // 
 // -----------------------------------------------------------------------------
 // static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
-    // Serial.print(F("Incoming NoteOn  from channel: "));
-    // Serial.print(channel);
-    // Serial.print(F(", note: "));
-    // Serial.print(note);
-    // Serial.print(F(", velocity: "));
-    // Serial.println(velocity);
+    // _serial_.print(F("Incoming NoteOn  from channel: "));
+    // _serial_.print(channel);
+    // _serial_.print(F(", note: "));
+    // _serial_.print(note);
+    // _serial_.print(F(", velocity: "));
+    // _serial_.println(velocity);
 // }
 
 // -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
 // static void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
-    // Serial.print(F("Incoming NoteOff from channel: "));
-    // Serial.print(channel);
-    // Serial.print(F(", note: "));
-    // Serial.print(note);
-    // Serial.print(F(", velocity: "));
-    // Serial.println(velocity);
+    // _serial_.print(F("Incoming NoteOff from channel: "));
+    // _serial_.print(channel);
+    // _serial_.print(F(", note: "));
+    // _serial_.print(note);
+    // _serial_.print(F(", velocity: "));
+    // _serial_.println(velocity);
 // }
 

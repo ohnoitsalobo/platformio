@@ -55,9 +55,11 @@ void ledSetup(){
 void ledLoop(){
     if(MIDIconnected()){
         runLED();
+        FastLED.show();
     }else{
         if(music){
             gPatterns1[gCurrentPatternNumber]();
+            FastLED.show();
         }
         else if(_auto){
             EVERY_N_SECONDS(20){
@@ -72,12 +74,12 @@ void ledLoop(){
                 gHue2--;
             }
             gPatterns[gCurrentPatternNumber]();
+            FastLED.show();
         }
         else if(manual){
-            
+            FastLED.show();
         }
     }
-    FastLED.show();
 }
 
 void audio_spectrum(){
@@ -127,44 +129,6 @@ uint16_t maxR = 0, minR = 4096, maxL = 0, minL = 4096;
 void audioLight(){
     EVERY_N_MILLISECONDS( 55 ) { gHue1++; }
     EVERY_N_MILLISECONDS( 57 ) { gHue2--; }
-    // audioReads[0][movingAvg] -= audioReads[0][audioReadIndex];
-    // audioReads[0][audioReadIndex] = analogRead( LeftPin);
-    // audioReads[0][movingAvg] += audioReads[0][audioReadIndex];
-    
-    // audioReads[0][movingAvg+1] = audioReads[0][movingAvg]/movingAvg;
-    // minL = (audioReads[0][audioReadIndex] < minL) ? audioReads[0][audioReadIndex] : minL++;
-    // maxL = (audioReads[0][audioReadIndex] > maxL) ? audioReads[0][audioReadIndex] : maxL--;
-    
-    // audioReads[1][movingAvg] -= audioReads[1][audioReadIndex];
-    // audioReads[1][audioReadIndex] = analogRead( RightPin);
-    // audioReads[1][movingAvg] += audioReads[1][audioReadIndex];
-    
-    // audioReads[1][movingAvg+1] = audioReads[1][movingAvg]/movingAvg;
-    // minR = (audioReads[1][audioReadIndex] < minR) ? audioReads[1][audioReadIndex] : minR++;
-    // maxR = (audioReads[1][audioReadIndex] > maxR) ? audioReads[1][audioReadIndex] : maxR--;
-    
-    // audioReadIndex = (audioReadIndex+1)%movingAvg;
-    
-    // for(int i = NUM_LEDS/2-1; i > 0; i--){
-        // RIGHT[i] = RIGHT[i-1].nscale8(254);
-        // LEFT [NUM_LEDS/2-i] = LEFT [NUM_LEDS/2-i+1].nscale8(254);
-    // }
-    // uint16_t mid = 1800, _noise = 180;
-    // uint8_t _hue = 0, _sat = 255, _val = 0;
-    // int temp1 = abs(mid - analogRead( RightPin));
-    // if(temp1 > _noise){
-        // _val = (temp1-_noise)/float(mid) * 255;
-        // _hue = _val/255.0 * 224;
-    // }
-    // RIGHT[0] = CHSV( _hue, _sat, _val);
-    
-    // _hue = 0; _val = 0;
-    // int temp2 = abs(mid - analogRead( LeftPin));
-    // if(temp2 > _noise){
-        // _val = (temp2-_noise)/float(mid) * 255;
-        // _hue = _val/255.0 * 224;
-    // }
-    // LEFT[NUM_LEDS/2-1] = CHSV( _hue, _sat, _val);
     
     uint8_t fadeval = 250;
     for(int i = 0; i < NUM_LEDS/4; i++){
@@ -178,34 +142,22 @@ void audioLight(){
     int temp1 = abs(mid - analogRead( RightPin));
     if(temp1 > _noise){
         _val = (temp1-_noise)/float(mid) * 255;
-        // _hue = _val/255.0 * 224;
         _hue = _val/255.0 * 65;
     }
     R2[0] = CHSV( _hue+gHue1, _sat, _val);
     R1[NUM_LEDS/4] = R2[0];
-    
-    _hue = 0; _val = 0;
-    int temp2 = abs(mid - analogRead( LeftPin));
-    if(temp2 > _noise){
-        _val = (temp2-_noise)/float(mid) * 255;
-        // _hue = _val/255.0 * 224;
-        _hue = _val/255.0 * 65;
-    }
-    L1[NUM_LEDS/4] = CHSV( _hue+gHue2, _sat, _val);
+    L1[NUM_LEDS/4] = R2[0];
     L2[0] = L1[NUM_LEDS/4];
     
-    // Serial.print(minL);
-    // Serial.print("\t");
-    // Serial.print(audioReads[0][movingAvg+1]);
-    // Serial.print("\t");
-    // Serial.print(maxL);
-    // Serial.print("\t");
-    // Serial.print(minR);
-    // Serial.print("\t");
-    // Serial.print(audioReads[1][movingAvg+1]);
-    // Serial.print("\t");
-    // Serial.print(maxR);
-    // Serial.print("\t\r");
+    // _hue = 0; _val = 0;
+    // int temp2 = abs(mid - analogRead( LeftPin));
+    // if(temp2 > _noise){
+        // _val = (temp2-_noise)/float(mid) * 255;
+        // _hue = _val/255.0 * 65;
+    // }
+    // L1[NUM_LEDS/4] = CHSV( _hue+gHue2, _sat, _val);
+    // L2[0] = L1[NUM_LEDS/4];
+    
 }
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
@@ -321,7 +273,7 @@ void runLED(){
 void MIDI2LED(){
     // MIDI note values 0 - 127 
     // 36-96 (for 61-key) mapped to LED 0-60
-    // Serial.println(pitch);
+    // _serial_.println(pitch);
     // int temp = map(pitch, 36, 96, 0, NUM_LEDS-1);
     
     // if(temp < 0)
