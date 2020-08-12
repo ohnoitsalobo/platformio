@@ -1,3 +1,5 @@
+// #include <EasyDDNS.h>
+
 const char* ssid = "linksys1";
 const char* password = "9182736450";
 
@@ -8,7 +10,7 @@ WebSocketsServer webSocket(81);    // create a websocket server on port 81
 bool connectedClient = 0;
 
 void setupWiFi(){
-    _serial_.println("\nStarting Wifi");
+    _serial_.println("\r\nStarting Wifi");
 
     WiFi.disconnect();
     // WiFi.mode(WIFI_AP_STA);
@@ -25,6 +27,8 @@ void setupWiFi(){
     
     startWebSocket();
     
+    // EasyDDNS.service("noip");
+    // EasyDDNS.client("lobo-esp32.ddns.net", "cataclysm9.8@gmail.com", "cataclysm9.8");
 }
     
 void setupOTA(){
@@ -42,13 +46,13 @@ void setupOTA(){
             type = "filesystem";
 
             // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-            _serial_.println("\nStart updating " + type);
+            _serial_.println("\r\nStart updating " + type);
             fill_solid (leds, NUM_LEDS, CRGB::Black);
             FastLED.show();
         })
         .onEnd([]() {
             digitalWrite(2, LOW);
-            _serial_.println("\nEnd");
+            _serial_.println("\r\nEnd");
             delay(10);
         })
         .onProgress([](unsigned int progress, unsigned int total) {
@@ -117,6 +121,7 @@ void wifiLoop(){
         }
         if(!digitalRead(2))
             digitalWrite(2, HIGH);
+            // EasyDDNS.update(30000);
     }
     
     if(WiFi.status() != WL_CONNECTED){
@@ -226,13 +231,13 @@ void startWebSocket() { // Start a WebSocket server
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) { // When a WebSocket message is received
     switch(type) {
     case WStype_DISCONNECTED:
-        _serial_.printf("[%u] Disconnected!\n", num);
+        _serial_.printf("[%u] Disconnected!\r\n", num);
         connectedClient = 0;
         break;
     case WStype_CONNECTED:
         {
             IPAddress ip = webSocket.remoteIP(num);
-            _serial_.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+            _serial_.printf("[%u] Connected from %d.%d.%d.%d url: %s\r\n", num, ip[0], ip[1], ip[2], ip[3], payload);
 
             // send message to client
             webSocket.sendTXT(num, "Connected");
@@ -240,7 +245,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         }
         break;
     case WStype_TEXT:
-        _serial_.printf("[%u] get Text: %s\n", num, payload);
+        _serial_.printf("[%u] get Text: %s\r\n", num, payload);
         WSdata = "";
         for(int i = 0; i < length; i++)
             WSdata += String(char(payload[i])); 
@@ -248,7 +253,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         handleSliders();
         break;
     case WStype_BIN:
-        _serial_.printf("[%u] get binary length: %u\n", num, length);
+        _serial_.printf("[%u] get binary length: %u\r\n", num, length);
 
         // send message to client
         // webSocket.sendBIN(num, payload, length);

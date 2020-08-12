@@ -45,7 +45,7 @@ void setup(){
 }
 
 void loop(){
-    long now = micros();
+    // long now = micros();
 
     wifiLoop();
 
@@ -53,14 +53,14 @@ void loop(){
     
     ledLoop();
     
-    if(millis()%500 > 450){
-        long t = micros() - now;
-        _serial_.print("Loop time : ");
-        _serial_.print(t);
-        _serial_.print(" us (");
-        _serial_.print(1000000.0/t);
-        _serial_.print("Hz)\t\r");
-    }
+    // if(millis()%500 > 450){
+        // long t = micros() - now;
+        // _serial_.print("Loop time : ");
+        // _serial_.print(t);
+        // _serial_.print(" us (");
+        // _serial_.print(1000000.0/t);
+        // _serial_.print("Hz)\t\r");
+    // }
 }
 
 void MIDIsetup(){
