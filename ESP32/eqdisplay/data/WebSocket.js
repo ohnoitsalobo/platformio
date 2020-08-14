@@ -1,6 +1,6 @@
 var temp = [0], audiodata;
-// var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
-var connection = new WebSocket('ws://192.168.43.153:81/', ['arduino']);
+var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
+// var connection = new WebSocket('ws://192.168.43.153:81/', ['arduino']);
 
 connection.onopen = function () {
     connection.send('Connect ' + new Date());
@@ -58,6 +58,7 @@ function sendRGB(_temp) {
     // var rgbstr = '#'+ rgb.toString(16);    
     console.log('RGB: ' + rgbstr); 
     connection.send(rgbstr);
+    c = [r, g, b];
 }
 
 function process(){
@@ -97,12 +98,12 @@ function process(){
 
 let img;
 function setup(){
-    let cnv = createCanvas(550, 550);
+    let _size = (windowWidth < windowHeight) ? windowWidth : windowHeight;
+    let cnv = createCanvas(_size, _size);
     cnv.parent('p5js');
-    frameRate(25);
+    frameRate(10);
     // img = loadImage('hue_square.png');
     img = loadImage('hue_circle.png');
-
     // colorMode(HSB, 255);
     // for(let i = 0; i < width; i++){
         // for(let j = 0; j < height/2; j++){
@@ -116,87 +117,18 @@ function setup(){
 
 let c = [0, 0, 0];
 function draw(){
-    // colorSquare();
     colorWheel();
 }
 
-function colorSquare(){
-    colorMode(HSB, 255);
-    for(let i = 0; i < 255; i++){
-        stroke(255, i, 255);
-        line(0, i+25, 25, i+25);
-        stroke(255, 255, 255-i);
-        line(0, i+275, 25, i+275);
-        stroke(224, i, 255);
-        line(525, i+25, 550, i+25);
-        stroke(224, 255, 255-i);
-        line(525, i+275, 550, i+275);
-    }
-    image(img, 25, 25);
-    if(m == 2 && mouseIsPressed && mouseX <= width && mouseX >= 0 && mouseY <= height && mouseY >= 0){
-        colorMode(RGB);
-        c = get(mouseX, mouseY);
-        fill(c); noStroke();
-        rect(0, 0, width, 25);
-        // ellipse(mouseX, mouseY, 50, 50);
-        document.getElementById('r').value = c[0];
-        document.getElementById('g').value = c[1];
-        document.getElementById('b').value = c[2];
-        document.getElementById('rval' ).innerHTML = (c[0]/255*100).toFixed(0) + '%';
-        document.getElementById('gval' ).innerHTML = (c[1]/255*100).toFixed(0) + '%';
-        document.getElementById('bval' ).innerHTML = (c[2]/255*100).toFixed(0) + '%';
-
-        let rgbstr;
-        _ll = document.getElementById('ll').checked;
-        _rr = document.getElementById('rr').checked;
-        if(_ll && _rr) { rgbstr = 'B'; }
-        else if(!_ll && !_rr) { rgbstr = 'X'; }
-        else{
-                 if(_ll) { rgbstr = 'L'; }
-            else if(_rr) { rgbstr = 'R'; }
-        }
-        connection.send('R'+ c[0] + rgbstr);
-        connection.send('G'+ c[1] + rgbstr);
-        connection.send('B'+ c[2] + rgbstr);
-    }
-    noStroke();
-    fill(0);
-    rect(0, height-25, width, height);
-    fill(255);
-    rect(0, 15, width, 10);
-}
-
 function colorWheel(){
-    // colorMode(HSB, 255);
-    // translate(width/2, height/2);
-    // rotate(PI);
-    // angleMode(DEGREES);
-    // fill(255); noStroke();
-    // let radius = 0.9*width/2;
-    // circle(0, 0, radius*2/0.98);
-    // strokeWeight(4);
-    // let deg = 360;
-    // for(let j = 0; j < deg; j++){
-        // rotate(360/deg);
-        // for(let i = 0; i < radius; i++){
-            // let _hue = j/deg*255;
-            // let _sat = (i < radius/2) ? 255 : 255-((i-radius/2)/(radius/2))*255;
-            // let _val = (i > radius/2) ? 255 : (i/(radius/2))*255;
-            // stroke(_hue, _sat, _val);
-            // point(0, i);
-        // }
-    // }
-    // noLoop();
+    background(0);
     image(img, 0, 0);
-    translate(width/2, height/2);
-    noFill(); stroke(c); strokeWeight(184);
-    circle(0, 0, height*1.25);
-    if(m == 2 && mouseIsPressed && mouseX <= width && mouseX >= 0 && mouseY <= height && mouseY >= 0){
+    img.resize(width, 0);
+    noFill(); stroke(c); strokeWeight(30);
+    circle(width/2, height/2, width);
+    if(mouseIsPressed && mouseX <= width && mouseX >= 0 && mouseY <= height && mouseY >= 0){
         colorMode(RGB);
         c = get(mouseX, mouseY);
-        noFill(); stroke(c); strokeWeight(184);
-        circle(0, 0, height*1.25);
-        // ellipse(mouseX, mouseY, 50, 50);
         document.getElementById('r' ).value = c[0];
         document.getElementById('g' ).value = c[1];
         document.getElementById('b' ).value = c[2];
@@ -217,6 +149,28 @@ function colorWheel(){
         connection.send('G'+ c[1] + rgbstr);
         connection.send('B'+ c[2] + rgbstr);
     }
+    /*  * /
+    colorMode(HSB, 255);
+    translate(width/2, height/2);
+    rotate(PI);
+    angleMode(DEGREES);
+    fill(255); noStroke();
+    let radius = 0.9*width/2;
+    circle(0, 0, width*0.975);
+    strokeWeight(4);
+    let deg = 360;
+    for(let j = 0; j < deg; j++){
+        rotate(360/deg);
+        for(let i = 0; i < radius; i++){
+            let _hue = j/deg*255;
+            let _sat = (i < radius/2) ? 255 : 255-((i-radius/2)/(radius/2))*255;
+            let _val = (i > radius/2) ? 255 : (i/(radius/2))*255;
+            stroke(_hue, _sat, _val);
+            point(0, i);
+        }
+    }
+    noLoop();
+    /*  */
 }
 
 function setHue(hue) { // Set the RGB LED to a given hue (color) (0° = Red, 120° = Green, 240° = Blue)
@@ -242,4 +196,19 @@ function setHue(hue) { // Set the RGB LED to a given hue (color) (0° = Red, 120
     rr = rf*rf*1023;
     gg = gf*gf*1023;
     bb = bf*bf*1023;
+}
+
+function leftRight(x){
+    if(x==0){
+        document.getElementById('ll').checked = true;
+        document.getElementById('rr').checked = false;
+    }
+    else if(x==1){
+        document.getElementById('ll').checked = false;
+        document.getElementById('rr').checked = true;
+    }
+    if(x==2){
+        document.getElementById('ll').checked = true;
+        document.getElementById('rr').checked = true;
+    }
 }

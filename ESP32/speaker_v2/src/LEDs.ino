@@ -38,7 +38,7 @@ uint8_t eq[2][samples/2-2];
 void ledSetup(){
     FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness(BRIGHTNESS);
-    FastLED.setMaxPowerInVoltsAndMilliamps(5, 750);
+    FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
     
     for(int i = 0; i < samples/2-2; i++){
         eq[0][i] = 0;
@@ -55,6 +55,7 @@ void ledLoop(){
     }else{
         if(music){
             gPatterns1[gCurrentPatternNumber]();
+            FastLED.show();
             EVERY_N_MILLISECONDS(20){
                 // if(webSocketConn()){
                     // eqBroadcast = "E";
@@ -82,12 +83,12 @@ void ledLoop(){
                 randomPalette2 = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
             }
             gPatterns[gCurrentPatternNumber]();
+            FastLED.show();
         }
         else if(manual){
-            
+            FastLED.show();
         }
     }
-    FastLED.show();
 #ifdef debug
     _serial_.println("Ending ledLoop");
 #endif
@@ -199,19 +200,23 @@ void rainbowWithGlitter() {
 }
 
 void addGlitter() {
-    if( random8() < 80) {
-        leds[ random16(NUM_LEDS) ] += CRGB::White;
+    EVERY_N_MILLISECONDS(1000/40){
+        if( random8() < 80) {
+            leds[ random16(NUM_LEDS) ] += CRGB::White;
+        }
     }
 }
 
 void confetti() 
 {
-  // random colored speckles that blink in and fade smoothly
-    fadeToBlackBy( leds, NUM_LEDS, 10);
-    int pos = random16(NUM_LEDS/2);
-    // leds[pos] += CHSV( random8(255), 255, 255);
-    RIGHT[pos] += CHSV( gHue1 + random8(64), 190+random8(65), 255);
-    LEFT [pos] += CHSV( gHue2 + random8(64), 190+random8(65), 255);
+    EVERY_N_MILLISECONDS(1000/30){
+        // random colored speckles that blink in and fade smoothly
+        fadeToBlackBy( leds, NUM_LEDS, 30);
+        int pos = random16(NUM_LEDS/2);
+        // leds[pos] += CHSV( random8(255), 255, 255);
+        RIGHT[pos] += CHSV( gHue1 + random8(64), 190+random8(65), 255);
+        LEFT [pos] += CHSV( gHue2 + random8(64), 190+random8(65), 255);
+    }
 }
 
 void sinelon()
@@ -229,26 +234,39 @@ void sinelon()
 }
 
 void dot_beat() {
-    uint8_t fadeval = 190;                                        // Trail behind the LED's. Lower => faster fade.
-    uint8_t BPM = 30;
+    uint8_t fadeval = 10;                                        // Trail behind the LED's. Lower => faster fade.
+    // nscale8(leds, NUM_LEDS, fadeval);                             // Fade the entire array. Or for just a few LED's, use  nscale8(&leds[2], 5, fadeval);
+    fadeToBlackBy( leds, NUM_LEDS, fadeval);
 
+    uint8_t BPM, inner, outer, middle;
+    
+    BPM = 33;
 
-    uint8_t inner = beatsin8(BPM, NUM_LEDS/4, NUM_LEDS/4*3);    // Move 1/4 to 3/4
-    uint8_t outer = beatsin8(BPM, 0, NUM_LEDS-1);               // Move entire length
-    uint8_t middle = beatsin8(BPM, NUM_LEDS/3, NUM_LEDS/3*2);   // Move 1/3 to 2/3
+    inner  = beatsin8(BPM, NUM_LEDS/2/4, NUM_LEDS/2/4*3);    // Move 1/4 to 3/4
+    outer  = beatsin8(BPM, 0, NUM_LEDS/2-1);               // Move entire length
+    middle = beatsin8(BPM, NUM_LEDS/2/3, NUM_LEDS/2/3*2);   // Move 1/3 to 2/3
 
-    leds[outer]  = CHSV( gHue1    , 200, 255); // CRGB::Aqua;
-    leds[middle] = CHSV( gHue1+96 , 200, 255); // CRGB::Purple;
-    leds[inner]  = CHSV( gHue1+160, 200, 255); // CRGB::Blue;
+    LEFT[outer]  = CHSV( gHue1    , 200, 255); // CRGB::Aqua;
+    LEFT[middle] = CHSV( gHue1+96 , 200, 255); // CRGB::Purple;
+    LEFT[inner]  = CHSV( gHue1+160, 200, 255); // CRGB::Blue;
 
-    nscale8(leds,NUM_LEDS,fadeval);                             // Fade the entire array. Or for just a few LED's, use  nscale8(&leds[2], 5, fadeval);
+    BPM = 31;
+    
+    inner  = beatsin8(BPM, NUM_LEDS/2/4, NUM_LEDS/2/4*3);    // Move 1/4 to 3/4
+    outer  = beatsin8(BPM, 0, NUM_LEDS/2-1);               // Move entire length
+    middle = beatsin8(BPM, NUM_LEDS/2/3, NUM_LEDS/2/3*2);   // Move 1/3 to 2/3
+
+    RIGHT[outer]  = CHSV( gHue2    , 200, 255); // CRGB::Aqua;
+    RIGHT[middle] = CHSV( gHue2+96 , 200, 255); // CRGB::Purple;
+    RIGHT[inner]  = CHSV( gHue2+160, 200, 255); // CRGB::Blue;
+
 } // dot_beat()
 
 void juggle() {
     // eight colored dots, weaving in and out of sync with each other
     fadeToBlackBy( leds, NUM_LEDS, 15);
     byte dothue1 = 0, dothue2 = 0;
-    for( int i = 0; i < 8; i++) {
+    for( int i = 0; i < 6; i++) {
         RIGHT[beatsin16(i+7,0,NUM_LEDS/2)] |= CHSV(dothue1, 200, 255);
         LEFT [beatsin16(i+5,0,NUM_LEDS/2)] |= CHSV(dothue2, 200, 255);
         dothue1 += 32;
@@ -303,6 +321,7 @@ void runLED(){
     }
     // if(MidiEventReceived)
     MIDI2LED();
+    FastLED.show();
     yield();
 }
 

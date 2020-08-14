@@ -308,7 +308,6 @@ void handleSliders(){
         x = (x*x)/255.0;
         FastLED.setBrightness(x);
     }
-    // FastLED.show();
     if(manual){
          if(WSdata.startsWith("R")){
             int x = temp.toInt();
