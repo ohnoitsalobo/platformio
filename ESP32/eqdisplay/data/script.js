@@ -13,7 +13,7 @@ connection.onerror = function (error) {
 connection.onmessage = function (e) { 
     audiodata = e.data;
     temp = audiodata.split(",");
-    console.log('Server: ', temp);
+    // console.log('Server: ', temp);
 };
 
 connection.onclose = function(){
@@ -98,9 +98,10 @@ function process(){
 
 let img;
 function setup(){
-    let _size = (windowWidth < windowHeight) ? windowWidth : windowHeight;
+    let _size = 0.9*((windowWidth < windowHeight) ? windowWidth : windowHeight);
     let cnv = createCanvas(_size, _size);
     cnv.parent('p5js');
+    cnv.style('border-radius: 10%;');
     frameRate(10);
     // img = loadImage('hue_square.png');
     img = loadImage('hue_circle.png');
@@ -115,18 +116,33 @@ function setup(){
     // }
 }
 
-let c = [0, 0, 0];
+function rainbowHeader(){
+    let _hue = millis()/50;
+    document.getElementById('header').style['background'] = "linear-gradient(     to right, hsl(" + 
+                                                             _hue     %360 + ", 100%, 50%), hsl(" + 
+                                                            (_hue+60 )%360 + ", 100%, 50%), hsl(" + 
+                                                            (_hue+120)%360 + ", 100%, 50%), hsl(" + 
+                                                            (_hue+180)%360 + ", 100%, 50%), hsl(" + 
+                                                            (_hue+240)%360 + ", 100%, 50%), hsl(" + 
+                                                            (_hue+300)%360 + ", 100%, 50%) )";
+    document.getElementById('header').style['color'] = "transparent";
+    document.getElementById('header').style['-webkit-background-clip'] = "text";
+}
+
 function draw(){
+    rainbowHeader();
     colorWheel();
 }
 
+let c = [0, 0, 0];
+let leftcolor = c, rightcolor = c;
 function colorWheel(){
-    background(0);
-    image(img, 0, 0);
-    img.resize(width, 0);
-    noFill(); stroke(c); strokeWeight(30);
-    circle(width/2, height/2, width);
-    if(mouseIsPressed && mouseX <= width && mouseX >= 0 && mouseY <= height && mouseY >= 0){
+    if (
+    m == 2           &&
+    mouseIsPressed   &&
+    mouseX <= width  && mouseX >= 0 &&
+    mouseY <= height && mouseY >= 0 
+    ){
         colorMode(RGB);
         c = get(mouseX, mouseY);
         document.getElementById('r' ).value = c[0];
@@ -149,6 +165,19 @@ function colorWheel(){
         connection.send('G'+ c[1] + rgbstr);
         connection.send('B'+ c[2] + rgbstr);
     }
+    background(0);
+    image(img, 0, 0);
+    img.resize(width, 0);
+    let t = 300;
+    if(_rr) rightcolor = c;
+    if(_ll) leftcolor = c;
+    noFill(); strokeWeight(t);
+    // stroke(c);
+    // circle(width/2, height/2, width+t+20);
+    stroke(rightcolor);
+    arc(width/2, height/2, width+t+20, width+t+20, -PI/2, PI/2);
+    stroke(leftcolor);
+    arc(width/2, height/2, width+t+20, width+t+20, PI/2, -PI/2);
     /*  * /
     colorMode(HSB, 255);
     translate(width/2, height/2);
@@ -173,8 +202,8 @@ function colorWheel(){
     /*  */
 }
 
-function setHue(hue) { // Set the RGB LED to a given hue (color) (0Â° = Red, 120Â° = Green, 240Â° = Blue)
-    hue %= 360;                   // hue is an angle between 0 and 359Â°
+function setHue(hue) { // Set the RGB LED to a given hue (color) (0° = Red, 120° = Green, 240° = Blue)
+    hue %= 360;                   // hue is an angle between 0 and 359°
     var radH = hue*3.142/180;   // Convert degrees to radians
     var rf, gf, bf;
 

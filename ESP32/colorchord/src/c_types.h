@@ -1,10 +1,3 @@
-
-// This is a copy of SDK's "c_type.h"
-// with conflicting declarations commented out
-// (search CONFLICT in this file)
-
-// diff -u common/c_types.h ../../tools/sdk/include/c_types.h
-
 /*
  * ESPRESSIF MIT License
  *
@@ -40,11 +33,11 @@ typedef signed char         sint8_t;
 typedef signed short        sint16_t;
 typedef signed long         sint32_t;
 typedef signed long long    sint64_t;
-// CONFLICT typedef unsigned long long  u_int64_t;
+typedef unsigned long long  u_int64_t;
 typedef float               real32_t;
 typedef double              real64_t;
 
-// CONFLICT typedef unsigned char       uint8;
+typedef unsigned char       uint8;
 typedef unsigned char       u8;
 typedef signed char         sint8;
 typedef signed char         int8;
@@ -53,7 +46,7 @@ typedef unsigned short      uint16;
 typedef unsigned short      u16;
 typedef signed short        sint16;
 typedef signed short        s16;
-// CONFLICT typedef unsigned int        uint32;
+typedef unsigned int        uint32;
 typedef unsigned int        u_int;
 typedef unsigned int        u32;
 typedef signed int          sint32;
@@ -95,11 +88,9 @@ typedef double              real64;
 #define __ICACHE_STRINGIZE(A) __ICACHE_STRINGIZE_NX(A)
 #define ICACHE_FLASH_ATTR   __attribute__((section("\".irom0.text." __FILE__ "." __ICACHE_STRINGIZE(__LINE__) "." __ICACHE_STRINGIZE(__COUNTER__) "\"")))
 #define ICACHE_RAM_ATTR     __attribute__((section("\".iram.text." __FILE__ "." __ICACHE_STRINGIZE(__LINE__) "." __ICACHE_STRINGIZE(__COUNTER__) "\"")))
-#define ICACHE_RODATA_ATTR  __attribute__((section("\".irom.text." __FILE__ "." __ICACHE_STRINGIZE(__LINE__) "." __ICACHE_STRINGIZE(__COUNTER__) "\"")))
 #else
 #define ICACHE_FLASH_ATTR
 // #define ICACHE_RAM_ATTR
-#define ICACHE_RODATA_ATTR
 #endif /* ICACHE_FLASH */
 
 // counterpart https://github.com/espressif/arduino-esp32/blob/master/cores/esp32/esp8266-compat.h

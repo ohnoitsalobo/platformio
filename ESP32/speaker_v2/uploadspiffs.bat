@@ -1,0 +1,1 @@
+pio run -t buildfs && "c:\python38\python.exe" "C:\Users\Anand\.platformio\packages\framework-arduinoespressif32\tools\espota.py" --debug --progress -i speaker.local -s -f .pio\build\esp32dev\spiffs.bin

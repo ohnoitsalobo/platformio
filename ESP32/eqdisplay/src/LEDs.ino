@@ -1,3 +1,4 @@
+#define FASTLED_INTERNAL
 #include <FastLED.h>
 
 FASTLED_USING_NAMESPACE
@@ -27,28 +28,22 @@ SimplePatternList gPatterns1 = { audio_spectrum, audioLight };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
 bool manual = 0, _auto = 0;
-CRGB manualColor = 0x000000;
+uint8_t currentBrightness = BRIGHTNESS, _setBrightness = BRIGHTNESS;
+CRGB manualColor = 0x000000, manualColor_L = 0x000000, manualColor_R = 0x000000;
 CHSV manualHSV (0, 255, 255);
 uint8_t gHue = 0, gHue1 = 0, gHue2 = 0; // rotating "base color" used by many of the patterns
 
 String eqBroadcast = "";
 uint8_t eq[2][samples/2-2];
-#define movingAvg 100
-uint8_t audioReadIndex = 0;
-uint32_t audioReads[2][movingAvg+2];
 
 void ledSetup(){
     FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
-    FastLED.setBrightness(BRIGHTNESS);
+    FastLED.setBrightness(currentBrightness);
     FastLED.setMaxPowerInVoltsAndMilliamps(5,1000);
     
     for(int i = 0; i < samples/2-2; i++){
         eq[0][i] = 0;
         eq[1][i] = 0;
-    }
-    for(int i = 0; i < movingAvg+2; i++){
-        audioReads[0][i] = 0;
-        audioReads[1][i] = 0;
     }
 }
 
@@ -77,9 +72,21 @@ void ledLoop(){
             FastLED.show();
         }
         else if(manual){
+            for(int i = 0; i < NUM_LEDS/2; i++){
+                for(int j = 0; j < 3; j++){
+                    // LEFT [i][j] = (LEFT [i][j] < manualColor_L[j]) ? LEFT [i][j]++ : (LEFT [i][j] > manualColor_L[j]) ? LEFT [i][j]-- : LEFT [i][j];
+                    // RIGHT[i][j] = (RIGHT[i][j] < manualColor_R[j]) ? RIGHT[i][j]++ : (RIGHT[i][j] > manualColor_R[j]) ? RIGHT[i][j]-- : RIGHT[i][j];
+                         if(LEFT [i][j] < manualColor_L[j]) LEFT [i][j]++;
+                    else if(LEFT [i][j] > manualColor_L[j]) LEFT [i][j]--;
+                         if(RIGHT[i][j] < manualColor_R[j]) RIGHT[i][j]++;
+                    else if(RIGHT[i][j] > manualColor_R[j]) RIGHT[i][j]--;
+                }
+            }
             FastLED.show();
         }
     }
+         if(currentBrightness < _setBrightness) FastLED.setBrightness(++currentBrightness);
+    else if(currentBrightness > _setBrightness) FastLED.setBrightness(--currentBrightness);
 }
 
 void audio_spectrum(){
@@ -234,8 +241,8 @@ void juggle() {
     fadeToBlackBy( leds, NUM_LEDS, 15);
     byte dothue1 = 0, dothue2 = 0;
     for( int i = 0; i < 8; i++) {
-        RIGHT[beatsin16(i+7,0,NUM_LEDS/2)] |= CHSV(dothue1, 200, 255);
-        LEFT [beatsin16(i+5,0,NUM_LEDS/2)] |= CHSV(dothue2, 200, 255);
+        RIGHT[beatsin16(i+7,0,NUM_LEDS/2-1)] |= CHSV(dothue1, 200, 255);
+        LEFT [beatsin16(i+5,0,NUM_LEDS/2-1)] |= CHSV(dothue2, 200, 255);
         dothue1 += 32;
         dothue2 -= 32;
         yield();
@@ -256,7 +263,7 @@ void bpm()
     }
 }
 
-//////// MIDI stuff
+//////// MIDI stuff ////////
 
 CRGB lastPressed;             // holder for last-detected key color
 
@@ -265,27 +272,14 @@ void runLED(){
     EVERY_N_MILLISECONDS(20){ 
         fadeToBlackBy( leds, NUM_LEDS, 10); // ( sustain ? 3 : 10) );
     }
-    // if(MidiEventReceived)
     MIDI2LED();
     yield();
 }
 
 void MIDI2LED(){
-    // MIDI note values 0 - 127 
-    // 36-96 (for 61-key) mapped to LED 0-60
-    // _serial_.println(pitch);
-    // int temp = map(pitch, 36, 96, 0, NUM_LEDS-1);
-    
-    // if(temp < 0)
-        // temp = -temp;                   // if note goes above 60 or below 0
-    // else if(temp > NUM_LEDS)                  //      reverse it
-        // temp = NUM_LEDS - (temp%NUM_LEDS);
-    
-    // uint8_t _pitch = map(temp, 0, NUM_LEDS, 0, 224); // map note to color 'hue'
     uint8_t _pos = MIDIdata[1]/127.0 * (NUM_LEDS-1); // map note to position
-    uint8_t _col = MIDIdata[1]/127.0 * 224; // map note to position
+    uint8_t _col = MIDIdata[1]/127.0 * 224; // map note to color
     
-    // uint8_t _pos = map(temp, 0, NUM_LEDS, 0, NUM_LEDS-1);
     // assign color based on note position and intensity (velocity)
     leds[_pos] = CHSV(_col + _hue, 255 - (MIDIdata[2]/2.0), MIDIdata[2]/127.0 * 255);
     if(MIDIdata[2] > 0 && millis()%2 == 0)
@@ -298,14 +292,14 @@ void handleNoteOn(byte channel, byte pitch, byte velocity) {
     MIDIdata[0] = channel;
     MIDIdata[1] = pitch;
     MIDIdata[2] = velocity;
-    MidiEventReceived = true;
+    // MidiEventReceived = true;
 }
 
 void handleNoteOff(byte channel, byte pitch, byte velocity) {
     MIDIdata[0] = channel;
     MIDIdata[1] = pitch;
     MIDIdata[2] = velocity;
-    MidiEventReceived = true;
+    // MidiEventReceived = true;
 }
 
 void handlePitchBend(byte channel, int bend) {

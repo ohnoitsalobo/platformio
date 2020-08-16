@@ -1,81 +1,55 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>LED Control</title>
-    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Lato">
+    <title>LED Strip Control</title>
+    
+    <link href="style.css" rel="stylesheet">
     <script src="p5.min.js" type="text/javascript"></script>
-    <script src="WebSocket.js" type="text/javascript"></script>
-    <style>
-        html {
-            font-family: Lato;
-            background-color: #003;
-            color: white;
-            height: 100%;
-        }
-        table {
-            background-color: #222;
-            text-align: center;
-        }
-        .slider {
-            width : 75%;
-            height: 3em;
-        }
-        input {
-            width: 90%;
-        }
-        button {
-            font-family: Lato;
-            width: 95%;
-            height: 3em;
-        }
-        .button {
-            border: 0;
-        }
-    </style>
+    <script src="script.js" type="text/javascript"></script>
 </head>
 
 <center>
     <header>
-        <h1>LED Strip Control</h1>
+        <h1><span id="header">LED Strip Control</span></h1>
     </header>
     <body onload="process();">
         <div>
             <table border=1>
                 <tr>
-                    <td>Mode: </td>
+                    <td>Mode</td>
                     <td class="slider"><input id="m" type="range" min="0" max="2" step="1" oninput="sendRGB('M');" value="0"></td>
-                    <td style="width:150px" colspan=3><a id="mval"></a></td>
+                    <td colspan=3 id="mval"></td>
                 </tr>
                 <tr>
-                    <td>Brightness: </td>
+                    <td>Brightness</td>
                     <td class="slider"><input id="v" type="range" min="0" max="255" step="1" oninput="sendRGB('V');" value="0"></td>
-                    <td style="width:50px"><a id="vval"></a></td>
+                    <td class="value" id="vval"></td>
                     <td class="button" rowspan=3 ><button type="button" id="next" onclick="next();">Next pattern</button></td>
                 </tr>
                 <tr style="color: #F00;">
-                    <td>Red: </td>
+                    <td>Red</td>
                     <td class="slider"><input id="r" type="range" min="0" max="255" step="1" oninput="sendRGB('R');" value="0"></td>
-                    <td><a id="rval"></a></td>
+                    <td class="value" id="rval"></td>
                 </tr>
                 <tr style="color: #0F0;">
-                    <td>Green: </td>
+                    <td>Green</td>
                     <td class="slider"><input id="g" type="range" min="0" max="255" step="1" oninput="sendRGB('G');" value="0"></td>
-                    <td><a id="gval"></a></td>
+                    <td class="value" id="gval"></td>
                 </tr>
                 <tr style="color: #00F;">
-                    <td>Blue: </td>
+                    <td>Blue</td>
                     <td class="slider"><input id="b" type="range" min="0" max="255" step="1" oninput="sendRGB('B');" value="0"></td>
-                    <td><a id="bval"></a></td>
+                    <td class="value" id="bval"></td>
                     <td class="button" rowspan=3><button type="button" id="next" onclick="reset();">Reset</button></td>
                 <tr style="color: yellow;">
-                    <td>Hue: </td>
+                    <td>Hue</td>
                     <td class="slider"><input id="h" type="range" min="0" max="224" step="1" oninput="sendRGB('H');" value="0"></td>
-                    <td><a id="hval"></a></td>
+                    <td class="value" id="hval"></td>
                 </tr>
                 <tr style="color: pink;">
-                    <td>Saturation: </td>
+                    <td>Saturation</td>
                     <td class="slider"><input id="s" type="range" min="0" max="255" step="1" oninput="sendRGB('S');" value="0"></td>
-                    <td><a id="sval"></a></td>
+                    <td class="value" id="sval"></td>
                 </tr>
                 <tr style="display: none;">
                     <td><input type="checkbox" id="ll" checked></td>
@@ -98,17 +72,8 @@
                         </table>
                     </td>
                 </tr>
-                <!-- <tr style="color:white"> -->
-                    <!-- <td>Gradient1: </td> -->
-                    <!-- <td><input id="ga" type="range" min="0" max="255" step="1" oninput="sendRGB('Y');" value="0"></td> -->
-                    <!-- <td><a id="gaval"></a></td> -->
-                <!-- </tr> -->
-                <!-- <tr style="color:white"> -->
-                    <!-- <td>Gradient2: </td> -->
-                    <!-- <td><input id="gb" type="range" min="0" max="255" step="1" oninput="sendRGB('Z');" value="0"></td> -->
-                    <!-- <td><a id="gbval"></a></td> -->
-                <!-- </tr> -->
             </table>
+            <br />
             <div id="p5js"></div>
         </div>
     </body>

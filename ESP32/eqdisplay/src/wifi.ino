@@ -5,7 +5,7 @@ const char* password = "9182736450";
 
 String WSdata = "";
 File fsUploadFile;
-WebServer server(80); const char* host = "eqdisplay";
+WebServer server(80); const char* host = "ledstrip";
 WebSocketsServer webSocket(81);    // create a websocket server on port 81
 bool connectedClient = 0;
 
@@ -13,11 +13,8 @@ void setupWiFi(){
     _serial_.println("\r\nStarting Wifi");
 
     WiFi.disconnect();
-    // WiFi.mode(WIFI_AP_STA);
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
-    // WiFi.softAP(host, password);
-
 
     setupOTA();
     
@@ -302,15 +299,14 @@ void handleSliders(){
         manual = temp.endsWith("2") ? true : false;
         gCurrentPatternNumber = 0;
         if(_auto)
-            FastLED.setBrightness(30);
+            _setBrightness = 30;
         else
-            FastLED.setBrightness(255);
+            _setBrightness = 255;
     }if(WSdata.startsWith("V")){
         int x = temp.toInt();
         x = (x*x)/255.0;
-        FastLED.setBrightness(x);
+        _setBrightness = x;
     }
-    // FastLED.show();
     if(manual){
          if(WSdata.startsWith("R")){
             int x = temp.toInt();
@@ -333,11 +329,12 @@ void handleSliders(){
             manualColor = manualHSV;
         }
         if(WSdata.endsWith("L")){
-            fill_solid (LEFT, NUM_LEDS/2, manualColor);
+            manualColor_L = manualColor;
         }else if(WSdata.endsWith("R")){
-            fill_solid (RIGHT, NUM_LEDS/2, manualColor);
+            manualColor_R = manualColor;
         }else if(WSdata.endsWith("B")){
-            fill_solid (leds, NUM_LEDS, manualColor);
+            manualColor_L = manualColor;
+            manualColor_R = manualColor;
         }
     }
     WSdata = "";

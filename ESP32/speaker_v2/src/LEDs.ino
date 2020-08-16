@@ -1,3 +1,4 @@
+#define FASTLED_INTERNAL
 #include <FastLED.h>
 
 FASTLED_USING_NAMESPACE
@@ -23,12 +24,13 @@ uint8_t maxChanges = 24;        // Value for blending between palettes.
 
 typedef void (*SimplePatternList[])();
 // SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, dot_beat, juggle, bpm, inoise8_mover};
-SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, dot_beat, bpm };
+SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, dot_beat, juggle, bpm };
 SimplePatternList gPatterns1 = { audio_spectrum, audioLight };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
 bool manual = 0, _auto = 0;
-CRGB manualColor = 0x000000;
+uint8_t currentBrightness = BRIGHTNESS, _setBrightness = BRIGHTNESS;
+CRGB manualColor = 0x000000, manualColor_L = 0x000000, manualColor_R = 0x000000;
 CHSV manualHSV (0, 255, 255);
 uint8_t gHue = 0, gHue1 = 0, gHue2 = 0; // rotating "base color" used by many of the patterns
 
@@ -37,7 +39,7 @@ uint8_t eq[2][samples/2-2];
 
 void ledSetup(){
     FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
-    FastLED.setBrightness(BRIGHTNESS);
+    FastLED.setBrightness(currentBrightness);
     FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
     
     for(int i = 0; i < samples/2-2; i++){
@@ -86,9 +88,19 @@ void ledLoop(){
             FastLED.show();
         }
         else if(manual){
+            for(int i = 0; i < NUM_LEDS/2; i++){
+                for(int j = 0; j < 3; j++){
+                         if(LEFT [i][j] < manualColor_L[j]) LEFT [i][j]++;
+                    else if(LEFT [i][j] > manualColor_L[j]) LEFT [i][j]--;
+                         if(RIGHT[i][j] < manualColor_R[j]) RIGHT[i][j]++;
+                    else if(RIGHT[i][j] > manualColor_R[j]) RIGHT[i][j]--;
+                }
+            }
             FastLED.show();
         }
     }
+         if(currentBrightness < _setBrightness) FastLED.setBrightness(++currentBrightness);
+    else if(currentBrightness > _setBrightness) FastLED.setBrightness(--currentBrightness);
 #ifdef debug
     _serial_.println("Ending ledLoop");
 #endif
@@ -222,7 +234,7 @@ void confetti()
 void sinelon()
 {
     // a colored dot sweeping back and forth, with fading trails
-    fadeToBlackBy( leds, NUM_LEDS, 10);
+    fadeToBlackBy( leds, NUM_LEDS, 5);
     int pos1 = beatsin16(11, 0, NUM_LEDS/2-1);
     int pos2 = beatsin16(13, 0, NUM_LEDS/2-1);
     int pos3 = beatsin16( 9, 0, NUM_LEDS/2-1);
@@ -264,11 +276,11 @@ void dot_beat() {
 
 void juggle() {
     // eight colored dots, weaving in and out of sync with each other
-    fadeToBlackBy( leds, NUM_LEDS, 15);
+    fadeToBlackBy( leds, NUM_LEDS, 5);
     byte dothue1 = 0, dothue2 = 0;
     for( int i = 0; i < 6; i++) {
-        RIGHT[beatsin16(i+7,0,NUM_LEDS/2)] |= CHSV(dothue1, 200, 255);
-        LEFT [beatsin16(i+5,0,NUM_LEDS/2)] |= CHSV(dothue2, 200, 255);
+        RIGHT[beatsin16(i+7,0,NUM_LEDS/2-1)] |= CHSV(dothue1, 200, 255);
+        LEFT [beatsin16(i+5,0,NUM_LEDS/2-1)] |= CHSV(dothue2, 200, 255);
         dothue1 += 32;
         dothue2 -= 32;
         yield();

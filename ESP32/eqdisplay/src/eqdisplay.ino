@@ -7,7 +7,7 @@
 #include <FS.h>
 #include <SPIFFS.h>
 
-#define _serial_ TelnetStream
+#define _serial_ Serial
 
 #define NUMBER_OF_LEDS 144
 
@@ -26,7 +26,7 @@ bool MidiEventReceived = false;
 // APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE();
 // #define APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE() \
 // APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI, "ESP32", DEFAULT_CONTROL_PORT);
-APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI, "eqdisplay", DEFAULT_CONTROL_PORT);
+APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI, "ledstrip", DEFAULT_CONTROL_PORT);
 
 void setup(){
 
@@ -40,7 +40,7 @@ void setup(){
     
     MIDIsetup();
     
-    TelnetStream.begin();
+    // TelnetStream.begin();
     
 }
 
@@ -64,7 +64,10 @@ void loop(){
 }
 
 void MIDIsetup(){
-    MIDI.begin(1); // listen on channel 1
+    // for(int i = 0; i < 16; i++){
+        // MIDI.begin(i+1);
+    // }
+    MIDI.begin(1);
     AppleMIDI.setHandleConnected(OnAppleMidiConnected);
     AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
     AppleMIDI.setHandleError(OnAppleMidiError);

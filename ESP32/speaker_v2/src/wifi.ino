@@ -300,13 +300,13 @@ void handleSliders(){
         manual = temp.endsWith("2") ? true : false;
         gCurrentPatternNumber = 0;
         if(_auto)
-            FastLED.setBrightness(30);
+            _setBrightness = 30;
         else
-            FastLED.setBrightness(255);
+            _setBrightness = 255;
     }if(WSdata.startsWith("V")){
         int x = temp.toInt();
         x = (x*x)/255.0;
-        FastLED.setBrightness(x);
+        _setBrightness = x;
     }
     if(manual){
          if(WSdata.startsWith("R")){
@@ -330,11 +330,16 @@ void handleSliders(){
             manualColor = manualHSV;
         }
         if(WSdata.endsWith("L")){
-            fill_solid (LEFT, NUM_LEDS/2, manualColor);
+            manualColor_L = manualColor;
+            // fill_solid (LEFT, NUM_LEDS/2, manualColor_L);
         }else if(WSdata.endsWith("R")){
-            fill_solid (RIGHT, NUM_LEDS/2, manualColor);
+            manualColor_R = manualColor;
+            // fill_solid (RIGHT, NUM_LEDS/2, manualColor_R);
         }else if(WSdata.endsWith("B")){
-            fill_solid (leds, NUM_LEDS, manualColor);
+            manualColor_L = manualColor;
+            manualColor_R = manualColor;
+            // fill_solid (LEFT , NUM_LEDS/2, manualColor_L);
+            // fill_solid (RIGHT, NUM_LEDS/2, manualColor_R);
         }
     }
     WSdata = "";
