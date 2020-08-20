@@ -29,8 +29,7 @@ uint8_t gHue = 0, gHue1 = 0, gHue2 = 0; // rotating "base color" used by many of
 #include "Pacifica.h"
 
 typedef void (*SimplePatternList[])();
-// SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, dot_beat, juggle, bpm, inoise8_mover};
-SimplePatternList autoPatterns = { rainbow, rainbowWithGlitter, rainbow_scaling, fire, fireSparks, fireRainbow, noise1, noise2, noise3, pacifica_loop, ripple_blur, confetti, sinelon, dot_beat, juggle, bpm, blendwave };
+SimplePatternList autoPatterns = { rainbow, rainbowWithGlitter, rainbow_scaling, fire, fireSparks, fireRainbow, noise1, noise2, noise3, pacifica_loop, blendwave, confetti, ripple_blur, sinelon, dot_beat, juggle };
 SimplePatternList audioPatterns = { audio_spectrum, audioLight };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
@@ -322,25 +321,28 @@ void bpm()
     }
 }
 
-static int16_t dist1 = 0, dist2 = 0;    // A moving location for our noise generator.
-uint16_t xscale = 30;           // Wouldn't recommend changing this on the fly, or the animation will be really blocky.
-uint16_t yscale = 30;           // Wouldn't recommend changing this on the fly, or the animation will be really blocky.
+void blendwave() {
+    CRGB clr1, clr2;
+    uint8_t speed, loc1;
 
-void inoise8_mover() {
-    fadeToBlackBy(leds, NUM_LEDS, 10);     
-    uint8_t locn = 0, pixlen = 0;
+    speed = beatsin8(6,0,255);
+
+    clr1 = blend(CHSV(beatsin8(3,0,255),255,255), CHSV(beatsin8(4,0,255),255,255), speed);
+    clr2 = blend(CHSV(beatsin8(4,0,255),255,255), CHSV(beatsin8(3,0,255),255,255), speed);
+    loc1 = beatsin8(13,0,NUM_LEDS/2-1);
+
+    fill_gradient_RGB(LEFT, 0, clr2, loc1, clr1);
+    fill_gradient_RGB(LEFT, loc1, clr2, NUM_LEDS/2-1, clr1);
     
-    locn = inoise8(xscale, dist1+yscale) % 255;          // Get a new pixel location from moving noise.
-    pixlen = map(locn,0,255,0,NUM_LEDS/2);                // Map that to the length of the strand.
-    LEFT[pixlen] = ColorFromPalette(currentPalette, pixlen, 255, LINEARBLEND);   // Use that value for both the location as well as the palette index colour for the pixel.
+    speed = beatsin8(7,0,255);
 
-    locn = inoise8(xscale, dist2+yscale) % 255;          // Get a new pixel location from moving noise.
-    pixlen = map(locn,0,255,0,NUM_LEDS/2);                // Map that to the length of the strand.
-    RIGHT[pixlen] = ColorFromPalette(randomPalette2, pixlen, 255, LINEARBLEND);   // Use that value for both the location as well as the palette index colour for the pixel.
+    clr1 = blend(CHSV(beatsin8(4,0,255),255,255), CHSV(beatsin8(5,0,255),255,255), speed);
+    clr2 = blend(CHSV(beatsin8(5,0,255),255,255), CHSV(beatsin8(4,0,255),255,255), speed);
+    loc1 = beatsin8(11,0,NUM_LEDS/2-1);
 
-    dist1 += beatsin8(10,1,4);                                                // Moving along the distance (that random number we started out with). Vary it a bit with a sine wave.                                             
-    dist2 += beatsin8(13,1,4);                                                // Moving along the distance (that random number we started out with). Vary it a bit with a sine wave.                                             
-}
+    fill_gradient_RGB(RIGHT, 0, clr2, loc1, clr1);
+    fill_gradient_RGB(RIGHT, loc1, clr2, NUM_LEDS/2-1, clr1);
+} // blendwave()
 
 uint8_t _xhue[NUM_LEDS/2], _yhue[NUM_LEDS/2]; // x/y coordinates for noise function
 uint8_t _xsat[NUM_LEDS/2], _ysat[NUM_LEDS/2]; // x/y coordinates for noise function
@@ -473,30 +475,6 @@ void noise3() {
         RIGHT[i] = CHSV( _hue, _sat, _val);
     }
 }
-
-void blendwave() {
-    CRGB clr1, clr2;
-    // uint8_t speed, loc1, loc2, ran1, ran2;
-    uint8_t speed, loc1;
-
-    speed = beatsin8(6,0,255);
-
-    clr1 = blend(CHSV(beatsin8(3,0,255),255,255), CHSV(beatsin8(4,0,255),255,255), speed);
-    clr2 = blend(CHSV(beatsin8(4,0,255),255,255), CHSV(beatsin8(3,0,255),255,255), speed);
-    loc1 = beatsin8(13,0,NUM_LEDS/2-1);
-
-    fill_gradient_RGB(LEFT, 0, clr2, loc1, clr1);
-    fill_gradient_RGB(leds, loc1, clr2, NUM_LEDS/2-1, clr1);
-    
-    speed = beatsin8(7,0,255);
-
-    clr1 = blend(CHSV(beatsin8(4,0,255),255,255), CHSV(beatsin8(5,0,255),255,255), speed);
-    clr2 = blend(CHSV(beatsin8(5,0,255),255,255), CHSV(beatsin8(4,0,255),255,255), speed);
-    loc1 = beatsin8(11,0,NUM_LEDS/2-1);
-
-    fill_gradient_RGB(RIGHT, 0, clr2, loc1, clr1);
-    fill_gradient_RGB(RIGHT, loc1, clr2, NUM_LEDS/2-1, clr1);
-} // blendwave()
 
 uint8_t fadeval = 200, frameRate = 45;
 void fire(){
