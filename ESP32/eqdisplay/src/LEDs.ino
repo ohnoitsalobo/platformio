@@ -23,7 +23,7 @@ TBlendType    currentBlending;
 uint8_t maxChanges = 24;        // Value for blending between palettes.
 
 typedef void (*SimplePatternList[])();
-SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, dot_beat, juggle, bpm };
+SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, noise1, noise2, noise3, confetti, sinelon, dot_beat, juggle, bpm };
 SimplePatternList gPatterns1 = { audio_spectrum, audioLight };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
@@ -45,6 +45,8 @@ void ledSetup(){
         eq[0][i] = 0;
         eq[1][i] = 0;
     }
+    
+    setupNoise();
 }
 
 void ledLoop(){
@@ -119,17 +121,17 @@ void audio_spectrum(){
         
         yield();
     }
-    uint8_t p = NUM_LEDS/2-1; uint8_t t = 200;
-    RIGHT[  1]  = RIGHT[  0].nscale8(t);
-    RIGHT[  2]  = RIGHT[  1].nscale8(t);
-    RIGHT[  4]  = RIGHT[  3].nscale8(t);
-    RIGHT[  6]  = RIGHT[  5].nscale8(t);
-    RIGHT[  8]  = RIGHT[  7].nscale8(t);
-    LEFT [p-1]  = LEFT [p-0].nscale8(t);
-    LEFT [p-2]  = LEFT [p-1].nscale8(t);
-    LEFT [p-4]  = LEFT [p-3].nscale8(t);
-    LEFT [p-6]  = LEFT [p-5].nscale8(t);
-    LEFT [p-8]  = LEFT [p-7].nscale8(t);
+    // uint8_t p = NUM_LEDS/2-1; uint8_t t = 200;
+    // RIGHT[  1]  = RIGHT[  0].nscale8(t);
+    // RIGHT[  2]  = RIGHT[  1].nscale8(t);
+    // RIGHT[  4]  = RIGHT[  3].nscale8(t);
+    // RIGHT[  6]  = RIGHT[  5].nscale8(t);
+    // RIGHT[  8]  = RIGHT[  7].nscale8(t);
+    // LEFT [p-1]  = LEFT [p-0].nscale8(t);
+    // LEFT [p-2]  = LEFT [p-1].nscale8(t);
+    // LEFT [p-4]  = LEFT [p-3].nscale8(t);
+    // LEFT [p-6]  = LEFT [p-5].nscale8(t);
+    // LEFT [p-8]  = LEFT [p-7].nscale8(t);
 }
 
 uint16_t maxR = 0, minR = 4096, maxL = 0, minL = 4096;
@@ -260,6 +262,130 @@ void bpm()
         RIGHT[i]              = ColorFromPalette(palette, gHue1+(i*2), beat-gHue1+(i*10));
         LEFT [NUM_LEDS/2-1-i] = ColorFromPalette(palette, gHue2+(i*2), beat-gHue2+(i*10));
         yield();
+    }
+}
+
+uint8_t _x[NUM_LEDS/2], _y[NUM_LEDS/2]; // x/y coordinates for noise function
+void setupNoise(){
+    for (uint16_t i = 0; i < NUM_LEDS/2; i++) {       // precalculate the lookup-tables:
+        uint8_t angle = (i * 256) / NUM_LEDS/2;         // on which position on the circle is the led?
+        _x[i] = cos8( angle );                         // corrsponding x position in the matrix
+        _y[i] = sin8( angle );                         // corrsponding y position in the matrix
+    }
+}
+
+int scale = 1000;                               // the "zoom factor" for the noise
+void noise1() {
+    
+    for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
+
+        uint16_t shift_x = beatsin8(3);                  // the x position of the noise field swings @ 17 bpm
+        uint16_t shift_y = millis() / 100;                // the y position becomes slowly incremented
+
+        uint32_t real_x = (_x[i] + shift_x) * scale;       // calculate the coordinates within the noise field
+        uint32_t real_y = (_y[i] + shift_y) * scale;       // based on the precalculated positions
+
+        uint8_t _noise = inoise16(real_x, real_y, 4223) >> 8;           // get the noise data and scale it down
+
+        uint8_t index = _noise * 3;                        // map led color based on noise data
+        uint8_t bri   = _noise;
+
+        CRGB color = CHSV( index, 255, bri);
+        LEFT[i] = color;
+    }
+    for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
+
+        uint16_t shift_x = beatsin8(4);                  // the x position of the noise field swings @ 17 bpm
+        uint16_t shift_y = millis() / 100;                // the y position becomes slowly incremented
+
+        uint32_t real_x = (_x[i] + shift_x) * scale;       // calculate the coordinates within the noise field
+        uint32_t real_y = (_y[i] + shift_y) * scale;       // based on the precalculated positions
+
+        uint8_t _noise = inoise16(real_x, real_y, 4223) >> 8;           // get the noise data and scale it down
+
+        uint8_t index = _noise * 3;                        // map led color based on noise data
+        uint8_t bri   = _noise;
+
+        CRGB color = CHSV( index, 255, bri);
+        RIGHT[i] = color;
+    }
+}
+
+// just moving along one axis = "lavalamp effect"
+void noise2() {
+
+    for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
+
+        uint16_t shift_x = millis() / 47;                 // x as a function of time
+        uint16_t shift_y = 0;
+
+        uint32_t real_x = (_x[i] + shift_x) * scale;       // calculate the coordinates within the noise field
+        uint32_t real_y = (_y[i] + shift_y) * scale;       // based on the precalculated positions
+
+        uint8_t _noise = inoise16(real_x, real_y, 4223) >> 8;           // get the noise data and scale it down
+
+        uint8_t index = _noise * 3;                        // map led color based on noise data
+        uint8_t bri   = _noise;
+
+        CRGB color = CHSV( index, 255, bri);
+        LEFT[i] = color;
+    }
+    for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
+
+        uint16_t shift_x = millis() / 51;                 // x as a function of time
+        uint16_t shift_y = 0;
+
+        uint32_t real_x = (_x[i] + shift_x) * scale;       // calculate the coordinates within the noise field
+        uint32_t real_y = (_y[i] + shift_y) * scale;       // based on the precalculated positions
+
+        uint8_t _noise = inoise16(real_x, real_y, 4223) >> 8;           // get the noise data and scale it down
+
+        uint8_t index = _noise * 3;                        // map led color based on noise data
+        uint8_t bri   = _noise;
+
+        CRGB color = CHSV( index, 255, bri);
+        RIGHT[i] = color;
+    }
+}
+
+// no x/y shifting but scrolling along z
+void noise3() {
+
+    for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
+
+        uint16_t shift_x = 0;                             // no movement along x and y
+        uint16_t shift_y = 0;
+
+        uint32_t real_x = (_x[i] + shift_x) * scale;       // calculate the coordinates within the noise field
+        uint32_t real_y = (_y[i] + shift_y) * scale;       // based on the precalculated positions
+
+        uint32_t real_z = millis() * 19;                  // increment z linear
+
+        uint8_t _noise = inoise16(real_x, real_y, real_z) >> 8;           // get the noise data and scale it down
+
+        uint8_t index = _noise * 3;                        // map led color based on noise data
+        uint8_t bri   = _noise;
+
+        CRGB color = CHSV( index, 255, bri);
+        LEFT[i] = color;
+    }
+    for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
+
+        uint16_t shift_x = 0;                             // no movement along x and y
+        uint16_t shift_y = 0;
+
+        uint32_t real_x = (_x[i] + shift_x) * scale;       // calculate the coordinates within the noise field
+        uint32_t real_y = (_y[i] + shift_y) * scale;       // based on the precalculated positions
+
+        uint32_t real_z = millis() * 23;                  // increment z linear
+
+        uint8_t _noise = inoise16(real_x, real_y, real_z) >> 8;           // get the noise data and scale it down
+
+        uint8_t index = _noise * 3;                        // map led color based on noise data
+        uint8_t bri   = _noise;
+
+        CRGB color = CHSV( index, 255, bri);
+        RIGHT[i] = color;
     }
 }
 

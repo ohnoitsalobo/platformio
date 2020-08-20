@@ -24,7 +24,7 @@
                     <td>Brightness: </td>
                     <td class="slider"><input id="v" type="range" min="0" max="255" step="1" oninput="sendRGB('V');" value="0"></td>
                     <td class="value" id="vval"></td>
-                    <td class="button" rowspan=3 ><button type="button" id="next" onclick="next();">Next pattern</button></td>
+                    <td class="button" rowspan=2><button type="button" id="next" onclick="next();">Next pattern</button></td>
                 </tr>
                 <tr style="color: #F00;">
                     <td>Red: </td>
@@ -35,16 +35,17 @@
                     <td>Green: </td>
                     <td class="slider"><input id="g" type="range" min="0" max="255" step="1" oninput="sendRGB('G');" value="0"></td>
                     <td class="value" id="gval"></td>
+                    <td class="button" rowspan=2><button type="button" id="prev" onclick="prev();">Previous pattern</button></td>
                 </tr>
                 <tr style="color: #00F;">
                     <td>Blue: </td>
                     <td class="slider"><input id="b" type="range" min="0" max="255" step="1" oninput="sendRGB('B');" value="0"></td>
                     <td class="value" id="bval"></td>
-                    <td class="button" rowspan=3><button type="button" id="next" onclick="reset();">Reset</button></td>
                 <tr style="color: yellow;">
                     <td>Hue: </td>
                     <td class="slider"><input id="h" type="range" min="0" max="224" step="1" oninput="sendRGB('H');" value="0"></td>
                     <td class="value" id="hval"></td>
+                    <td class="button" rowspan=2><button type="button" id="next" onclick="reset();">Reset</button></td>
                 </tr>
                 <tr style="color: pink;">
                     <td>Saturation: </td>

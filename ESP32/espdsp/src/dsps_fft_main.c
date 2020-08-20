@@ -28,7 +28,7 @@
 
 #include "esp_dsp.h"
 
-// static const char *TAG = "main";
+static const char *TAG = "main";
 
 // This example shows how to use FFT from esp-dsp library
 
@@ -48,11 +48,7 @@ float* y2_cf = &y_cf[N_SAMPLES];
 // Sum of y1 and y2
 float sum_y[N_SAMPLES/2];
 
-void setup(){
-    Serial.begin(115200);
-}
-
-void loop()
+void app_main()
 {
     esp_err_t ret;
     ESP_LOGI(TAG, "Start Example.");
@@ -77,13 +73,13 @@ void loop()
         y_cf[i*2 + 1] = x2[i] * wind[i];
     }
     // FFT
-    // unsigned int start_b = xthal_get_ccount();
-    dsps_fft2r_fc32_ansi(y_cf, N);
-    // unsigned int end_b = xthal_get_ccount();
+    unsigned int start_b = xthal_get_ccount();
+    dsps_fft2r_fc32(y_cf, N);
+    unsigned int end_b = xthal_get_ccount();
     // Bit reverse 
-    dsps_bit_rev_fc32_ansi(y_cf, N);
+    dsps_bit_rev_fc32(y_cf, N);
     // Convert one complex vector to two complex vectors
-    dsps_cplx2reC_fc32_ansi(y_cf, N);
+    dsps_cplx2reC_fc32(y_cf, N);
 
     for (int i = 0 ; i < N/2 ; i++) {
         y1_cf[i] = 10 * log10f((y1_cf[i * 2 + 0] * y1_cf[i * 2 + 0] + y1_cf[i * 2 + 1] * y1_cf[i * 2 + 1])/N);
@@ -102,5 +98,4 @@ void loop()
     ESP_LOGI(TAG, "FFT for %i complex points take %i cycles", N, end_b - start_b);
 
     ESP_LOGI(TAG, "End Example.");
-    delay(5000);
 }

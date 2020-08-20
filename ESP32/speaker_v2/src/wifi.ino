@@ -293,6 +293,9 @@ void handleSliders(){
     if(WSdata.startsWith("next")){
         nextPattern();
     }
+    if(WSdata.startsWith("prev")){
+        previousPattern();
+    }
     String temp = WSdata.substring(1, WSdata.length()-1);
     if(WSdata.startsWith("M")){
         music = temp.endsWith("0") ? true : false;
@@ -300,7 +303,7 @@ void handleSliders(){
         manual = temp.endsWith("2") ? true : false;
         gCurrentPatternNumber = 0;
         if(_auto)
-            _setBrightness = 30;
+            FastLED.setBrightness(30);
         else
             _setBrightness = 255;
     }if(WSdata.startsWith("V")){

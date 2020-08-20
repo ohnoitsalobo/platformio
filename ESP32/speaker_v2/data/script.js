@@ -1,6 +1,6 @@
 var temp = [0], audiodata;
 var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
-// var connection = new WebSocket('ws://192.168.43.153:81/', ['arduino']);
+// var connection = new WebSocket('ws://192.168.43.237:81/', ['arduino']);
 
 connection.onopen = function () {
     connection.send('Connect ' + new Date());
@@ -32,6 +32,11 @@ function reset(){
 function next(){
     connection.send('next');
     console.log('next'); 
+}
+
+function prev(){
+    connection.send('prev');
+    console.log('prev'); 
 }
 
 function sendRGB(_temp) {
