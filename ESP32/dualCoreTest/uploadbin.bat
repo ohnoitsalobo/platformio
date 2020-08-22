@@ -1,0 +1,1 @@
+pio run && "c:\python38\python.exe" "C:\Users\Anand\.platformio\packages\framework-arduinoespressif32\tools\espota.py" --debug --progress -i 192.168.43.153 -f .pio\build\bpi-bit\firmware.bin
