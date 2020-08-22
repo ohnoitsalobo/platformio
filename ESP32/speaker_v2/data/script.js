@@ -1,6 +1,6 @@
 var temp = [0], audiodata;
 var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
-// var connection = new WebSocket('ws://192.168.43.237:81/', ['arduino']);
+// var connection = new WebSocket('ws://ledstrip.local:81/', ['arduino']);
 
 connection.onopen = function () {
     connection.send('Connect ' + new Date());

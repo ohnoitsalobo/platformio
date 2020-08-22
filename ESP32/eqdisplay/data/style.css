@@ -56,14 +56,14 @@ button {
     -webkit-background-clip: text;
 }
 /*  */
-/*  * /
-.p5canvas {
+/*  */
+.rainbow {
     width: 600px;
     height: 600px;
     background: 
         radial-gradient(rgba(255, 255, 255, 255) 2%, rgba(255, 255, 255, 0) 34%),
         radial-gradient(rgba(0, 0, 0, 0) 35%, rgba(0, 0, 0, 255) 70%),
         conic-gradient(#F00, #FF0, #0F0, #0FF, #00F, #F0F, #F00);
-    border-radius: 50%;
+    border-radius: 10%;
 }
 /*  */

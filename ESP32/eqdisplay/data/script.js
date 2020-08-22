@@ -1,6 +1,6 @@
 var temp = [0], audiodata;
 var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
-// var connection = new WebSocket('ws://192.168.43.153:81/', ['arduino']);
+// var connection = new WebSocket('ws://speaker.local:81/', ['arduino']);
 
 connection.onopen = function () {
     connection.send('Connect ' + new Date());
@@ -32,6 +32,11 @@ function reset(){
 function next(){
     connection.send('next');
     console.log('next'); 
+}
+
+function prev(){
+    connection.send('prev');
+    console.log('prev'); 
 }
 
 function sendRGB(_temp) {
@@ -118,13 +123,14 @@ function setup(){
 
 function rainbowHeader(){
     let _hue = millis()/50;
-    document.getElementById('header').style['background'] = "linear-gradient(     to right, hsl(" + 
-                                                             _hue     %360 + ", 100%, 50%), hsl(" + 
-                                                            (_hue+60 )%360 + ", 100%, 50%), hsl(" + 
-                                                            (_hue+120)%360 + ", 100%, 50%), hsl(" + 
-                                                            (_hue+180)%360 + ", 100%, 50%), hsl(" + 
-                                                            (_hue+240)%360 + ", 100%, 50%), hsl(" + 
-                                                            (_hue+300)%360 + ", 100%, 50%) )";
+    document.getElementById('header').style['background'] = 
+        "linear-gradient(     to right, hsl(" + 
+         _hue     %360 + ", 100%, 50%), hsl(" + 
+        (_hue+60 )%360 + ", 100%, 50%), hsl(" + 
+        (_hue+120)%360 + ", 100%, 50%), hsl(" + 
+        (_hue+180)%360 + ", 100%, 50%), hsl(" + 
+        (_hue+240)%360 + ", 100%, 50%), hsl(" + 
+        (_hue+300)%360 + ", 100%, 50%))";
     document.getElementById('header').style['color'] = "transparent";
     document.getElementById('header').style['-webkit-background-clip'] = "text";
 }
@@ -135,7 +141,7 @@ function draw(){
 }
 
 let c = [0, 0, 0];
-let leftcolor = c, rightcolor = c;
+let leftcolor, rightcolor;
 function colorWheel(){
     if (
     m == 2           &&

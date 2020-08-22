@@ -1,6 +1,5 @@
 #define FASTLED_INTERNAL
 #include <FastLED.h>
-
 FASTLED_USING_NAMESPACE
 
 #define LED_TYPE    WS2812B
@@ -9,29 +8,31 @@ FASTLED_USING_NAMESPACE
 #define NUM_LEDS    NUMBER_OF_LEDS
 #define BRIGHTNESS  255*225/255
 
-CRGBArray<NUM_LEDS> leds;                            // LED array containing all LEDs
-CRGBSet RIGHT (leds ( 0*NUM_LEDS/2, 1*NUM_LEDS/2-1 ) );   // < subset containing only left  LEDs
-CRGBSet LEFT  (leds ( 1*NUM_LEDS/2, 2*NUM_LEDS/2-1 ) );   // < subset containing only right LEDs
-CRGBSet R1    (leds ( 0*NUM_LEDS/4, 1*NUM_LEDS/4-1 ) );   // < < subset containing only R1   LEDs
-CRGBSet R2    (leds ( 1*NUM_LEDS/4, 2*NUM_LEDS/4-1 ) );   // < < subset containing only R2   LEDs
-CRGBSet L1    (leds ( 2*NUM_LEDS/4, 3*NUM_LEDS/4-1 ) );   // < < subset containing only L1   LEDs
-CRGBSet L2    (leds ( 3*NUM_LEDS/4, 4*NUM_LEDS/4-1 ) );   // < < subset containing only L2   LEDs
+CRGBArray<NUM_LEDS> leds;                              // LED array containing all LEDs
+CRGBSet RIGHT (leds (0,            NUM_LEDS/2-1)   );  // < subset containing only left  LEDs
+CRGBSet R1    (leds (0,            NUM_LEDS/4-1)   );  // < subset containing only left  side of left  LEDs
+CRGBSet R2    (leds (NUM_LEDS/4,   NUM_LEDS/2-1)   );  // < subset containing only right side of left  LEDs
+CRGBSet LEFT  (leds (NUM_LEDS/2,   NUM_LEDS)       );  // < subset containing only right LEDs
+CRGBSet L1    (leds (NUM_LEDS/2,   3*NUM_LEDS/4-1) );  // < subset containing only left  side of right LEDs
+CRGBSet L2    (leds (3*NUM_LEDS/4, NUM_LEDS)       );  // < subset containing only right side of right LEDs
 
 CRGBPalette16 currentPalette, randomPalette1;
 CRGBPalette16 targetPalette, randomPalette2;
 TBlendType    currentBlending;
 uint8_t maxChanges = 24;        // Value for blending between palettes.
 
-typedef void (*SimplePatternList[])();
-SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, noise1, noise2, noise3, confetti, sinelon, dot_beat, juggle, bpm };
-SimplePatternList gPatterns1 = { audio_spectrum, audioLight };
-uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
-
 bool manual = 0, _auto = 0;
 uint8_t currentBrightness = BRIGHTNESS, _setBrightness = BRIGHTNESS;
 CRGB manualColor = 0x000000, manualColor_L = 0x000000, manualColor_R = 0x000000;
 CHSV manualHSV (0, 255, 255);
 uint8_t gHue = 0, gHue1 = 0, gHue2 = 0; // rotating "base color" used by many of the patterns
+#include "pacifica.h"
+// #include "others.h"
+
+typedef void (*SimplePatternList[])();
+SimplePatternList autoPatterns = { drawClock, rainbow, rainbowWithGlitter, rainbow_scaling, fire, fireSparks, fireRainbow, noise1, noise2, noise3, pacifica_loop, blendwave, confetti, ripple_blur, sinelon, dot_beat, juggle };
+SimplePatternList audioPatterns = { audio_spectrum, audioLight };
+uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
 String eqBroadcast = "";
 uint8_t eq[2][samples/2-2];
@@ -39,7 +40,7 @@ uint8_t eq[2][samples/2-2];
 void ledSetup(){
     FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness(currentBrightness);
-    FastLED.setMaxPowerInVoltsAndMilliamps(5,1000);
+    FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
     
     for(int i = 0; i < samples/2-2; i++){
         eq[0][i] = 0;
@@ -47,37 +48,51 @@ void ledSetup(){
     }
     
     setupNoise();
+    fill_solid (leds, NUM_LEDS, CRGB::Black);
 }
 
 void ledLoop(){
+#ifdef debug
+    _serial_.println("Starting ledLoop");
+#endif
     if(MIDIconnected()){
         runLED();
-        FastLED.show();
     }else{
         if(music){
-            gPatterns1[gCurrentPatternNumber]();
+            audioPatterns[gCurrentPatternNumber]();
             FastLED.show();
+            EVERY_N_MILLISECONDS(20){
+                // if(webSocketConn()){
+                    // eqBroadcast = "E";
+                    // for(uint8_t i = 0; i < samples/2-2; i++){
+                        // eqBroadcast += ",";
+                        // eqBroadcast += String(eq[0][i]);
+                        // if(eq[0][i] != 0) eq[0][i] /= 5.0;
+                    // }
+                    // for(uint8_t i = 0; i < samples/2-2; i++){
+                        // eqBroadcast += ",";
+                        // eqBroadcast += String(eq[1][i]);
+                        // if(eq[1][i] != 0) eq[1][i] /= 5.0;
+                    // }
+                    // wsBroadcast();
+                    // eqBroadcast = "";
+                // }
+            }
         }
         else if(_auto){
+            EVERY_N_MILLISECONDS( 41 ) { gHue1++; }
+            EVERY_N_MILLISECONDS( 37 ) { gHue2--; }
             EVERY_N_SECONDS(20){
                 targetPalette = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
                 randomPalette1 = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
                 randomPalette2 = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
             }
-            EVERY_N_MILLISECONDS( 29 ) {
-                gHue1++;
-            }
-            EVERY_N_MILLISECONDS( 23 ) {
-                gHue2--;
-            }
-            gPatterns[gCurrentPatternNumber]();
+            autoPatterns[gCurrentPatternNumber]();
             FastLED.show();
         }
         else if(manual){
             for(int i = 0; i < NUM_LEDS/2; i++){
                 for(int j = 0; j < 3; j++){
-                    // LEFT [i][j] = (LEFT [i][j] < manualColor_L[j]) ? LEFT [i][j]++ : (LEFT [i][j] > manualColor_L[j]) ? LEFT [i][j]-- : LEFT [i][j];
-                    // RIGHT[i][j] = (RIGHT[i][j] < manualColor_R[j]) ? RIGHT[i][j]++ : (RIGHT[i][j] > manualColor_R[j]) ? RIGHT[i][j]-- : RIGHT[i][j];
                          if(LEFT [i][j] < manualColor_L[j]) LEFT [i][j]++;
                     else if(LEFT [i][j] > manualColor_L[j]) LEFT [i][j]--;
                          if(RIGHT[i][j] < manualColor_R[j]) RIGHT[i][j]++;
@@ -89,12 +104,18 @@ void ledLoop(){
     }
          if(currentBrightness < _setBrightness) FastLED.setBrightness(++currentBrightness);
     else if(currentBrightness > _setBrightness) FastLED.setBrightness(--currentBrightness);
+#ifdef debug
+    _serial_.println("Ending ledLoop");
+#endif
 }
 
-void audio_spectrum(){
+void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping them to light spectrum
+#ifdef debug
+    _serial_.println("Starting audio_spectrum");
+#endif
     fftLoop();
-    eqBroadcast = "";
-    nscale8(leds, NUM_LEDS, 100); // smaller = faster fade
+    uint8_t fadeval = 90;
+    nscale8(leds, NUM_LEDS, fadeval); // smaller = faster fade
     CRGB tempRGB1, tempRGB2;
     uint8_t pos = 0, h = 0, s = 0, v = 0;
     double temp1 = 0, temp2 = 0;
@@ -105,102 +126,116 @@ void audio_spectrum(){
         s = 255 - (temp1*30.0);
         v = temp1*255.0;
         tempRGB1 = CHSV(h, s, v);
+        uint8_t p = NUM_LEDS/2-pos;
         if(tempRGB1 > RIGHT[pos]){
             RIGHT[pos] = tempRGB1;
         }
-        eq[0][i-2] = v;
+        // RIGHT[p] = RIGHT[pos];
+        // eq[0][i-2] = v;
+
         temp2 = spectrum[2][i]/MAX;
         s = 255 - (temp2*30.0);
         v = temp2*255.0;
         tempRGB2 = CHSV(h, s, v);
-        uint8_t p = NUM_LEDS/2-1-pos;
-        if(tempRGB2 > LEFT[p]){
-            LEFT[p] = tempRGB2;
+        if(tempRGB2 > LEFT[pos]){
+            LEFT[pos] = tempRGB2;
         }
-        eq[1][i-2] = v;
-        
+        // LEFT[p] = LEFT[pos];
+        // eq[1][i-2] = v;
         yield();
     }
-    // uint8_t p = NUM_LEDS/2-1; uint8_t t = 200;
-    // RIGHT[  1]  = RIGHT[  0].nscale8(t);
-    // RIGHT[  2]  = RIGHT[  1].nscale8(t);
-    // RIGHT[  4]  = RIGHT[  3].nscale8(t);
-    // RIGHT[  6]  = RIGHT[  5].nscale8(t);
-    // RIGHT[  8]  = RIGHT[  7].nscale8(t);
-    // LEFT [p-1]  = LEFT [p-0].nscale8(t);
-    // LEFT [p-2]  = LEFT [p-1].nscale8(t);
-    // LEFT [p-4]  = LEFT [p-3].nscale8(t);
-    // LEFT [p-6]  = LEFT [p-5].nscale8(t);
-    // LEFT [p-8]  = LEFT [p-7].nscale8(t);
+#ifdef debug
+    _serial_.println("Ending audio_spectrum");
+#endif
 }
 
-uint16_t maxR = 0, minR = 4096, maxL = 0, minL = 4096;
-void audioLight(){
+void audioLight(){ // directly sampling ADC values mapped to brightness
+#ifdef debug
+    _serial_.println("Starting audioLight");
+#endif
     EVERY_N_MILLISECONDS( 55 ) { gHue1++; }
     EVERY_N_MILLISECONDS( 57 ) { gHue2--; }
-    
-    uint8_t fadeval = 250;
-    for(int i = 0; i < NUM_LEDS/4; i++){
-        R2[NUM_LEDS/4-i] = R2[NUM_LEDS/4-1-i].nscale8(fadeval);
-        R1[i] = R2[NUM_LEDS/4-i];
-        L2[NUM_LEDS/4-i] = L2[NUM_LEDS/4-1-i].nscale8(fadeval);
-        L1[i] = L2[NUM_LEDS/4-i];
+    EVERY_N_MILLISECONDS( 15 ) {
+        uint8_t fadeval = 235;
+        for(int i = 0; i < NUM_LEDS/4; i++){
+            R1[i] = R1[i+1].nscale8(fadeval);
+            R2[NUM_LEDS/4-i] = R1[i];
+            L1[i] = R1[i+1].nscale8(fadeval);
+            L2[NUM_LEDS/4-i] = L1[i];
+        }
+        uint16_t mid = 1800, _noise = 180;
+        uint8_t _hue = 0, _sat = 255, _val = 0;
+        int temp1 = abs(mid - analogRead( RightPin));
+        if(temp1 > _noise){
+            _val = (temp1-_noise)/float(mid) * 255;
+            _hue = _val/255.0 * 65;
+        }
+        R1[NUM_LEDS/4-1] = CHSV( _hue+gHue1, _sat, _val*_val/255);
+        R2[0] = R1[NUM_LEDS/4-1];
+        
+        _hue = 0; _val = 0;
+        int temp2 = abs(mid - analogRead( LeftPin));
+        if(temp2 > _noise){
+            _val = (temp2-_noise)/float(mid) * 255;
+            _hue = _val/255.0 * 65;
+        }
+        L1[NUM_LEDS/4-1] = CHSV( _hue-gHue2, _sat, _val*_val/255);
+        L2[0] = L1[NUM_LEDS/4-1];
     }
-    uint16_t mid = 1800, _noise = 180;
-    uint8_t _hue = 0, _sat = 255, _val = 0;
-    int temp1 = abs(mid - analogRead( RightPin));
-    if(temp1 > _noise){
-        _val = (temp1-_noise)/float(mid) * 255;
-        _hue = _val/255.0 * 65;
-    }
-    R2[0] = CHSV( _hue+gHue1, _sat, _val);
-    R1[NUM_LEDS/4] = R2[0];
-    L1[NUM_LEDS/4] = R2[0];
-    L2[0] = L1[NUM_LEDS/4];
-    
-    // _hue = 0; _val = 0;
-    // int temp2 = abs(mid - analogRead( LeftPin));
-    // if(temp2 > _noise){
-        // _val = (temp2-_noise)/float(mid) * 255;
-        // _hue = _val/255.0 * 65;
-    // }
-    // L1[NUM_LEDS/4] = CHSV( _hue+gHue2, _sat, _val);
-    // L2[0] = L1[NUM_LEDS/4];
-    
+#ifdef debug
+    _serial_.println("Ending audioLight");
+#endif
 }
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
 void nextPattern(){
-    if(music)
-        gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns1 );
-    else
-        gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns );
-}
+    uint8_t temp = 0;
+    if(music) temp = ARRAY_SIZE( audioPatterns );
+    else      temp = ARRAY_SIZE( autoPatterns );
+    gCurrentPatternNumber = (gCurrentPatternNumber + 1) % temp;
+} // advance to the next pattern
+
+void previousPattern(){
+    uint8_t temp = 0;
+    if(music) temp = ARRAY_SIZE( audioPatterns );
+    else      temp = ARRAY_SIZE( autoPatterns );
+    gCurrentPatternNumber = (gCurrentPatternNumber + (temp-1)) % temp;
+} // advance to the previous pattern
 
 void rainbow() {
     // FastLED's built-in rainbow generator
-    fill_rainbow( LEFT , NUM_LEDS/2, gHue2);
     fill_rainbow( RIGHT, NUM_LEDS/2, gHue1);
-}
+    fill_rainbow( LEFT , NUM_LEDS/2, gHue2);
+} // rainbow
 
 void rainbowWithGlitter() {
     // built-in FastLED rainbow, plus some random sparkly glitter
     rainbow();
     addGlitter();
-}
+} // rainbow with glitter
+
+void rainbow_scaling(){
+    for(int i = 0; i <= NUM_LEDS/4; i++){
+        R1[i] = CHSV((millis()/77*i+1)%255 + gHue1, 255, 255);
+        R2[NUM_LEDS/4-i] = R1[i];
+        L1[i] = CHSV((millis()/73*i+1)%255 - gHue2, 255, 255);
+        L2[NUM_LEDS/4-i] = L1[i];
+    }
+} // rainbow scaling
 
 void addGlitter() {
-    if( random8() < 80) {
-        leds[ random16(NUM_LEDS) ] += CRGB::White;
+    EVERY_N_MILLISECONDS(1000/30){
+        if( random8() < 80) {
+            leds[ random16(NUM_LEDS) ] += CRGB::White;
+        }
     }
 }
 
 void confetti() 
-{
-    // random colored speckles that blink in and fade smoothly
+{    // random colored speckles that blink in and fade smoothly
     EVERY_N_MILLISECONDS(1000/30){
-        fadeToBlackBy( leds, NUM_LEDS, 50);
+        fadeToBlackBy( leds, NUM_LEDS, 30);
         int pos = random16(NUM_LEDS/2);
         // leds[pos] += CHSV( random8(255), 255, 255);
         RIGHT[pos] += CHSV( gHue1 + random8(64), 190+random8(65), 255);
@@ -211,7 +246,7 @@ void confetti()
 void sinelon()
 {
     // a colored dot sweeping back and forth, with fading trails
-    fadeToBlackBy( leds, NUM_LEDS, 10);
+    fadeToBlackBy( leds, NUM_LEDS, 5);
     int pos1 = beatsin16(11, 0, NUM_LEDS/2-1);
     int pos2 = beatsin16(13, 0, NUM_LEDS/2-1);
     int pos3 = beatsin16( 9, 0, NUM_LEDS/2-1);
@@ -223,26 +258,39 @@ void sinelon()
 }
 
 void dot_beat() {
-    uint8_t fadeval = 190;                                        // Trail behind the LED's. Lower => faster fade.
-    uint8_t BPM = 30;
+    uint8_t fadeval = 10;       // Trail behind the LED's. Lower => faster fade.
+    // nscale8(leds, NUM_LEDS, fadeval);    // Fade the entire array. Or for just a few LED's, use  nscale8(&leds[2], 5, fadeval);
+    fadeToBlackBy( leds, NUM_LEDS, fadeval);
 
+    uint8_t BPM, inner, outer, middle;
+    
+    BPM = 33;
 
-    uint8_t inner = beatsin8(BPM, NUM_LEDS/4, NUM_LEDS/4*3);    // Move 1/4 to 3/4
-    uint8_t outer = beatsin8(BPM, 0, NUM_LEDS-1);               // Move entire length
-    uint8_t middle = beatsin8(BPM, NUM_LEDS/3, NUM_LEDS/3*2);   // Move 1/3 to 2/3
+    inner  = beatsin8(BPM, NUM_LEDS/2/4, NUM_LEDS/2/4*3);    // Move 1/4 to 3/4
+    outer  = beatsin8(BPM, 0, NUM_LEDS/2-1);               // Move entire length
+    middle = beatsin8(BPM, NUM_LEDS/2/3, NUM_LEDS/2/3*2);   // Move 1/3 to 2/3
 
-    leds[outer]  = CHSV( gHue1    , 200, 255); // CRGB::Aqua;
-    leds[middle] = CHSV( gHue1+96 , 200, 255); // CRGB::Purple;
-    leds[inner]  = CHSV( gHue1+160, 200, 255); // CRGB::Blue;
+    LEFT[outer]  = CHSV( gHue1    , 200, 255);
+    LEFT[middle] = CHSV( gHue1+96 , 200, 255);
+    LEFT[inner]  = CHSV( gHue1+160, 200, 255);
 
-    nscale8(leds,NUM_LEDS,fadeval);                             // Fade the entire array. Or for just a few LED's, use  nscale8(&leds[2], 5, fadeval);
+    BPM = 31;
+    
+    inner  = beatsin8(BPM, NUM_LEDS/2/4, NUM_LEDS/2/4*3);    // Move 1/4 to 3/4
+    outer  = beatsin8(BPM, 0, NUM_LEDS/2-1);               // Move entire length
+    middle = beatsin8(BPM, NUM_LEDS/2/3, NUM_LEDS/2/3*2);   // Move 1/3 to 2/3
+
+    RIGHT[outer]  = CHSV( gHue2    , 200, 255);
+    RIGHT[middle] = CHSV( gHue2+96 , 200, 255);
+    RIGHT[inner]  = CHSV( gHue2+160, 200, 255);
+
 } // dot_beat()
 
 void juggle() {
     // eight colored dots, weaving in and out of sync with each other
-    fadeToBlackBy( leds, NUM_LEDS, 15);
+    fadeToBlackBy( leds, NUM_LEDS, 5);
     byte dothue1 = 0, dothue2 = 0;
-    for( int i = 0; i < 8; i++) {
+    for( int i = 0; i < 6; i++) {
         RIGHT[beatsin16(i+7,0,NUM_LEDS/2-1)] |= CHSV(dothue1, 200, 255);
         LEFT [beatsin16(i+5,0,NUM_LEDS/2-1)] |= CHSV(dothue2, 200, 255);
         dothue1 += 32;
@@ -265,152 +313,298 @@ void bpm()
     }
 }
 
-uint8_t _x[NUM_LEDS/2], _y[NUM_LEDS/2]; // x/y coordinates for noise function
+void blendwave() {
+    CRGB clr1, clr2;
+    uint8_t speed, loc1;
+
+    speed = beatsin8(6,0,255);
+
+    clr1 = blend(CHSV(beatsin8(3,0,255),255,255), CHSV(beatsin8(4,0,255),255,255), speed);
+    clr2 = blend(CHSV(beatsin8(4,0,255),255,255), CHSV(beatsin8(3,0,255),255,255), speed);
+    loc1 = beatsin8(13,0,NUM_LEDS/2-1);
+
+    fill_gradient_RGB(LEFT, 0, clr2, loc1, clr1);
+    fill_gradient_RGB(LEFT, loc1, clr2, NUM_LEDS/2-1, clr1);
+    
+    speed = beatsin8(7,0,255);
+
+    clr1 = blend(CHSV(beatsin8(4,0,255),255,255), CHSV(beatsin8(5,0,255),255,255), speed);
+    clr2 = blend(CHSV(beatsin8(5,0,255),255,255), CHSV(beatsin8(4,0,255),255,255), speed);
+    loc1 = beatsin8(11,0,NUM_LEDS/2-1);
+
+    fill_gradient_RGB(RIGHT, 0, clr2, loc1, clr1);
+    fill_gradient_RGB(RIGHT, loc1, clr2, NUM_LEDS/2-1, clr1);
+} // blendwave()
+
+uint8_t _xhue[NUM_LEDS/2], _yhue[NUM_LEDS/2]; // x/y coordinates for noise function
+uint8_t _xsat[NUM_LEDS/2], _ysat[NUM_LEDS/2]; // x/y coordinates for noise function
 void setupNoise(){
     for (uint16_t i = 0; i < NUM_LEDS/2; i++) {       // precalculate the lookup-tables:
         uint8_t angle = (i * 256) / NUM_LEDS/2;         // on which position on the circle is the led?
-        _x[i] = cos8( angle );                         // corrsponding x position in the matrix
-        _y[i] = sin8( angle );                         // corrsponding y position in the matrix
+        _xhue[i] = cos8( angle );                         // corrsponding x position in the matrix
+        _yhue[i] = sin8( angle );                         // corrsponding y position in the matrix
+        _xsat[i] = _yhue[i];                         // corrsponding x position in the matrix
+        _ysat[i] = _xhue[i];                         // corrsponding y position in the matrix
     }
 }
 
 int scale = 1000;                               // the "zoom factor" for the noise
 void noise1() {
-    
+    uint8_t _noise, _hue, _sat, _val;
+    uint16_t shift_x, shift_y;
+    uint32_t real_x, real_y;
+
     for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
 
-        uint16_t shift_x = beatsin8(3);                  // the x position of the noise field swings @ 17 bpm
-        uint16_t shift_y = millis() / 100;                // the y position becomes slowly incremented
+        shift_x = beatsin8(3);                  // the x position of the noise field swings @ 17 bpm
+        shift_y = millis() / 100;                // the y position becomes slowly incremented
 
-        uint32_t real_x = (_x[i] + shift_x) * scale;       // calculate the coordinates within the noise field
-        uint32_t real_y = (_y[i] + shift_y) * scale;       // based on the precalculated positions
+        real_x = (_xhue[i] + shift_x) * scale;       // calculate the coordinates within the noise field
+        real_y = (_yhue[i] + shift_y) * scale;       // based on the precalculated positions
 
-        uint8_t _noise = inoise16(real_x, real_y, 4223) >> 8;           // get the noise data and scale it down
+        _noise = inoise16(real_x, real_y, 4223) >> 8;           // get the noise data and scale it down
+        
+        _hue = _noise * 3;                        // map led color based on noise data
+        _sat = 255;
+        _val = _noise;
 
-        uint8_t index = _noise * 3;                        // map led color based on noise data
-        uint8_t bri   = _noise;
+        LEFT[i] = CHSV( _hue, _sat, _val);
+        
+        shift_x = beatsin8(4);                  // the x position of the noise field swings @ 17 bpm
+        shift_y = millis() / 100;                // the y position becomes slowly incremented
 
-        CRGB color = CHSV( index, 255, bri);
-        LEFT[i] = color;
-    }
-    for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
+        real_x = (_xhue[i] + shift_x) * scale;       // calculate the coordinates within the noise field
+        real_y = (_yhue[i] + shift_y) * scale;       // based on the precalculated positions
 
-        uint16_t shift_x = beatsin8(4);                  // the x position of the noise field swings @ 17 bpm
-        uint16_t shift_y = millis() / 100;                // the y position becomes slowly incremented
+        _noise = inoise16(real_x, real_y, 4223) >> 8;           // get the noise data and scale it down
+        
+        _hue = _noise * 3;                        // map led color based on noise data
+        _sat = 255;
+        _val = _noise;
 
-        uint32_t real_x = (_x[i] + shift_x) * scale;       // calculate the coordinates within the noise field
-        uint32_t real_y = (_y[i] + shift_y) * scale;       // based on the precalculated positions
-
-        uint8_t _noise = inoise16(real_x, real_y, 4223) >> 8;           // get the noise data and scale it down
-
-        uint8_t index = _noise * 3;                        // map led color based on noise data
-        uint8_t bri   = _noise;
-
-        CRGB color = CHSV( index, 255, bri);
-        RIGHT[i] = color;
+        RIGHT[i] = CHSV( _hue, _sat, _val);
     }
 }
 
 // just moving along one axis = "lavalamp effect"
 void noise2() {
 
+    uint8_t _noise, _hue, _sat, _val;
+    uint16_t shift_x, shift_y;
+    uint32_t real_x, real_y;
+
     for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
 
-        uint16_t shift_x = millis() / 47;                 // x as a function of time
-        uint16_t shift_y = 0;
+        shift_x = millis() / 47;                 // x as a function of time
+        shift_y = 0;
 
-        uint32_t real_x = (_x[i] + shift_x) * scale;       // calculate the coordinates within the noise field
-        uint32_t real_y = (_y[i] + shift_y) * scale;       // based on the precalculated positions
+        real_x = (_xhue[i] + shift_x) * scale;       // calculate the coordinates within the noise field
+        real_y = (_yhue[i] + shift_y) * scale;       // based on the precalculated positions
 
-        uint8_t _noise = inoise16(real_x, real_y, 4223) >> 8;           // get the noise data and scale it down
+        _noise = inoise16(real_x, real_y, 4223) >> 8;           // get the noise data and scale it down
+        
+        _hue = _noise * 3;                        // map led color based on noise data
+        _sat = 255;
+        _val = _noise;
 
-        uint8_t index = _noise * 3;                        // map led color based on noise data
-        uint8_t bri   = _noise;
+        LEFT[i] = CHSV( _hue, _sat, _val);
 
-        CRGB color = CHSV( index, 255, bri);
-        LEFT[i] = color;
-    }
-    for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
+        shift_x = millis() / 51;                 // x as a function of time
+        shift_y = 0;
 
-        uint16_t shift_x = millis() / 51;                 // x as a function of time
-        uint16_t shift_y = 0;
+        real_x = (_xhue[i] + shift_x) * scale;       // calculate the coordinates within the noise field
+        real_y = (_yhue[i] + shift_y) * scale;       // based on the precalculated positions
 
-        uint32_t real_x = (_x[i] + shift_x) * scale;       // calculate the coordinates within the noise field
-        uint32_t real_y = (_y[i] + shift_y) * scale;       // based on the precalculated positions
+        _noise = inoise16(real_x, real_y, 4223) >> 8;           // get the noise data and scale it down
 
-        uint8_t _noise = inoise16(real_x, real_y, 4223) >> 8;           // get the noise data and scale it down
+        _hue = _noise * 3;                        // map led color based on noise data
+        _sat = 255;
+        _val = _noise;
 
-        uint8_t index = _noise * 3;                        // map led color based on noise data
-        uint8_t bri   = _noise;
-
-        CRGB color = CHSV( index, 255, bri);
-        RIGHT[i] = color;
+        RIGHT[i] = CHSV( _hue, _sat, _val);
     }
 }
 
 // no x/y shifting but scrolling along z
 void noise3() {
 
+    uint8_t _noise, _hue, _sat, _val;
+    uint16_t shift_x, shift_y;
+    uint32_t real_x, real_y, real_z;
+
     for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
 
-        uint16_t shift_x = 0;                             // no movement along x and y
-        uint16_t shift_y = 0;
+        shift_x = 0;                             // no movement along x and y
+        shift_y = 0;
 
-        uint32_t real_x = (_x[i] + shift_x) * scale;       // calculate the coordinates within the noise field
-        uint32_t real_y = (_y[i] + shift_y) * scale;       // based on the precalculated positions
+        real_x = (_xhue[i] + shift_x) * scale;       // calculate the coordinates within the noise field
+        real_y = (_yhue[i] + shift_y) * scale;       // based on the precalculated positions
 
-        uint32_t real_z = millis() * 19;                  // increment z linear
+        real_z = millis() * 19;                  // increment z linear
 
-        uint8_t _noise = inoise16(real_x, real_y, real_z) >> 8;           // get the noise data and scale it down
+        _noise = inoise16(real_x, real_y, real_z) >> 8;           // get the noise data and scale it down
 
-        uint8_t index = _noise * 3;                        // map led color based on noise data
-        uint8_t bri   = _noise;
+        _hue = _noise * 3;                        // map led color based on noise data
+        _sat = 255;
+        _val = _noise;
 
-        CRGB color = CHSV( index, 255, bri);
-        LEFT[i] = color;
-    }
-    for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
+        LEFT[i] = CHSV( _hue, _sat, _val);
 
-        uint16_t shift_x = 0;                             // no movement along x and y
-        uint16_t shift_y = 0;
+        shift_x = 0;                             // no movement along x and y
+        shift_y = 0;
 
-        uint32_t real_x = (_x[i] + shift_x) * scale;       // calculate the coordinates within the noise field
-        uint32_t real_y = (_y[i] + shift_y) * scale;       // based on the precalculated positions
+        real_x = (_xhue[i] + shift_x) * scale;       // calculate the coordinates within the noise field
+        real_y = (_yhue[i] + shift_y) * scale;       // based on the precalculated positions
 
-        uint32_t real_z = millis() * 23;                  // increment z linear
+        real_z = millis() * 23;                  // increment z linear
 
-        uint8_t _noise = inoise16(real_x, real_y, real_z) >> 8;           // get the noise data and scale it down
+        _noise = inoise16(real_x, real_y, real_z) >> 8;           // get the noise data and scale it down
 
-        uint8_t index = _noise * 3;                        // map led color based on noise data
-        uint8_t bri   = _noise;
+        _hue = _noise * 3;                        // map led color based on noise data
+        _sat = 255;
+        _val = _noise;
 
-        CRGB color = CHSV( index, 255, bri);
-        RIGHT[i] = color;
+        RIGHT[i] = CHSV( _hue, _sat, _val);
     }
 }
 
-//////// MIDI stuff ////////
+uint8_t fadeval = 235, frameRate = 45;
+void fire(){ // my own 'fire' code - randomly generate color and move it up the strip while fading
+    EVERY_N_MILLISECONDS(1000/frameRate){
+        for(int i = 0; i < NUM_LEDS/4; i++){
+            R1[i] = R1[i+1].nscale8(fadeval); if(R1[i].g > 0) R1[i].g--;
+            R2[NUM_LEDS/4-i] = R1[i];
+            L1[i] = R1[i+1].nscale8(fadeval); if(L1[i].g > 0) L1[i].g--;
+            L2[NUM_LEDS/4-i] = L1[i];
+        }
+        uint8_t _hue = 0, _sat = 255, _val = 0;
+        _val = random(0, 255);
+        _sat = 255 - (_val/255.0 * 45);
+        _hue = _val/255.0 *_val/255.0 * 55;
+        R1[NUM_LEDS/4-1] = CHSV( _hue, _sat, _val*_val/255);
+        R2[0] = R1[NUM_LEDS/4-1];
+        
+        _val = random(0, 255);
+        _sat = 255 - (_val/255.0 * 45);
+        _hue = _val/255.0 *_val/255.0 * 55;
+        L1[NUM_LEDS/4-1] = CHSV( _hue, _sat, _val*_val/255);
+        L2[0] = L1[NUM_LEDS/4-1];
+    }
+}
 
-CRGB lastPressed;             // holder for last-detected key color
+void fireSparks(){ // randomly generate color and move it up the strip while fading, plus some yellow 'sparkles'
+    EVERY_N_MILLISECONDS(1000/frameRate){
+        for(int i = 0; i < NUM_LEDS/4; i++){
+            R1[i] = R1[i+1].nscale8(fadeval); if(R1[i].g > 0) R1[i].g--;
+            R2[NUM_LEDS/4-i] = R1[i];
+            L1[i] = R1[i+1].nscale8(fadeval); if(L1[i].g > 0) L1[i].g--;
+            L2[NUM_LEDS/4-i] = L1[i];
+        }
+        uint8_t _hue = 0, _sat = 255, _val = 0;
+        _val = random(0, 255);
+        _sat = 255 - (_val/255.0 * 45);
+        _hue = _val/255.0 *_val/255.0 * 55;
+        R1[NUM_LEDS/4-1] = CHSV( _hue, _sat, _val*_val/255);
+        R2[0] = R1[NUM_LEDS/4-1];
+        
+        _val = random(0, 255);
+        _sat = 255 - (_val/255.0 * 45);
+        _hue = _val/255.0 *_val/255.0 * 55;
+        L1[NUM_LEDS/4-1] = CHSV( _hue, _sat, _val*_val/255);
+        L2[0] = L1[NUM_LEDS/4-1];
+        EVERY_N_MILLISECONDS(1000/10){
+            CRGB spark = CRGB::Yellow;
+            if( random8() < 80)
+                R1[NUM_LEDS/4-1-random8(NUM_LEDS/8)] = spark;
+            if( random8() < 80)
+                R2[random8(NUM_LEDS/8)]              = spark;
+            if( random8() < 80)
+                L1[NUM_LEDS/4-1-random8(NUM_LEDS/8)] = spark;
+            if( random8() < 80)
+                L2[random8(NUM_LEDS/8)]              = spark;
+        }
+    }
+}
+
+void fireRainbow(){ // same as fire, but with color cycling
+    EVERY_N_MILLISECONDS(1000/frameRate){
+        for(int i = 0; i < NUM_LEDS/4; i++){
+            R1[i] = R1[i+1].nscale8(fadeval);
+            R2[NUM_LEDS/4-i] = R1[i];
+            L1[i] = R1[i+1].nscale8(fadeval);
+            L2[NUM_LEDS/4-i] = L1[i];
+        }
+        uint8_t _hue = 0, _sat = 255, _val = 0;
+        _val = random(0, 255);
+        _sat = 255 - (_val/255.0 * 45);
+        _hue = _val/255.0 *_val/255.0 * 55;
+        R1[NUM_LEDS/4-1] = CHSV( _hue+gHue1, _sat, _val*_val/255);
+        R2[0] = R1[NUM_LEDS/4-1];
+        
+        _val = random(0, 255);
+        _sat = 255 - (_val/255.0 * 45);
+        _hue = _val/255.0 *_val/255.0 * 55;
+        L1[NUM_LEDS/4-1] = CHSV( _hue-gHue2, _sat, _val*_val/255);
+        L2[0] = L1[NUM_LEDS/4-1];
+    }
+}
+
+uint8_t blurval = 150;
+void ripple_blur(){ // randomly drop a light somewhere and blur it using blur1d
+    EVERY_N_MILLISECONDS(1000/30){
+        blur1d( leds(0         , NUM_LEDS/2-1), NUM_LEDS/2, blurval);
+        blur1d( leds(NUM_LEDS/2, NUM_LEDS    ), NUM_LEDS/2, blurval);
+    }
+    EVERY_N_MILLISECONDS(30){
+        if( random8() < 15) {
+            uint8_t pos = random(NUM_LEDS/2);
+            LEFT [pos] = CHSV(random(0, 64)+gHue1, random(250, 255), 255);
+        }
+        if( random8() < 15) {
+            uint8_t pos = random(NUM_LEDS/2);
+            RIGHT [pos] = CHSV(random(0, 64)-gHue2, random(250, 255), 255);
+        }
+    }
+}
+
+//////// MIDI stuff
+
+CRGB lastPressed;  // holder for last-detected key color
 
 void runLED(){
     EVERY_N_MILLISECONDS(50){ _hue++; gHue1++; gHue2--;}
     EVERY_N_MILLISECONDS(20){ 
-        fadeToBlackBy( leds, NUM_LEDS, 10); // ( sustain ? 3 : 10) );
+        // fadeToBlackBy( leds, NUM_LEDS, 10); // ( sustain ? 3 : 10) );
+        nscale8( leds, NUM_LEDS, 240); // ( sustain ? 3 : 10) );
     }
+    // if(MidiEventReceived)
     MIDI2LED();
+    FastLED.show();
     yield();
 }
 
 void MIDI2LED(){
-    uint8_t _pos = MIDIdata[1]/127.0 * (NUM_LEDS-1); // map note to position
-    uint8_t _col = MIDIdata[1]/127.0 * 224; // map note to color
+    // MIDI note values 0 - 127 
+    // 36-96 (for 61-key) mapped to LED 0-60
+    // Serial.println(pitch);
+    // int temp = map(pitch, 36, 96, 0, NUM_LEDS-1);
     
+    // if(temp < 0)
+        // temp = -temp;                   // if note goes above 60 or below 0
+    // else if(temp > NUM_LEDS)                  //      reverse it
+        // temp = NUM_LEDS - (temp%NUM_LEDS);
+    
+    // uint8_t _pitch = map(temp, 0, NUM_LEDS, 0, 224); // map note to color 'hue'
+    uint8_t _pos = MIDIdata[1]/127.0 * (NUM_LEDS/2-1); // map note to position
+    uint8_t _col = MIDIdata[1]/127.0 * 224; // map note to position
+    
+    // uint8_t _pos = map(temp, 0, NUM_LEDS, 0, NUM_LEDS-1);
     // assign color based on note position and intensity (velocity)
-    leds[_pos] = CHSV(_col + _hue, 255 - (MIDIdata[2]/2.0), MIDIdata[2]/127.0 * 255);
+    RIGHT[_pos] = CHSV(_col + _hue, 255 - (MIDIdata[2]/2.0), MIDIdata[2]/127.0 * 255);
+    LEFT [_pos] = RIGHT[_pos];
     if(MIDIdata[2] > 0 && millis()%2 == 0)
         MIDIdata[2]--;
-    lastPressed = leds[_pos]; // remember last-detected note color
+    lastPressed = RIGHT[_pos]; // remember last-detected note color
     // MidiEventReceived = false;
 }
 
@@ -418,14 +612,14 @@ void handleNoteOn(byte channel, byte pitch, byte velocity) {
     MIDIdata[0] = channel;
     MIDIdata[1] = pitch;
     MIDIdata[2] = velocity;
-    // MidiEventReceived = true;
+    MidiEventReceived = true;
 }
 
 void handleNoteOff(byte channel, byte pitch, byte velocity) {
     MIDIdata[0] = channel;
     MIDIdata[1] = pitch;
     MIDIdata[2] = velocity;
-    // MidiEventReceived = true;
+    MidiEventReceived = true;
 }
 
 void handlePitchBend(byte channel, int bend) {
@@ -450,4 +644,46 @@ void handleControlChange(byte channel, byte number, byte value){
         }
     }
     yield();
+}
+
+void drawClock(){
+    if(timeStatus() == timeNotSet){
+        timeLoop();
+        if(WSdata.startsWith("prev"))
+            previousPattern();
+        else
+            nextPattern();
+    }else{
+        nscale8( leds, NUM_LEDS, 200);
+        int sec = 60000-millis()%60000;
+        double secPos = sec/60000.0 * NUM_LEDS/2;
+        int min = (60*60)-getTime()%(60*60);  // had to create a getTime() because now() clashed with MIDI library
+        double minPos = min/(60.0*60.0) * NUM_LEDS/2;
+        int _hour = (60*60*12)-getTime()%(60*60*12);
+        double hourPos = _hour/(60.0*60.0*12.0) * NUM_LEDS/2;
+        
+        for(int i = 0; i < NUM_LEDS/2; i++){
+            int _pos = (i+NUM_LEDS/4)%(NUM_LEDS/2);
+            double a, b, c, y, w = 0.4;
+            int bri = 255;
+            a = i-secPos;              a = -w*a*a; // main pulse (seconds)
+            b = i-secPos-NUM_LEDS/2.0; b = -w*b*b; // prev pulse
+            c = i-secPos+NUM_LEDS/2.0; c = -w*c*c; // next pulse
+            y = pow(2, a)+pow(2, b)+pow(2, c);     // sum
+            RIGHT[_pos] |= CHSV(160, 255, bri*y);
+            a = i-minPos;              a = -w*a*a; // main pulse (minutes)
+            b = i-minPos-NUM_LEDS/2.0; b = -w*b*b; // prev pulse
+            c = i-minPos+NUM_LEDS/2.0; c = -w*c*c; // next pulse
+            y = pow(2, a)+pow(2, b)+pow(2, c);     // sum
+            RIGHT[_pos] |= CHSV( 96, 255, bri*y);
+            a = i-hourPos;              a = -w*a*a; // main pulse (hours)
+            b = i-hourPos-NUM_LEDS/2.0; b = -w*b*b; // prev pulse
+            c = i-hourPos+NUM_LEDS/2.0; c = -w*c*c; // next pulse
+            y = pow(2, a)+pow(2, b)+pow(2, c);      // sum
+            RIGHT[_pos] |= CHSV(  0, 255, bri*y);
+        }
+        
+        int x = beatsin8(60, NUM_LEDS/2/3, NUM_LEDS/2/3*2);
+        LEFT[x] |= 0x444444;
+    }
 }

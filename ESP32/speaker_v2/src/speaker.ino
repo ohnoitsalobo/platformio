@@ -6,6 +6,8 @@
 #include <TelnetStream.h>
 #include <FS.h>
 #include <SPIFFS.h>
+#include <WiFiUdp.h>
+#include <TimeLib.h>
 
 #define _serial_ Serial_1
 
@@ -16,6 +18,7 @@
 HardwareSerial Serial_1(2);
 
 bool music = 1;
+String WSdata = "";
 
 #define APPLEMIDI_INITIATOR
 #include <AppleMIDI.h>
@@ -166,4 +169,11 @@ void OnAppleMidiError(const ssrc_t& ssrc, int32_t err) {
     // Serial.println(velocity);
 // }
 
+static const char ntpServerName[] = "us.pool.ntp.org";
+const double timeZone = 5.5; // IST
 
+WiFiUDP Udp;
+unsigned int localPort = 8888;  // local port to listen for UDP packets
+
+time_t getNtpTime();
+void sendNTPpacket(IPAddress &address);

@@ -6,12 +6,19 @@
 #include <TelnetStream.h>
 #include <FS.h>
 #include <SPIFFS.h>
+#include <WiFiUdp.h>
+#include <TimeLib.h>
 
 #define _serial_ Serial
 
 #define NUMBER_OF_LEDS 144
 
+// #define debug 1
+
+HardwareSerial Serial_1(2);
+
 bool music = 1;
+String WSdata = "";
 
 #define APPLEMIDI_INITIATOR
 #include <AppleMIDI.h>
@@ -30,7 +37,10 @@ APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI, "ledstrip", DEFAULT_CONTROL_PORT);
 
 void setup(){
 
-    Serial.begin(115200); pinMode(2, OUTPUT);
+    pinMode(2, OUTPUT);
+    
+    Serial.begin(115200);
+    // Serial_1.begin(115200);
 
     setupWiFi();
     
@@ -39,35 +49,43 @@ void setup(){
     ledSetup();
     
     MIDIsetup();
+
+    TelnetStream.begin();
     
-    // TelnetStream.begin();
+    // _serial_.print("\nCPU is running at ");
+    // _serial_.print(getCpuFrequencyMhz());
+    // _serial_.print(" MHz\n\n");
     
 }
 
 void loop(){
+#ifdef debug
+    _serial_.println("Starting loop");
+#endif
     // long now = micros();
-
-    wifiLoop();
-
-    MIDIloop();
     
+    wifiLoop();
+    
+    MIDIloop();
+
     ledLoop();
     
-    // if(millis()%500 > 450){
-        // long t = micros() - now;
-        // _serial_.print("Loop time : ");
-        // _serial_.print(t);
-        // _serial_.print(" us (");
-        // _serial_.print(1000000.0/t);
-        // _serial_.print("Hz)\t\r");
-    // }
+// if(millis()%500 > 450){
+    // long t = micros() - now;
+    // _serial_.print("Loop time : ");
+    // _serial_.print(t);
+    // _serial_.print(" us (");
+    // _serial_.print(1000000.0/t);
+    // _serial_.print("Hz)\t\r");
+// }
+#ifdef debug
+    _serial_.println("Ending loop");
+#endif
 }
 
+
 void MIDIsetup(){
-    // for(int i = 0; i < 16; i++){
-        // MIDI.begin(i+1);
-    // }
-    MIDI.begin(1);
+    MIDI.begin(1); // listen on channel 1
     AppleMIDI.setHandleConnected(OnAppleMidiConnected);
     AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
     AppleMIDI.setHandleError(OnAppleMidiError);
@@ -99,8 +117,8 @@ bool MIDIconnected(){
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
     isConnected = true;
-    _serial_.print(F("Connected to session "));
-    _serial_.println(name);
+    Serial.print(F("Connected to session "));
+    Serial.println(name);
 }
 
 // -----------------------------------------------------------------------------
@@ -108,21 +126,21 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
     isConnected = false;
-    _serial_.println(F("Disconnected"));
+    Serial.println(F("Disconnected"));
 }
 
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
 void OnAppleMidiError(const ssrc_t& ssrc, int32_t err) {
-    _serial_.print  (F("Exception "));
-    _serial_.print  (err);
-    _serial_.print  (F(" from ssrc 0x"));
-    _serial_.println(ssrc, HEX);
+    Serial.print  (F("Exception "));
+    Serial.print  (err);
+    Serial.print  (F(" from ssrc 0x"));
+    Serial.println(ssrc, HEX);
 
     switch (err){
         case Exception::NoResponseFromConnectionRequestException:
-            _serial_.println(F("xxx:yyy did't respond to the connection request. Check the address and port, and any firewall or router settings. (time)"));
+            Serial.println(F("xxx:yyy did't respond to the connection request. Check the address and port, and any firewall or router settings. (time)"));
         break;
         }
     }
@@ -131,23 +149,31 @@ void OnAppleMidiError(const ssrc_t& ssrc, int32_t err) {
 // 
 // -----------------------------------------------------------------------------
 // static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
-    // _serial_.print(F("Incoming NoteOn  from channel: "));
-    // _serial_.print(channel);
-    // _serial_.print(F(", note: "));
-    // _serial_.print(note);
-    // _serial_.print(F(", velocity: "));
-    // _serial_.println(velocity);
+    // Serial.print(F("Incoming NoteOn  from channel: "));
+    // Serial.print(channel);
+    // Serial.print(F(", note: "));
+    // Serial.print(note);
+    // Serial.print(F(", velocity: "));
+    // Serial.println(velocity);
 // }
 
 // -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
 // static void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
-    // _serial_.print(F("Incoming NoteOff from channel: "));
-    // _serial_.print(channel);
-    // _serial_.print(F(", note: "));
-    // _serial_.print(note);
-    // _serial_.print(F(", velocity: "));
-    // _serial_.println(velocity);
+    // Serial.print(F("Incoming NoteOff from channel: "));
+    // Serial.print(channel);
+    // Serial.print(F(", note: "));
+    // Serial.print(note);
+    // Serial.print(F(", velocity: "));
+    // Serial.println(velocity);
 // }
 
+static const char ntpServerName[] = "us.pool.ntp.org";
+const double timeZone = 5.5; // IST
+
+WiFiUDP Udp;
+unsigned int localPort = 8888;  // local port to listen for UDP packets
+
+time_t getNtpTime();
+void sendNTPpacket(IPAddress &address);

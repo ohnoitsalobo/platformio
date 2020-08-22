@@ -26,10 +26,10 @@ uint8_t currentBrightness = BRIGHTNESS, _setBrightness = BRIGHTNESS;
 CRGB manualColor = 0x000000, manualColor_L = 0x000000, manualColor_R = 0x000000;
 CHSV manualHSV (0, 255, 255);
 uint8_t gHue = 0, gHue1 = 0, gHue2 = 0; // rotating "base color" used by many of the patterns
-#include "Pacifica.h"
+#include "pacifica.h"
 
 typedef void (*SimplePatternList[])();
-SimplePatternList autoPatterns = { rainbow, rainbowWithGlitter, rainbow_scaling, fire, fireSparks, fireRainbow, noise1, noise2, noise3, pacifica_loop, blendwave, confetti, ripple_blur, sinelon, dot_beat, juggle };
+SimplePatternList autoPatterns = { drawClock, rainbow, rainbowWithGlitter, rainbow_scaling, fire, fireSparks, fireRainbow, noise1, noise2, noise3, pacifica_loop, blendwave, confetti, ripple_blur, sinelon, dot_beat, juggle };
 SimplePatternList audioPatterns = { audio_spectrum, audioLight };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
@@ -39,6 +39,7 @@ uint8_t eq[2][samples/2-2];
 void ledSetup(){
     FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness(currentBrightness);
+    FastLED.setDither(0);
     FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
     
     for(int i = 0; i < samples/2-2; i++){
@@ -78,7 +79,7 @@ void ledLoop(){
             }
         }
         else if(_auto){
-            EVERY_N_MILLISECONDS( 35 ) { gHue1++; }
+            EVERY_N_MILLISECONDS( 41 ) { gHue1++; }
             EVERY_N_MILLISECONDS( 37 ) { gHue2--; }
             EVERY_N_SECONDS(20){
                 targetPalette = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
@@ -107,7 +108,7 @@ void ledLoop(){
 #endif
 }
 
-void audio_spectrum(){ // 
+void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping them to light spectrum
 #ifdef debug
     _serial_.println("Starting audio_spectrum");
 #endif
@@ -127,8 +128,6 @@ void audio_spectrum(){ //
         uint8_t p = NUM_LEDS/4-pos;
         if(tempRGB1 > R1[pos]){
             R1[pos] = tempRGB1;
-        }else{
-            // R1[pos].nscale8(fadeval);
         }
         R2[p] = R1[pos];
         eq[0][i-2] = v;
@@ -139,8 +138,6 @@ void audio_spectrum(){ //
         tempRGB2 = CHSV(h, s, v);
         if(tempRGB2 > L1[pos]){
             L1[pos] = tempRGB2;
-        }else{
-            // L1[pos].nscale8(fadeval);
         }
         L2[p] = L1[pos];
         eq[1][i-2] = v;
@@ -151,7 +148,7 @@ void audio_spectrum(){ //
 #endif
 }
 
-void audioLight(){
+void audioLight(){ // directly sampling ADC values mapped to brightness
 #ifdef debug
     _serial_.println("Starting audioLight");
 #endif
@@ -195,26 +192,22 @@ void audioLight(){
 
 void nextPattern(){
     uint8_t temp = 0;
-    if(music)
-        temp = ARRAY_SIZE( audioPatterns );
-    else
-        temp = ARRAY_SIZE( autoPatterns );
+    if(music) temp = ARRAY_SIZE( audioPatterns );
+    else      temp = ARRAY_SIZE( autoPatterns );
     gCurrentPatternNumber = (gCurrentPatternNumber + 1) % temp;
 } // advance to the next pattern
 
 void previousPattern(){
     uint8_t temp = 0;
-    if(music)
-        temp = ARRAY_SIZE( audioPatterns );
-    else
-        temp = ARRAY_SIZE( autoPatterns );
+    if(music) temp = ARRAY_SIZE( audioPatterns );
+    else      temp = ARRAY_SIZE( autoPatterns );
     gCurrentPatternNumber = (gCurrentPatternNumber + (temp-1)) % temp;
-} // advance to the next pattern
+} // advance to the previous pattern
 
 void rainbow() {
     // FastLED's built-in rainbow generator
-    fill_rainbow( LEFT , NUM_LEDS/2, gHue2);
     fill_rainbow( RIGHT, NUM_LEDS/2, gHue1);
+    fill_rainbow( LEFT , NUM_LEDS/2, gHue2);
 } // rainbow
 
 void rainbowWithGlitter() {
@@ -266,8 +259,8 @@ void sinelon()
 }
 
 void dot_beat() {
-    uint8_t fadeval = 10;                                        // Trail behind the LED's. Lower => faster fade.
-    // nscale8(leds, NUM_LEDS, fadeval);                             // Fade the entire array. Or for just a few LED's, use  nscale8(&leds[2], 5, fadeval);
+    uint8_t fadeval = 10;       // Trail behind the LED's. Lower => faster fade.
+    // nscale8(leds, NUM_LEDS, fadeval);    // Fade the entire array. Or for just a few LED's, use  nscale8(&leds[2], 5, fadeval);
     fadeToBlackBy( leds, NUM_LEDS, fadeval);
 
     uint8_t BPM, inner, outer, middle;
@@ -278,9 +271,9 @@ void dot_beat() {
     outer  = beatsin8(BPM, 0, NUM_LEDS/2-1);               // Move entire length
     middle = beatsin8(BPM, NUM_LEDS/2/3, NUM_LEDS/2/3*2);   // Move 1/3 to 2/3
 
-    LEFT[outer]  = CHSV( gHue1    , 200, 255); // CRGB::Aqua;
-    LEFT[middle] = CHSV( gHue1+96 , 200, 255); // CRGB::Purple;
-    LEFT[inner]  = CHSV( gHue1+160, 200, 255); // CRGB::Blue;
+    LEFT[outer]  = CHSV( gHue1    , 200, 255);
+    LEFT[middle] = CHSV( gHue1+96 , 200, 255);
+    LEFT[inner]  = CHSV( gHue1+160, 200, 255);
 
     BPM = 31;
     
@@ -288,9 +281,9 @@ void dot_beat() {
     outer  = beatsin8(BPM, 0, NUM_LEDS/2-1);               // Move entire length
     middle = beatsin8(BPM, NUM_LEDS/2/3, NUM_LEDS/2/3*2);   // Move 1/3 to 2/3
 
-    RIGHT[outer]  = CHSV( gHue2    , 200, 255); // CRGB::Aqua;
-    RIGHT[middle] = CHSV( gHue2+96 , 200, 255); // CRGB::Purple;
-    RIGHT[inner]  = CHSV( gHue2+160, 200, 255); // CRGB::Blue;
+    RIGHT[outer]  = CHSV( gHue2    , 200, 255);
+    RIGHT[middle] = CHSV( gHue2+96 , 200, 255);
+    RIGHT[inner]  = CHSV( gHue2+160, 200, 255);
 
 } // dot_beat()
 
@@ -477,7 +470,7 @@ void noise3() {
 }
 
 uint8_t fadeval = 200, frameRate = 45;
-void fire(){
+void fire(){ // my own 'fire' code - randomly generate color and move it up the strip while fading
     EVERY_N_MILLISECONDS(1000/frameRate){
         for(int i = 0; i < NUM_LEDS/4; i++){
             R1[NUM_LEDS/4-i] = R1[NUM_LEDS/4-1-i].nscale8(fadeval); if(R1[NUM_LEDS/4-i].g > 0) R1[NUM_LEDS/4-i].g--;
@@ -501,7 +494,7 @@ void fire(){
     }
 }
 
-void fireSparks(){
+void fireSparks(){ // randomly generate color and move it up the strip while fading, plus some yellow 'sparkles'
     EVERY_N_MILLISECONDS(1000/frameRate){
         for(int i = 0; i < NUM_LEDS/4; i++){
             R1[NUM_LEDS/4-i] = R1[NUM_LEDS/4-1-i].nscale8(fadeval); if(R1[NUM_LEDS/4-i].g > 0) R1[NUM_LEDS/4-i].g--;
@@ -522,14 +515,20 @@ void fireSparks(){
         L2[NUM_LEDS/4] = CHSV( _hue, _sat, _val*_val/255);
         L1[0] = L2[NUM_LEDS/4];
         EVERY_N_MILLISECONDS(1000/10){
-            if( random8() < 80) {
-                leds[ random16(NUM_LEDS) ] += CRGB::Yellow;
-            }
+            CRGB spark = CRGB::Yellow;
+            if( random8() < 80)
+                R1[random8(NUM_LEDS/8)]              = spark;
+            if( random8() < 80)
+                R2[NUM_LEDS/4-1-random8(NUM_LEDS/8)] = spark;
+            if( random8() < 80)
+                L1[random8(NUM_LEDS/8)]              = spark;
+            if( random8() < 80)
+                L2[NUM_LEDS/4-1-random8(NUM_LEDS/8)] = spark;
         }
     }
 }
 
-void fireRainbow(){
+void fireRainbow(){ // same as fire, but with color cycling
     EVERY_N_MILLISECONDS(1000/frameRate){
         for(int i = 0; i < NUM_LEDS/4; i++){
             R1[NUM_LEDS/4-i] = R1[NUM_LEDS/4-1-i].nscale8(fadeval);
@@ -553,9 +552,8 @@ void fireRainbow(){
 }
 
 uint8_t blurval = 100;
-void ripple_blur(){
-    // nscale8( leds, NUM_LEDS, 250);
-    EVERY_N_MILLISECONDS(15){
+void ripple_blur(){ // randomly drop a light somewhere and blur it using blur1d
+    EVERY_N_MILLISECONDS(1000/30){
         blur1d( leds(0         , NUM_LEDS/2-1), NUM_LEDS/2, blurval);
         blur1d( leds(NUM_LEDS/2, NUM_LEDS    ), NUM_LEDS/2, blurval);
     }
@@ -573,7 +571,7 @@ void ripple_blur(){
 
 //////// MIDI stuff
 
-CRGB lastPressed;             // holder for last-detected key color
+CRGB lastPressed;  // holder for last-detected key color
 
 void runLED(){
     EVERY_N_MILLISECONDS(50){ _hue++; gHue1++; gHue2--;}
@@ -649,3 +647,46 @@ void handleControlChange(byte channel, byte number, byte value){
     }
     yield();
 }
+
+
+void drawClock(){
+    if(timeStatus() == timeNotSet){
+        timeLoop();
+        if(WSdata.startsWith("prev"))
+            previousPattern();
+        else
+            nextPattern();
+    }else{
+        nscale8( leds, NUM_LEDS, 200);
+        int sec = millis()%60000;
+        double secPos = sec/60000.0 * NUM_LEDS/2;
+        int min = getTime()%(60*60);  // had to create a getTime() because now() clashed with MIDI library
+        double minPos = min/(60.0*60.0) * NUM_LEDS/2;
+        int _hour = getTime()%(60*60*12);
+        double hourPos = _hour/(60.0*60.0*12.0) * NUM_LEDS/2;
+        
+        for(int i = 0; i < NUM_LEDS/2; i++){
+            double a, b, c, y, w = 2;
+            int bri = 255;
+            a = i+secPos;              a = -w*a*a; // main pulse
+            b = i+secPos-NUM_LEDS/2.0; b = -w*b*b; // prev pulse
+            c = i+secPos+NUM_LEDS/2.0; c = -w*c*c; // next pulse
+            y = pow(2, a)+pow(2, b)+pow(2, c);   // sum
+            RIGHT[(i+NUM_LEDS/4)%(NUM_LEDS/2)] |= CHSV(160, 255, bri*y);
+            a = i+minPos;              a = -w*a*a; // main pulse
+            b = i+minPos-NUM_LEDS/2.0; b = -w*b*b; // prev pulse
+            c = i+minPos+NUM_LEDS/2.0; c = -w*c*c; // next pulse
+            y = pow(2, a)+pow(2, b)+pow(2, c);   // sum
+            RIGHT[(i+NUM_LEDS/4)%(NUM_LEDS/2)] |= CHSV( 96, 255, bri*y);
+            a = i+hourPos;              a = -w*a*a; // main pulse
+            b = i+hourPos-NUM_LEDS/2.0; b = -w*b*b; // prev pulse
+            c = i+hourPos+NUM_LEDS/2.0; c = -w*c*c; // next pulse
+            y = pow(2, a)+pow(2, b)+pow(2, c);    // sum
+            RIGHT[(i+NUM_LEDS/4)%(NUM_LEDS/2)] |= CHSV(  0, 255, bri*y);
+        }
+        
+        int x = beatsin8(60, NUM_LEDS/2/3, NUM_LEDS/2/3*2);
+        LEFT[x] |= 0x444444;
+    }
+}
+

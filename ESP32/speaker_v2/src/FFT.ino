@@ -21,7 +21,7 @@ arduinoFFT RFFT = arduinoFFT(vReal[1], vImag[1], samples, samplingFrequency);
 void fftSetup(){
     sampling_period_us = round(1000000*(1.0/samplingFrequency));
     for (uint16_t i = 2; i < samples/2; i++){
-        spectrum[0][i] = pow((i-2)/(samples/2.0-2), 0.5) * NUMBER_OF_LEDS/4;
+        spectrum[0][i] = pow((i-2)/(samples/2.0-2), 0.5) * NUMBER_OF_LEDS/4; //0.32
         spectrum[1][i] = 0;
         spectrum[2][i] = 0;
 

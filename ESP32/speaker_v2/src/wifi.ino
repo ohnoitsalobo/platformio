@@ -1,7 +1,6 @@
 const char* ssid = "linksys1";
 const char* password = "9182736450";
 
-String WSdata = "";
 File fsUploadFile;
 WebServer server(80); const char* host = "speaker";
 WebSocketsServer webSocket(81);    // create a websocket server on port 81
@@ -55,9 +54,14 @@ void setupOTA(){
             digitalWrite(2, !digitalRead(2));
             _serial_.printf("Progress: %u%%\r", temp);
             if(temp<99){
-                fill_solid (LEFT, map(temp, 0, 99, 0, NUM_LEDS/2), 0x020202);
-                fill_solid (RIGHT, map(temp, 0, 99, 0, NUM_LEDS/2), 0x020202);
-            }else if(temp == 99){
+                // fill_solid (LEFT, map(temp, 0, 99, 0, NUM_LEDS/2), 0x020202);
+                // fill_solid (RIGHT, map(temp, 0, 99, 0, NUM_LEDS/2), 0x020202);
+                int t = map(temp, 0, 99, 0, NUM_LEDS/4);
+                fill_solid( RIGHT(           0, NUM_LEDS/4), t, 0x020202);
+                fill_solid( RIGHT(NUM_LEDS/2-t, NUM_LEDS/2), t, 0x020202);
+                fill_solid( LEFT (           0, NUM_LEDS/4), t, 0x020202);
+                fill_solid( LEFT (NUM_LEDS/2-t, NUM_LEDS/2), t, 0x020202);
+            }else if(temp >= 99){
                 fill_solid (leds, NUM_LEDS, 0x020202);
             }
             FastLED.show();
@@ -111,11 +115,11 @@ void wifiLoop(){
     
     if(WiFi.status() != WL_CONNECTED){
         EVERY_N_SECONDS(10){
+            _serial_.println("Wifi disconnected");
             WiFi.begin(ssid, password);
         }
         if(digitalRead(2))
             digitalWrite(2, LOW);
-            _serial_.println("Wifi disconnected");
     }
     yield();
 #ifdef debug
@@ -345,5 +349,79 @@ void handleSliders(){
             // fill_solid (RIGHT, NUM_LEDS/2, manualColor_R);
         }
     }
-    WSdata = "";
+    // WSdata = "";
+}
+
+//////// TIME //////////
+
+void timeSetup(){
+    Udp.begin(localPort);
+}
+
+void timeLoop(){
+	if(timeStatus() != timeSet){
+        // EVERY_N_SECONDS(30){
+            setSyncProvider(getNtpTime);
+            setSyncInterval(5000);
+        // }
+    }
+}
+
+/*-------- NTP code ----------*/
+
+const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
+byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
+
+time_t getNtpTime()
+{
+    IPAddress ntpServerIP; // NTP server's ip address
+
+    while (Udp.parsePacket() > 0) ; // discard any previously received packets
+    _serial_.println("Transmit NTP Request");
+    // get a random server from the pool
+    WiFi.hostByName(ntpServerName, ntpServerIP);
+    _serial_.print(ntpServerName);
+    _serial_.print(": ");
+    _serial_.println(ntpServerIP);
+    sendNTPpacket(ntpServerIP);
+    uint32_t beginWait = millis();
+    while (millis() - beginWait < 1500) {
+        int size = Udp.parsePacket();
+        if (size >= NTP_PACKET_SIZE) {
+            _serial_.println("Receive NTP Response");
+            Udp.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
+            unsigned long secsSince1900;
+            // convert four bytes starting at location 40 to a long integer
+            secsSince1900 =  (unsigned long)packetBuffer[40] << 24;
+            secsSince1900 |= (unsigned long)packetBuffer[41] << 16;
+            secsSince1900 |= (unsigned long)packetBuffer[42] << 8;
+            secsSince1900 |= (unsigned long)packetBuffer[43];
+            return secsSince1900 - 2208988800UL + timeZone * SECS_PER_HOUR;
+        }
+    }
+    _serial_.println("No NTP Response :-(");
+    return 0; // return 0 if unable to get the time
+}
+
+// send an NTP request to the time server at the given address
+void sendNTPpacket(IPAddress &address)
+{
+    // set all bytes in the buffer to 0
+    memset(packetBuffer, 0, NTP_PACKET_SIZE);
+    // Initialize values needed to form NTP request
+    // (see URL above for details on the packets)
+    packetBuffer[0] = 0b11100011;   // LI, Version, Mode
+    packetBuffer[1] = 0;     // Stratum, or type of clock
+    packetBuffer[2] = 6;     // Polling Interval
+    packetBuffer[3] = 0xEC;  // Peer Clock Precision
+    // 8 bytes of zero for Root Delay & Root Dispersion
+    packetBuffer[12] = 49;
+    packetBuffer[13] = 0x4E;
+    packetBuffer[14] = 49;
+    packetBuffer[15] = 52;
+    // all NTP fields have been given values, now
+    // you can send a packet requesting a timestamp:
+    Udp.beginPacket(address, 123); //NTP requests are to port 123
+    Udp.write(packetBuffer, NTP_PACKET_SIZE);
+    Udp.endPacket();
 }
