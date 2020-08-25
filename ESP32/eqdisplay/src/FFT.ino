@@ -1,5 +1,3 @@
-#include <arduinoFFT.h>
-
 #define LeftPin  36
 #define RightPin 39
 #define samples  512 // must ALWAYS be a power of 2
@@ -7,6 +5,10 @@
 
 #define noise 1500
 #define MAX 50000
+#define max_max MAX
+#define max_min MAX/5
+#define min_max noise
+#define min_min noise/5
 
 unsigned int sampling_period_us;
 unsigned long microseconds;
@@ -18,6 +20,7 @@ double spectrum[3][samples/2];
 arduinoFFT LFFT = arduinoFFT(vReal[0], vImag[0], samples, samplingFrequency);
 arduinoFFT RFFT = arduinoFFT(vReal[1], vImag[1], samples, samplingFrequency);
 
+        // spectrum[0][i] = (log(i-1)/log(samples/2.0-1)) * NUMBER_OF_LEDS/2;
 void fftSetup(){
     sampling_period_us = round(1000000*(1.0/samplingFrequency));
     for (uint16_t i = 2; i < samples/2; i++){
@@ -29,10 +32,13 @@ void fftSetup(){
         // _serial_.print(",");
         // _serial_.print(((i-1) * 1.0 * samplingFrequency) / samples);
         // _serial_.print(",");
+        // _serial_.print((int)spectrum[0][i]);
+        // /*  * /
         // for(uint8_t x = 0; x < 40; x++){
             // _serial_.print((int)(pow((i-2)/(samples/2.0-2), (0.4+x/100.0)) * NUMBER_OF_LEDS/2));
             // _serial_.print(",");
         // }
+        // /*  */
         // _serial_.print("\r\n");
     }
 }

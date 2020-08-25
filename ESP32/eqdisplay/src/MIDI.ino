@@ -1,119 +1,4 @@
-#include <WiFi.h>
-#include <WebServer.h>
-#include <WebSocketsServer.h>
-#include <ESPmDNS.h>
-#include <ArduinoOTA.h>
-#include <TelnetStream.h>
-#include <FS.h>
-#include <SPIFFS.h>
-#include <WiFiUdp.h>
-#include <TimeLib.h>
-
-#define _serial_ Serial_1
-
-#define NUMBER_OF_LEDS 66
-
-// #define debug 1
-
-HardwareSerial Serial_1(2);
-
-bool music = 1;
-bool FFTenable = true;
-String WSdata = "";
-
-#define APPLEMIDI_INITIATOR
-#include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
-// unsigned long t0 = millis();
-bool isConnected = false;
-byte MIDIdata[] = {0, 0, 0};
-uint8_t _hue = 0;             // modifier for key color cycling
-bool sustain = false;         // is sustain pedal on?
-bool MidiEventReceived = false;
-
-// APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE();
-// #define APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE() \
-// APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI, "ESP32", DEFAULT_CONTROL_PORT);
-APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI, "speaker", DEFAULT_CONTROL_PORT);
-
-/////////// DUAL CORE ///////////
-
-TaskHandle_t Task0;
-
-void core0_Task0( void * parameter )
-{
-  for (;;) {
-    long now = micros();
-    
-    if(FFTenable){
-        fftLoop();
-        delay(1);
-    }else{
-        delay(100);
-    }
-    
-if(millis()%500 > 450){
-    long t = micros() - now;
-    _serial_.print("Loop time : ");
-    _serial_.print(t);
-    _serial_.print(" us (");
-    _serial_.print(1000000.0/t);
-    _serial_.print("Hz)\t\r");
-}
-  }
-}
-
-/////////// DUAL CORE ///////////
-
-void setup(){
-
-    pinMode(2, OUTPUT);
-    
-    // Serial.begin(115200);
-    Serial_1.begin(115200);
-
-    setupWiFi();
-    
-    fftSetup();
-    
-    ledSetup();
-    
-    MIDIsetup();
-
-    TelnetStream.begin();
-    
-    // _serial_.print("\nCPU is running at ");
-    // _serial_.print(getCpuFrequencyMhz());
-    // _serial_.print(" MHz\n\n");
-    
-    xTaskCreatePinnedToCore(
-        core0_Task0,    /* Task function. */
-        "core0Task0",   /* name of task. */
-        1000,           /* Stack size of task */
-        NULL,           /* parameter of the task */
-        10,              /* priority of the task */
-        &Task0,         /* Task handle to keep track of created task */
-        0               /* pin task to core 0 */
-    );
-    delay(500);  // needed to start-up task1
-}
-
-void loop(){
-#ifdef debug
-    _serial_.println("Starting loop");
-#endif
-    
-    wifiLoop();
-    
-    MIDIloop();
-
-    ledLoop();
-    
-#ifdef debug
-    _serial_.println("Ending loop");
-#endif
-}
-
 
 void MIDIsetup(){
     MIDI.begin(1); // listen on channel 1
@@ -125,8 +10,8 @@ void MIDIsetup(){
     // MIDI.setHandleNoteOff(handleNoteOff);
 
     // MDNS.begin(AppleMIDI.getName());
-    MDNS.addService("apple-midi", "udp", AppleMIDI.getPort());
-    MDNS.addService("http", "tcp", 80);
+    MDNS.addService(host, "udp", AppleMIDI.getPort());
+    // MDNS.addService("http", "tcp", 80);
     IPAddress remote(192, 168, 1, 4);
     AppleMIDI.sendInvite(remote); // port is 5004 by default
 }
@@ -135,8 +20,79 @@ void MIDIloop(){
     MIDI.read();
 }
 
-bool MIDIconnected(){
-    return isConnected;
+void runLED(){
+    EVERY_N_MILLISECONDS(50){ _hue++; gHue1++; gHue2--;}
+    EVERY_N_MILLISECONDS(20){ 
+        // fadeToBlackBy( leds, NUM_LEDS, 10); // ( sustain ? 3 : 10) );
+        nscale8( leds, NUM_LEDS, 240); // ( sustain ? 3 : 10) );
+    }
+    // if(MidiEventReceived)
+    MIDI2LED();
+    FastLED.show();
+    yield();
+}
+
+void MIDI2LED(){
+    // MIDI note values 0 - 127 
+    // 36-96 (for 61-key) mapped to LED 0-60
+    // Serial.println(pitch);
+    // int temp = map(pitch, 36, 96, 0, NUM_LEDS-1);
+    
+    // if(temp < 0)
+        // temp = -temp;                   // if note goes above 60 or below 0
+    // else if(temp > NUM_LEDS)                  //      reverse it
+        // temp = NUM_LEDS - (temp%NUM_LEDS);
+    
+    // uint8_t _pitch = map(temp, 0, NUM_LEDS, 0, 224); // map note to color 'hue'
+    uint8_t _pos = MIDIdata[1]/127.0 * (NUM_LEDS/2-1); // map note to position
+    uint8_t _col = MIDIdata[1]/127.0 * 224; // map note to position
+    
+    // uint8_t _pos = map(temp, 0, NUM_LEDS, 0, NUM_LEDS-1);
+    // assign color based on note position and intensity (velocity)
+    RIGHT[_pos] = CHSV(_col + _hue, 255 - (MIDIdata[2]/2.0), MIDIdata[2]/127.0 * 255);
+    LEFT [_pos] = RIGHT[_pos];
+    if(MIDIdata[2] > 0 && millis()%2 == 0)
+        MIDIdata[2]--;
+    lastPressed = RIGHT[_pos]; // remember last-detected note color
+    // MidiEventReceived = false;
+}
+
+void handleNoteOn(byte channel, byte pitch, byte velocity) {
+    MIDIdata[0] = channel;
+    MIDIdata[1] = pitch;
+    MIDIdata[2] = velocity;
+    MidiEventReceived = true;
+}
+
+void handleNoteOff(byte channel, byte pitch, byte velocity) {
+    MIDIdata[0] = channel;
+    MIDIdata[1] = pitch;
+    MIDIdata[2] = velocity;
+    MidiEventReceived = true;
+}
+
+void handlePitchBend(byte channel, int bend) {
+    // fill strip with solid color based on pitch bend amount
+    fill_solid(leds, NUM_LEDS, CHSV(map(bend, -8192, 8192, 0, 224), 255, 125)); // 0  8192  16383
+    yield();
+}
+
+void handleControlChange(byte channel, byte number, byte value){
+    // channel 1 = modulation
+    if( number == 1 ){
+        fill_solid( leds, NUM_LEDS, 0x222222 );
+        // fill_rainbow(leds, NUM_LEDS, hue);
+    }
+    // channel 64 = damper / sustain pedal
+    if( number == 64 ){
+        if( value >= 64 ){
+            fill_solid( leds, NUM_LEDS, lastPressed );
+            sustain = true;
+        } else {
+            sustain = false;
+        }
+    }
+    yield();
 }
 
 // ====================================================================================
@@ -147,7 +103,7 @@ bool MIDIconnected(){
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
-    isConnected = true;
+    MIDIconnected = true;
     Serial.print(F("Connected to session "));
     Serial.println(name);
 }
@@ -156,7 +112,7 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
-    isConnected = false;
+    MIDIconnected = false;
     Serial.println(F("Disconnected"));
 }
 
@@ -199,12 +155,3 @@ void OnAppleMidiError(const ssrc_t& ssrc, int32_t err) {
     // Serial.print(F(", velocity: "));
     // Serial.println(velocity);
 // }
-
-static const char ntpServerName[] = "us.pool.ntp.org";
-const double timeZone = 5.5; // IST
-
-WiFiUDP Udp;
-unsigned int localPort = 8888;  // local port to listen for UDP packets
-
-time_t getNtpTime();
-void sendNTPpacket(IPAddress &address);

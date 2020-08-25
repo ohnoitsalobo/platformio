@@ -1,15 +1,16 @@
 #define _serial_ Serial
-// #define debug 1
 #include "headers.h"
 
-// HardwareSerial Serial_1(2);
+// #define debug 1
 
 void setup(){
+#ifdef debug
+    _serial_.println("Starting setup");
+#endif
+    _serial_.begin(115200); pinMode(2, OUTPUT);
+    _serial_.setDebugOutput(true);
 
-    pinMode(2, OUTPUT);
-    Serial.begin(115200);
-
-    setupWiFi();
+    wifiSetup();
     
     fftSetup();
     
@@ -17,13 +18,11 @@ void setup(){
     
     MIDIsetup();
 
-    TelnetStream.begin();
-    
-    // _serial_.print("\nCPU is running at ");
-    // _serial_.print(getCpuFrequencyMhz());
-    // _serial_.print(" MHz\n\n");
-    
     dualCoreInit();
+
+#ifdef debug
+    _serial_.println("Ending setup");
+#endif
 }
 
 void loop(){
@@ -41,4 +40,3 @@ void loop(){
     _serial_.println("Ending loop");
 #endif
 }
-

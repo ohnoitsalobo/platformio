@@ -3,7 +3,7 @@ FASTLED_USING_NAMESPACE
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
 #define LED_PINS    13
-#define NUM_LEDS    NUMBER_OF_LEDS
+// #define NUM_LEDS    NUMBER_OF_LEDS
 #define BRIGHTNESS  255*225/255
 
 CRGBArray<NUM_LEDS> leds;                              // LED array containing all LEDs
@@ -27,7 +27,7 @@ uint8_t gHue = 0, gHue1 = 0, gHue2 = 0; // rotating "base color" used by many of
 #include "pacifica.h"
 
 typedef void (*SimplePatternList[])();
-SimplePatternList autoPatterns = { cylon, drawClock, rainbow, rainbowWithGlitter, rainbow_scaling, fire, fireSparks, fireRainbow, noise1, noise2, noise3, pacifica_loop, blendwave, confetti, ripple_blur, sinelon, dot_beat, juggle };
+SimplePatternList autoPatterns = { drawClock, rainbow, rainbowWithGlitter, rainbow_scaling, fire, fireSparks, fireRainbow, noise1, noise2, noise3, pacifica_loop, blendwave, confetti, ripple_blur, sinelon, dot_beat, juggle };
 SimplePatternList audioPatterns = { audio_spectrum, audioLight };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
@@ -35,8 +35,12 @@ String eqBroadcast = "";
 uint8_t eq[2][samples/2-2];
 
 void ledSetup(){
+#ifdef debug
+    _serial_.println("\tStarting ledSetup");
+#endif
     FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness(currentBrightness);
+    FastLED.setDither(0);
     FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
     
     for(int i = 0; i < samples/2-2; i++){
@@ -46,11 +50,14 @@ void ledSetup(){
     
     setupNoise();
     fill_solid (leds, NUM_LEDS, CRGB::Black);
+#ifdef debug
+    _serial_.println("\tEnding ledSetup");
+#endif
 }
 
 void ledLoop(){
 #ifdef debug
-    _serial_.println("Starting ledLoop");
+    _serial_.println("\tStarting ledLoop");
 #endif
     if(MIDIconnected){
         runLED();
@@ -63,6 +70,23 @@ void ledLoop(){
         if(music){
             audioPatterns[gCurrentPatternNumber]();
             FastLED.show();
+            EVERY_N_MILLISECONDS(20){
+                // if(webSocketConn()){
+                    // eqBroadcast = "E";
+                    // for(uint8_t i = 0; i < samples/2-2; i++){
+                        // eqBroadcast += ",";
+                        // eqBroadcast += String(eq[0][i]);
+                        // if(eq[0][i] != 0) eq[0][i] /= 5.0;
+                    // }
+                    // for(uint8_t i = 0; i < samples/2-2; i++){
+                        // eqBroadcast += ",";
+                        // eqBroadcast += String(eq[1][i]);
+                        // if(eq[1][i] != 0) eq[1][i] /= 5.0;
+                    // }
+                    // wsBroadcast();
+                    // eqBroadcast = "";
+                // }
+            }
         }
         else if(_auto){
             EVERY_N_MILLISECONDS( 41 ) { gHue1++; }
@@ -90,14 +114,12 @@ void ledLoop(){
          if(currentBrightness < _setBrightness) FastLED.setBrightness(++currentBrightness);
     else if(currentBrightness > _setBrightness) FastLED.setBrightness(--currentBrightness);
 #ifdef debug
-    _serial_.println("Ending ledLoop");
+    _serial_.println("\tEnding ledLoop");
 #endif
 }
 
 void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping them to light spectrum
-#ifdef debug
-    _serial_.println("Starting audio_spectrum");
-#endif
+    // fftLoop();
     uint8_t fadeval = 90;
     nscale8(leds, NUM_LEDS, fadeval); // smaller = faster fade
     CRGB tempRGB1, tempRGB2;
@@ -114,6 +136,8 @@ void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping 
         if(tempRGB1 > RIGHT[pos]){
             RIGHT[pos] = tempRGB1;
         }
+        // RIGHT[p] = RIGHT[pos];
+        // eq[0][i-2] = v;
 
         temp2 = spectrum[2][i]/MAX;
         s = 255 - (temp2*30.0);
@@ -122,17 +146,13 @@ void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping 
         if(tempRGB2 > LEFT[pos]){
             LEFT[p] = tempRGB2;
         }
+        // LEFT[p] = LEFT[pos];
+        // eq[1][i-2] = v;
         yield();
     }
-#ifdef debug
-    _serial_.println("Ending audio_spectrum");
-#endif
 }
 
 void audioLight(){ // directly sampling ADC values mapped to brightness
-#ifdef debug
-    _serial_.println("Starting audioLight");
-#endif
     EVERY_N_MILLISECONDS( 55 ) { gHue1++; }
     EVERY_N_MILLISECONDS( 57 ) { gHue2--; }
     EVERY_N_MILLISECONDS( 15 ) {
@@ -162,9 +182,6 @@ void audioLight(){ // directly sampling ADC values mapped to brightness
         L1[NUM_LEDS/4-1] = R1[NUM_LEDS/4-1];
         L2[0] = L1[NUM_LEDS/4-1];
     }
-#ifdef debug
-    _serial_.println("Ending audioLight");
-#endif
 }
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
@@ -488,19 +505,19 @@ void fire(){ // my own simpler 'fire' code - randomly generate fire and move it 
         uint8_t _hue = 0, _sat = 255, _val = 0;
         _val = random(0, 255);
         _sat = 255 - (_val/255.0 * 50);
-        _hue = _val/255.0 *_val/255.0 * 55;
+        _hue = _val/255.0 * 55;
         R1[NUM_LEDS/4-1] = CHSV( _hue, _sat, _val*_val/255);
         _val = random(0, 255);
         _sat = 255 - (_val/255.0 * 50);
-        _hue = _val/255.0 *_val/255.0 * 55;
+        _hue = _val/255.0 * 55;
         R2[0] = CHSV( _hue, _sat, _val*_val/255);
         _val = random(0, 255);
         _sat = 255 - (_val/255.0 * 50);
-        _hue = _val/255.0 *_val/255.0 * 55;
+        _hue = _val/255.0 * 55;
         L1[NUM_LEDS/4-1] = CHSV( _hue, _sat, _val*_val/255);
         _val = random(0, 255);
         _sat = 255 - (_val/255.0 * 50);
-        _hue = _val/255.0 *_val/255.0 * 55;
+        _hue = _val/255.0 * 55;
         L2[0] = CHSV( _hue, _sat, _val*_val/255);
     }
 }
@@ -516,19 +533,19 @@ void fireSparks(){ // randomly generate color and move it up the strip while fad
         uint8_t _hue = 0, _sat = 255, _val = 0;
         _val = random(0, 255);
         _sat = 255 - (_val/255.0 * 50);
-        _hue = _val/255.0 *_val/255.0 * 55;
+        _hue = _val/255.0 * 55;
         R1[NUM_LEDS/4-1] = CHSV( _hue, _sat, _val*_val/255);
         _val = random(0, 255);
         _sat = 255 - (_val/255.0 * 50);
-        _hue = _val/255.0 *_val/255.0 * 55;
+        _hue = _val/255.0 * 55;
         R2[0] = CHSV( _hue, _sat, _val*_val/255);
         _val = random(0, 255);
         _sat = 255 - (_val/255.0 * 50);
-        _hue = _val/255.0 *_val/255.0 * 55;
+        _hue = _val/255.0 * 55;
         L1[NUM_LEDS/4-1] = CHSV( _hue, _sat, _val*_val/255);
         _val = random(0, 255);
         _sat = 255 - (_val/255.0 * 50);
-        _hue = _val/255.0 *_val/255.0 * 55;
+        _hue = _val/255.0 * 55;
         L2[0] = CHSV( _hue, _sat, _val*_val/255);
         EVERY_N_MILLISECONDS(1000/10){
             CRGB spark = CRGB::Yellow;
@@ -555,20 +572,20 @@ void fireRainbow(){ // same as fire, but with color cycling
         uint8_t _hue = 0, _sat = 255, _val = 0;
         _val = random(0, 255);
         _sat = 255 - (_val/255.0 * 50);
-        _hue = _val/255.0 *_val/255.0 * 55;
-        R1[NUM_LEDS/4-1] = CHSV( _hue, _sat, _val*_val/255);
+        _hue = _val/255.0 * 55;
+        R1[NUM_LEDS/4-1] = CHSV( _hue+gHue1, _sat, _val*_val/255);
         _val = random(0, 255);
         _sat = 255 - (_val/255.0 * 50);
-        _hue = _val/255.0 *_val/255.0 * 55;
-        R2[0] = CHSV( _hue, _sat, _val*_val/255);
+        _hue = _val/255.0 * 55;
+        R2[0] = CHSV( _hue+gHue1, _sat, _val*_val/255);
         _val = random(0, 255);
         _sat = 255 - (_val/255.0 * 50);
-        _hue = _val/255.0 *_val/255.0 * 55;
-        L1[NUM_LEDS/4-1] = CHSV( _hue, _sat, _val*_val/255);
+        _hue = _val/255.0 * 55;
+        L1[NUM_LEDS/4-1] = CHSV( _hue+gHue2, _sat, _val*_val/255);
         _val = random(0, 255);
         _sat = 255 - (_val/255.0 * 50);
-        _hue = _val/255.0 *_val/255.0 * 55;
-        L2[0] = CHSV( _hue, _sat, _val*_val/255);
+        _hue = _val/255.0 * 55;
+        L2[0] = CHSV( _hue+gHue2, _sat, _val*_val/255);
     }
 }
 
@@ -601,10 +618,12 @@ void drawClock(){
         nscale8( leds, NUM_LEDS, 200);
         int sec = millis()%(60*1000);
         double secPos = sec/60000.0 * NUM_LEDS/2;
-        int min = ::now()%(60*60);  // 'now' clash with MIDI library, use global indicator
+        int min = getTime()%(60*60);  // had to create a getTime() because now() clashed with MIDI library
         double minPos = min/(60.0*60.0) * NUM_LEDS/2;
-        int _hour = ::now()%(60*60*12);
+        int _hour = getTime()%(60*60*12);
         double hourPos = _hour/(60.0*60.0*12.0) * NUM_LEDS/2;
+        int    p       = beatsin16(60, (NUM_LEDS*5)/3, (NUM_LEDS*5)/3*2);              // range of input
+        double pPos    = p/(NUM_LEDS*5.0) * (NUM_LEDS/2-1); // range scaled down to working length
         
         for(int i = 0; i < NUM_LEDS/2; i++){
             int _pos = (i+NUM_LEDS/4)%(NUM_LEDS/2);
@@ -625,35 +644,10 @@ void drawClock(){
             c = i+hourPos+NUM_LEDS/2.0; c = -w*c*c; // next pulse
             y = pow(2, a)+pow(2, b)+pow(2, c);      // sum
             RIGHT[_pos] |= CHSV(  0, 255, bri*y);
+            a = i-pPos; a = -2*a*a;
+            y = pow(2, a);
+            LEFT [i] |= CRGB(beatsin88(0.5*256, 10, 255)*y, beatsin88(0.7*256, 10, 255)*y, beatsin88(1.1*256, 10, 255)*y);
         }
-        
-        int x = beatsin8(60, NUM_LEDS/2/3, NUM_LEDS/2/3*2);
-        LEFT[x] |= 0x444444;
-    }
-}
-
-double temp = 5.0; // set this for the "resolution" of the bell curve temp*NUM_LEDS
-double width = 15; // set this for the "width" of the bell curve (how many LEDs to light)
-double _smear = 4.0*sqrt(1.0/(width*width*width)); // this calculates the necessary coefficient for a width of w
-void cylon(){
-    EVERY_N_MILLISECONDS( 55 ) { gHue1++; }
-    EVERY_N_MILLISECONDS( 57 ) { gHue2--; }
-    nscale8( leds, NUM_LEDS, 20);
-    int posL, posR, val;
-    posL = beatsin16(23, 0.9*width*temp, (NUM_LEDS-0.9*width)*temp);  // range of input. the 'w' prevents it from hitting the sides
-    posR = beatsin16(27, 0.9*width*temp, (NUM_LEDS-0.9*width)*temp);  // range of input. the 'w' prevents it from hitting the sides
-    double a;
-    double scaledposL = posL/(NUM_LEDS*temp) * NUM_LEDS/2; // range scaled down to working length
-    double scaledposR = posR/(NUM_LEDS*temp) * NUM_LEDS/2; // range scaled down to working length
-    for(int i = 0; i < NUM_LEDS/2; i++){
-        a = i-scaledposL;       // 
-        a = -_smear*a*a;        // generate bell curve with coefficient calculated above for chosen width
-        val = 255.0*pow(2, a);  // 
-        LEFT [i] |= CHSV(gHue2, 255, val);
-        a = i-scaledposR;       // 
-        a = -_smear*a*a;        // generate bell curve with coefficient calculated above for chosen width
-        val = 255.0*pow(2, a);  // 
-        RIGHT[i] |= CHSV(gHue1, 255, val);
     }
 }
 
@@ -663,15 +657,26 @@ void interpolationTest(){
     EVERY_N_MILLISECONDS( 57 ) { gHue2--; }
     nscale8( leds, NUM_LEDS, 20);
     /*  */
-    double temp = 5.0, w = 0.5, a = 0;
-    int pos = beatsin16(1, 0, NUM_LEDS*temp);            // range of input
+    double temp = 5.0;
+    int pos = beatsin16(1, 0, NUM_LEDS*temp);              // range of input
     double scaledpos = pos/(NUM_LEDS*temp) * NUM_LEDS/2; // range scaled down to working length
     for(int i = 0; i < NUM_LEDS/2; i++){
+        double a, w = 0.5;
         a = i-scaledpos;
         a = -w*a*a;
         int val = 255.0*pow(2, a);
         RIGHT[i] |= CHSV(gHue1, 255, val);
         LEFT [i] |= CHSV(gHue2, 255, val);
+    }
+    /*  */
+    /*  * /
+    for(int i = 0; i < NUM_LEDS/2; i++){
+        int h = gHue1, s = 255;
+        double v = cos16(i/(NUM_LEDS/2.0)*65536+millis()*30)+32768;
+        for(uint8_t i = 0; i < 5; i++){
+            v *= v/65535.0;
+        }
+        RIGHT[i] = CHSV(h, s, v/65535.0*255);
     }
     /*  */
 }

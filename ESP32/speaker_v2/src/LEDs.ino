@@ -57,6 +57,11 @@ void ledLoop(){
     if(MIDIconnected()){
         runLED();
     }else{
+        if(music && gCurrentPatternNumber == 0)
+            FFTenable = true;
+        else if(FFTenable)
+            FFTenable = false;
+        
         if(music){
             audioPatterns[gCurrentPatternNumber]();
             FastLED.show();
@@ -112,8 +117,8 @@ void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping 
 #ifdef debug
     _serial_.println("Starting audio_spectrum");
 #endif
-    fftLoop();
-    uint8_t fadeval = 90;
+    // fftLoop();
+    uint8_t fadeval = 200;
     nscale8(leds, NUM_LEDS, fadeval); // smaller = faster fade
     CRGB tempRGB1, tempRGB2;
     uint8_t pos = 0, h = 0, s = 0, v = 0;
@@ -155,7 +160,7 @@ void audioLight(){ // directly sampling ADC values mapped to brightness
     EVERY_N_MILLISECONDS( 55 ) { gHue1++; }
     EVERY_N_MILLISECONDS( 57 ) { gHue2--; }
     EVERY_N_MILLISECONDS( 15 ) {
-        uint8_t fadeval = 200;
+        uint8_t fadeval = 210;
         for(int i = 0; i < NUM_LEDS/4; i++){
             R1[NUM_LEDS/4-i] = R1[NUM_LEDS/4-1-i].nscale8(fadeval);
             R2[i] = R1[NUM_LEDS/4-i];
@@ -167,7 +172,6 @@ void audioLight(){ // directly sampling ADC values mapped to brightness
         int temp1 = abs(mid - analogRead( RightPin));
         if(temp1 > _noise){
             _val = (temp1-_noise)/float(mid) * 255;
-            // _hue = _val/255.0 * 224;
             _hue = _val/255.0 * 65;
         }
         R1[0] = CHSV( _hue+gHue1, _sat, _val);
@@ -177,7 +181,6 @@ void audioLight(){ // directly sampling ADC values mapped to brightness
         int temp2 = abs(mid - analogRead( LeftPin));
         if(temp2 > _noise){
             _val = (temp2-_noise)/float(mid) * 255;
-            // _hue = _val/255.0 * 224;
             _hue = _val/255.0 * 65;
         }
         L2[NUM_LEDS/4] = CHSV( _hue+gHue2, _sat, _val);
@@ -591,16 +594,9 @@ void MIDI2LED(){
     // Serial.println(pitch);
     // int temp = map(pitch, 36, 96, 0, NUM_LEDS-1);
     
-    // if(temp < 0)
-        // temp = -temp;                   // if note goes above 60 or below 0
-    // else if(temp > NUM_LEDS)                  //      reverse it
-        // temp = NUM_LEDS - (temp%NUM_LEDS);
-    
-    // uint8_t _pitch = map(temp, 0, NUM_LEDS, 0, 224); // map note to color 'hue'
     uint8_t _pos = MIDIdata[1]/127.0 * (NUM_LEDS/2-1); // map note to position
-    uint8_t _col = MIDIdata[1]/127.0 * 224; // map note to position
+    uint8_t _col = MIDIdata[1]/127.0 * 224; // map note to color
     
-    // uint8_t _pos = map(temp, 0, NUM_LEDS, 0, NUM_LEDS-1);
     // assign color based on note position and intensity (velocity)
     RIGHT[_pos] = CHSV(_col + _hue, 255 - (MIDIdata[2]/2.0), MIDIdata[2]/127.0 * 255);
     LEFT [_pos] = RIGHT[_pos];
@@ -648,7 +644,6 @@ void handleControlChange(byte channel, byte number, byte value){
     yield();
 }
 
-
 void drawClock(){
     if(timeStatus() == timeNotSet){
         timeLoop();
@@ -658,17 +653,19 @@ void drawClock(){
             nextPattern();
     }else{
         nscale8( leds, NUM_LEDS, 200);
-        int sec = millis()%60000;
-        double secPos = sec/60000.0 * NUM_LEDS/2;
-        int min = getTime()%(60*60);  // had to create a getTime() because now() clashed with MIDI library
-        double minPos = min/(60.0*60.0) * NUM_LEDS/2;
-        int _hour = getTime()%(60*60*12);
+        int    sec     = millis()%60000;
+        double secPos  = sec/60000.0 * NUM_LEDS/2;
+        int    min     = getTime()%(60*60);  // had to create a getTime() because now() clashed with MIDI library
+        double minPos  = min/(60.0*60.0) * NUM_LEDS/2;
+        int    _hour   = getTime()%(60*60*12);
         double hourPos = _hour/(60.0*60.0*12.0) * NUM_LEDS/2;
+        int    p       = beatsin16(60, (NUM_LEDS*5)/3, (NUM_LEDS*5)/3*2);              // range of input
+        double pPos    = p/(NUM_LEDS*5.0) * (NUM_LEDS/2-1); // range scaled down to working length
         
         for(int i = 0; i < NUM_LEDS/2; i++){
             double a, b, c, y, w = 2;
             int bri = 255;
-            a = i+secPos;              a = -w*a*a; // main pulse
+            a = i+secPos;              a = -w*a*a; // main pulse  << should be subtracted, but reverse direction.
             b = i+secPos-NUM_LEDS/2.0; b = -w*b*b; // prev pulse
             c = i+secPos+NUM_LEDS/2.0; c = -w*c*c; // next pulse
             y = pow(2, a)+pow(2, b)+pow(2, c);   // sum
@@ -683,10 +680,14 @@ void drawClock(){
             c = i+hourPos+NUM_LEDS/2.0; c = -w*c*c; // next pulse
             y = pow(2, a)+pow(2, b)+pow(2, c);    // sum
             RIGHT[(i+NUM_LEDS/4)%(NUM_LEDS/2)] |= CHSV(  0, 255, bri*y);
+            a = i-pPos; a = -2*a*a;
+            y = pow(2, a);
+            LEFT [i] |= CRGB(beatsin88(0.5*256, 10, 255)*y, beatsin88(0.7*256, 10, 255)*y, beatsin88(1.1*256, 10, 255)*y);
         }
         
-        int x = beatsin8(60, NUM_LEDS/2/3, NUM_LEDS/2/3*2);
-        LEFT[x] |= 0x444444;
+        // int x = beatsin8(60, NUM_LEDS/2/3, NUM_LEDS/2/3*2);
+        // LEFT[x] |= 0x444444;
     }
 }
+
 
