@@ -2,7 +2,6 @@
 #include "headers.h"
 
 // #define debug 1
-
 void setup(){
 #ifdef debug
     _serial_.println("Starting setup");

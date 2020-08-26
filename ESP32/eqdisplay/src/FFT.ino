@@ -20,26 +20,26 @@ double spectrum[3][samples/2];
 arduinoFFT LFFT = arduinoFFT(vReal[0], vImag[0], samples, samplingFrequency);
 arduinoFFT RFFT = arduinoFFT(vReal[1], vImag[1], samples, samplingFrequency);
 
-        // spectrum[0][i] = (log(i-1)/log(samples/2.0-1)) * NUMBER_OF_LEDS/2;
 void fftSetup(){
     sampling_period_us = round(1000000*(1.0/samplingFrequency));
+    // double a = log10(1 + (144/(samples/2.0))*sqrt(NUM_LEDS/2.0));
     for (uint16_t i = 2; i < samples/2; i++){
-        spectrum[0][i] = pow((i-2)/(samples/2.0-2), 0.66) * NUMBER_OF_LEDS/2;
+        spectrum[0][i] = pow((i-2)/(samples/2.0-2), 0.66) * NUM_LEDS/2;
         spectrum[1][i] = 0;
         spectrum[2][i] = 0;
 
-        // _serial_.print(i);
-        // _serial_.print(",");
-        // _serial_.print(((i-1) * 1.0 * samplingFrequency) / samples);
-        // _serial_.print(",");
-        // _serial_.print((int)spectrum[0][i]);
-        // /*  * /
-        // for(uint8_t x = 0; x < 40; x++){
-            // _serial_.print((int)(pow((i-2)/(samples/2.0-2), (0.4+x/100.0)) * NUMBER_OF_LEDS/2));
-            // _serial_.print(",");
-        // }
-        // /*  */
-        // _serial_.print("\r\n");
+        _serial_.print(i);
+        _serial_.print(",");
+        _serial_.print(((i-1) * 1.0 * samplingFrequency) / samples);
+        _serial_.print(",");
+        _serial_.print((int)spectrum[0][i]);
+        /*  * /
+        for(uint8_t x = 0; x < 40; x++){
+            _serial_.print((int)(pow((i-2)/(samples/2.0-2), (0.4+x/100.0)) * NUMBER_OF_LEDS/2));
+            _serial_.print(",");
+        }
+        /*  */
+        _serial_.print("\r\n");
     }
 }
 

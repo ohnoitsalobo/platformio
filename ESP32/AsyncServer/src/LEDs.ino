@@ -120,6 +120,8 @@ void ledLoop(){
 
 void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping them to light spectrum
     // fftLoop();
+    // xSemaphoreTake( FFTMutex, portMAX_DELAY );
+    
     uint8_t fadeval = 90;
     nscale8(leds, NUM_LEDS, fadeval); // smaller = faster fade
     CRGB tempRGB1, tempRGB2;
@@ -136,8 +138,6 @@ void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping 
         if(tempRGB1 > RIGHT[pos]){
             RIGHT[pos] = tempRGB1;
         }
-        // RIGHT[p] = RIGHT[pos];
-        // eq[0][i-2] = v;
 
         temp2 = spectrum[2][i]/MAX;
         s = 255 - (temp2*30.0);
@@ -146,10 +146,9 @@ void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping 
         if(tempRGB2 > LEFT[pos]){
             LEFT[p] = tempRGB2;
         }
-        // LEFT[p] = LEFT[pos];
-        // eq[1][i-2] = v;
         yield();
     }
+    // xSemaphoreGive( FFTMutex );
 }
 
 void audioLight(){ // directly sampling ADC values mapped to brightness
@@ -628,7 +627,7 @@ void drawClock(){
         for(int i = 0; i < NUM_LEDS/2; i++){
             int _pos = (i+NUM_LEDS/4)%(NUM_LEDS/2);
             double a, b, c, y, w = 0.4;
-            int bri = 255;
+            int bri = beatsin8(10, 100, 255);
             a = i+secPos;              a = -w*a*a; // main pulse (seconds)
             b = i+secPos-NUM_LEDS/2.0; b = -w*b*b; // prev pulse
             c = i+secPos+NUM_LEDS/2.0; c = -w*c*c; // next pulse

@@ -34,7 +34,9 @@ void sendNTPpacket(IPAddress &address);
 // #define FASTLED_ESP32_FLASH_LOCK 1
 #define FASTLED_INTERNAL
 #include <FastLED.h>
-#define NUMBER_OF_LEDS 144
+#define NUM_LEDS 144
+bool _auto = 0;
+bool manual = 0;
 bool music = 1;
 bool FFTenable = true;
 

@@ -278,8 +278,8 @@ void handleSliders(){
     }
     String temp = WSdata.substring(1, WSdata.length()-1);
     if(WSdata.startsWith("M")){
-        music = temp.endsWith("0") ? true : false;
-        _auto = temp.endsWith("1") ? true : false;
+        music  = temp.endsWith("0") ? true : false;
+        _auto  = temp.endsWith("1") ? true : false;
         manual = temp.endsWith("2") ? true : false;
         gCurrentPatternNumber = 0;
         if(_auto)

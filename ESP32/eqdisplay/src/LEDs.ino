@@ -3,7 +3,7 @@ FASTLED_USING_NAMESPACE
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
 #define LED_PINS    13
-#define NUM_LEDS    NUMBER_OF_LEDS
+// #define NUM_LEDS    NUMBER_OF_LEDS
 #define BRIGHTNESS  255*225/255
 
 CRGBArray<NUM_LEDS> leds;                              // LED array containing all LEDs
@@ -19,7 +19,6 @@ CRGBPalette16 targetPalette, randomPalette2;
 TBlendType    currentBlending;
 uint8_t maxChanges = 24;        // Value for blending between palettes.
 
-bool manual = 0, _auto = 0;
 uint8_t currentBrightness = BRIGHTNESS, _setBrightness = BRIGHTNESS;
 CRGB manualColor = 0x000000, manualColor_L = 0x000000, manualColor_R = 0x000000;
 CHSV manualHSV (0, 255, 255);
@@ -52,6 +51,7 @@ void ledLoop(){
 #ifdef debug
     _serial_.println("Starting ledLoop");
 #endif
+    adjustBrightness();
     if(MIDIconnected){
         runLED();
     }else{
@@ -76,22 +76,28 @@ void ledLoop(){
             FastLED.show();
         }
         else if(manual){
-            for(int i = 0; i < NUM_LEDS/2; i++){
-                for(int j = 0; j < 3; j++){
-                         if(LEFT [i][j] < manualColor_L[j]) LEFT [i][j]++;
-                    else if(LEFT [i][j] > manualColor_L[j]) LEFT [i][j]--;
-                         if(RIGHT[i][j] < manualColor_R[j]) RIGHT[i][j]++;
-                    else if(RIGHT[i][j] > manualColor_R[j]) RIGHT[i][j]--;
-                }
-            }
+            adjustColors();
             FastLED.show();
         }
     }
-         if(currentBrightness < _setBrightness) FastLED.setBrightness(++currentBrightness);
-    else if(currentBrightness > _setBrightness) FastLED.setBrightness(--currentBrightness);
 #ifdef debug
     _serial_.println("Ending ledLoop");
 #endif
+}
+
+void adjustBrightness(){
+         if(currentBrightness < _setBrightness) FastLED.setBrightness(++currentBrightness);
+    else if(currentBrightness > _setBrightness) FastLED.setBrightness(--currentBrightness);
+}
+void adjustColors(){
+    for(int i = 0; i < NUM_LEDS/2; i++){
+        for(int j = 0; j < 3; j++){
+                 if(LEFT [i][j] < manualColor_L[j]) LEFT [i][j]++;
+            else if(LEFT [i][j] > manualColor_L[j]) LEFT [i][j]--;
+                 if(RIGHT[i][j] < manualColor_R[j]) RIGHT[i][j]++;
+            else if(RIGHT[i][j] > manualColor_R[j]) RIGHT[i][j]--;
+        }
+    }
 }
 
 void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping them to light spectrum

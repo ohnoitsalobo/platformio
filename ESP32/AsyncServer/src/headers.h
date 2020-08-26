@@ -12,6 +12,7 @@ const char* http_username = "admin";
 const char* http_password = "admin";
 
 
+#define CONFIG_ASYNC_TCP_RUNNING_CORE 0
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 String WSdata = "";
@@ -46,3 +47,4 @@ uint8_t _hue = 0;             // modifier for key color cycling
 bool sustain = false;         // is sustain pedal on?
 bool MidiEventReceived = false;
 
+SemaphoreHandle_t FFTMutex;

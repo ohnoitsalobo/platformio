@@ -17,12 +17,6 @@ void setup(){
     
     MIDIsetup();
 
-    TelnetStream.begin();
-    
-    // _serial_.print("\nCPU is running at ");
-    // _serial_.print(getCpuFrequencyMhz());
-    // _serial_.print(" MHz\n\n");
-    
     dualCoreInit();
 }
 
