@@ -8,31 +8,8 @@
 #include <FS.h>
 #include <SPIFFS.h>
 
+#define FASTLED_INTERNAL
+#include <FastLED.h>
 #define kMatrixWidth    8
 #define kMatrixHeight   9
 #define NUMBER_OF_LEDS kMatrixWidth*kMatrixHeight
-
-bool music = 0;
-
-void setup(){
-
-    Serial.begin(115200); pinMode(2, OUTPUT);
-
-    setupWiFi();
-    
-    fftSetup();
-    
-    ledSetup();
-    
-}
-
-void loop(){
-
-    wifiLoop();
-    
-    if(music)
-        fftLoop();
-
-    ledLoop();
-    
-}
