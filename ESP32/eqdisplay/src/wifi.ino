@@ -15,6 +15,7 @@ void setupWiFi(){
     
     timeSetup();
     
+	blynkSetup();
 }
     
 void setupOTA(){
@@ -82,6 +83,7 @@ void wifiLoop(){
         ArduinoOTA.handle();
         server.handleClient();
         webSocket.loop();
+        blynkLoop();
         if(!digitalRead(2)){
             digitalWrite(2, HIGH);
             _serial_.println("Wifi connected!");

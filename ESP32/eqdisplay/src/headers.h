@@ -5,8 +5,10 @@ File fsUploadFile;
 #include <WiFi.h>
 #include <ArduinoOTA.h>
 #include <ESPmDNS.h>
-const char* ssid = "linksys1";
-const char* password = "9182736450";
+// const char* ssid = "linksys1";
+// const char* password = "9182736450";
+const char* ssid = "Home";
+const char* password = "12345678";
 
 #include <TelnetStream.h>
 #include <WebServer.h>
@@ -26,6 +28,8 @@ unsigned int localPort = 8888;  // local port to listen for UDP packets
 
 time_t getNtpTime();
 void sendNTPpacket(IPAddress &address);
+
+#include <BlynkSimpleEsp32.h>
 
 #include <arduinoFFT.h>
 // #define FASTLED_ALLOW_INTERRUPTS 0

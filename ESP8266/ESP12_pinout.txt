@@ -1,0 +1,24 @@
+                      __ESP 12___
+ 3v3 -> 10k -> RESET |           | TX / GPIO1
+                 ADC |           | RX / GPIO3
+ 3v3 -> 10k -> CH_PD |           | GPIO5
+              GPIO16 |           | GPIO4
+              GPIO14 |           | GPIO0 <- 10k <- 3v3
+              GPIO12 |           | GPIO2 / TXD1
+         (RX)/GPIO13 |           | GPIO15/(TX) <- 10k <- GND
+                 VCC |3v3_____GND| GND
+
+             SW1 -> RESET    SW2 -> GPIO0
+
+0 BOOT_SW
+1 TX0
+2 TX1
+3 RX0
+4
+5
+12
+13
+14
+15
+
+6-11 memory

@@ -7,6 +7,7 @@
 #include <ArduinoOTA.h>
 #include <FS.h>
 #include <SPIFFS.h>
+#include <BlynkSimpleEsp32.h>
 
 #define FASTLED_INTERNAL
 #include <FastLED.h>

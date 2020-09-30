@@ -1,0 +1,17 @@
+ _________
+|         3   Vcc
+|         0   RST
+|         2   EN
+|_________GND 1
+
+RST   -> 10k -> Vcc
+      -> SW  -> Vcc
+
+EN    -> 10k -> Vcc
+
+GPIO0 -> 10k -> Vcc
+      -> SW  -> GND
+
+GPIO1 => TX0
+GPIO2 => TX1
+GPIO3 => RX0

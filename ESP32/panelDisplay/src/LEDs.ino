@@ -23,7 +23,8 @@ SimplePatternList gPatterns = { leaperLoop, sinewave5, sinewave4, ripple_blur, s
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
 bool manual = 0, _auto = 1;
-CRGB manualColor = 0x000000;
+uint8_t currentBrightness = BRIGHTNESS, _setBrightness = BRIGHTNESS;
+CRGB manualColor = 0x000000, manualColor_L = 0x000000, manualColor_R = 0x000000;
 CHSV manualHSV (0, 255, 255);
 uint8_t gHue = 0, gHue1 = 0, gHue2 = 0; // rotating "base color" used by many of the patterns
 
@@ -55,7 +56,7 @@ void ledSetup(){
     FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness(BRIGHTNESS);
     FastLED.setDither(0);
-    FastLED.setMaxPowerInVoltsAndMilliamps(5,200);
+    FastLED.setMaxPowerInVoltsAndMilliamps(5,1500);
 
     randomSeed(analogRead(5));
     x = random16();
@@ -67,6 +68,7 @@ void ledSetup(){
 }
 
 void ledLoop(){
+    adjustBrightness();
     if(music){
         audio_spectrum();
     }
@@ -85,9 +87,24 @@ void ledLoop(){
         gPatterns[gCurrentPatternNumber]();
     }
     else if(manual){
-        
+        adjustColors();
     }
     FastLED.show();
+}
+
+void adjustBrightness(){
+         if(currentBrightness < _setBrightness) FastLED.setBrightness(++currentBrightness);
+    else if(currentBrightness > _setBrightness) FastLED.setBrightness(--currentBrightness);
+}
+void adjustColors(){
+    for(int i = 0; i < NUM_LEDS/2; i++){
+        for(int j = 0; j < 3; j++){
+                 if(LEFT [i][j] < manualColor_L[j]) LEFT [i][j]++;
+            else if(LEFT [i][j] > manualColor_L[j]) LEFT [i][j]--;
+                 if(RIGHT[i][j] < manualColor_R[j]) RIGHT[i][j]++;
+            else if(RIGHT[i][j] > manualColor_R[j]) RIGHT[i][j]--;
+        }
+    }
 }
 
 void audio_spectrum(){
@@ -125,8 +142,16 @@ void audio_spectrum(){
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
 void nextPattern(){
-    gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns );
-}
+    uint8_t temp = 0;
+    temp = ARRAY_SIZE( gPatterns );
+    gCurrentPatternNumber = (gCurrentPatternNumber + 1) % temp;
+} // advance to the next pattern
+
+void previousPattern(){
+    uint8_t temp = 0;
+    temp = ARRAY_SIZE( gPatterns );
+    gCurrentPatternNumber = (gCurrentPatternNumber + (temp-1)) % temp;
+} // advance to the previous pattern
 
 void rainbow() {
     // FastLED's built-in rainbow generator
@@ -543,7 +568,7 @@ void sinewave1(){
 
 // sinewave using exponential bell curve
 double temp = 5.0; // set this for the "resolution" of the bell curve temp*NUM_LEDS
-double width = 1.5; // set this for the "width" of the bell curve (how many LEDs to light)
+double width = 3; // set this for the "width" of the bell curve (how many LEDs to light)
 double _smear = 4.0*sqrt(1.0/(width*width*width)); // this calculates the necessary coefficient for a width of w
 void sinewave2(){
     nscale8( leds, NUM_LEDS, 20);

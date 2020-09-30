@@ -1,5 +1,5 @@
-const char* ssid = "linksys1";
-const char* password = "9182736450";
+const char* ssid = "Home";
+const char* password = "12345678";
 const char* APssid = "ledPanel";
 const char* APpassword = "9182736450";
 
@@ -13,9 +13,10 @@ void setupWiFi(){
     Serial.println("\nStarting Wifi");
 
     WiFi.disconnect();
-    WiFi.mode(WIFI_AP_STA);
+    // WiFi.mode(WIFI_AP_STA);
+    WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
-    WiFi.softAP(APssid, APpassword);
+    // WiFi.softAP(APssid, APpassword);
     
     setupOTA();
     
@@ -25,6 +26,7 @@ void setupWiFi(){
     
     startWebSocket();
     
+	blynkSetup();
 }
     
 void setupOTA(){
@@ -86,6 +88,7 @@ void wifiLoop(){
         ArduinoOTA.handle();
         server.handleClient();
         webSocket.loop();
+        blynkLoop();
         if(music && webSocketConn()){
             webSocket.broadcastTXT(eqBroadcast);
         }
@@ -264,34 +267,26 @@ void handleSliders(){
     if(WSdata.startsWith("next")){
         nextPattern();
     }
+    if(WSdata.startsWith("prev")){
+        previousPattern();
+    }
     String temp = WSdata.substring(1, WSdata.length()-1);
     if(WSdata.startsWith("M")){
-        music = temp.endsWith("0") ? true : false;
-        _auto = temp.endsWith("1") ? true : false;
+        music  = temp.endsWith("0") ? true : false;
+        _auto  = temp.endsWith("1") ? true : false;
         manual = temp.endsWith("2") ? true : false;
-        // gCurrentPatternNumber = 0;
+        gCurrentPatternNumber = 0;
         if(_auto)
-            FastLED.setBrightness(50);
-        else{
-            FastLED.setBrightness(255);
-            fill_solid (leds, NUM_LEDS, CRGB::Black);
-        }
+            FastLED.setBrightness(30);
+        else
+            _setBrightness = 255;
     }if(WSdata.startsWith("V")){
         int x = temp.toInt();
         x = (x*x)/255.0;
-        FastLED.setBrightness(x);
-    }
-    if(_auto){
-        // if(WSdata.startsWith("R")){
-            // int x = temp.toInt();
-            // speed = x/2.55;
-        // }else if(WSdata.startsWith("G")){
-            // int x = temp.toInt();
-            // scale = x/0.127;
-        // }        
+        _setBrightness = x;
     }
     if(manual){
-        if(WSdata.startsWith("R")){
+         if(WSdata.startsWith("R")){
             int x = temp.toInt();
             x = (x*x)/255.0;
             manualColor.r = x;
@@ -312,12 +307,17 @@ void handleSliders(){
             manualColor = manualHSV;
         }
         if(WSdata.endsWith("L")){
-            fill_solid (LEFT, NUM_LEDS/2, manualColor);
+            manualColor_L = manualColor;
+            // fill_solid (LEFT, NUM_LEDS/2, manualColor_L);
         }else if(WSdata.endsWith("R")){
-            fill_solid (RIGHT, NUM_LEDS/2, manualColor);
+            manualColor_R = manualColor;
+            // fill_solid (RIGHT, NUM_LEDS/2, manualColor_R);
         }else if(WSdata.endsWith("B")){
-            fill_solid (leds, NUM_LEDS, manualColor);
+            manualColor_L = manualColor;
+            manualColor_R = manualColor;
+            // fill_solid (LEFT , NUM_LEDS/2, manualColor_L);
+            // fill_solid (RIGHT, NUM_LEDS/2, manualColor_R);
         }
     }
-    WSdata = "";
+    // WSdata = "";
 }
