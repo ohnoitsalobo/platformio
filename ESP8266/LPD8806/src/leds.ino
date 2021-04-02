@@ -2,14 +2,14 @@
 
 FASTLED_USING_NAMESPACE
 
-// #define LED_TYPE    LPD8806
-// #define LED_PINS    13, 12
-// #define COLOR_ORDER BRG
-// #define NUM_LEDS     48
-#define LED_TYPE    WS2812
-#define COLOR_ORDER GRB
-#define LED_PINS    13
-#define NUM_LEDS    144
+#define LED_TYPE    LPD8806
+#define LED_PINS    13, 12
+#define COLOR_ORDER BRG
+#define NUM_LEDS     48
+// #define LED_TYPE    WS2812
+// #define COLOR_ORDER GRB
+// #define LED_PINS    13
+// #define NUM_LEDS    144
 
 CRGBArray<NUM_LEDS> leds;
 CRGBSet LEFT  (leds (0,            NUM_LEDS/2-1)   );  // < subset containing only left  LEDs
@@ -138,7 +138,7 @@ void audio_eq(){ // segmented equalizer
     }
     FastLED.show();
 }
-
+/*  * /
 #define div 1000
 #define width 1
 
@@ -174,7 +174,7 @@ void clockLight(){
     FastLED.show();                                 // show on LED strip
     yield();
 }
-
+/*  */
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
 void nextPattern()

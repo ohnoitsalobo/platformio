@@ -1,3 +1,4 @@
+#ifdef blynk_en
 char blynkAuth[] = "95y13VELKuhBALusysknhF2u_kyyYOEI";
 IPAddress blynkServer(192,168,0,200);
 int blynkPort = 8080;
@@ -84,3 +85,4 @@ void setManualcolor(){
     manualColor_L = manualColor;
     manualColor_R = manualColor;
 }
+#endif

@@ -1,26 +1,38 @@
+#define _serial_ Serial
+#define BLYNK_PRINT Serial
+// #define debug 1
 #include "headers.h"
 
-bool music = 0;
+// HardwareSerial Serial_1(2);
 
 void setup(){
 
-    Serial.begin(115200); pinMode(2, OUTPUT);
+    pinMode(2, OUTPUT);
+    Serial.begin(115200);
 
     setupWiFi();
     
-    fftSetup();
+    // fftSetup();
     
     ledSetup();
     
+    MIDIsetup();
+
+    // dualCoreInit();
 }
 
 void loop(){
-
+#ifdef debug
+    _serial_.println("Starting loop");
+#endif
+    
     wifiLoop();
     
-    if(music)
-        fftLoop();
+    MIDIloop();
 
     ledLoop();
     
+#ifdef debug
+    _serial_.println("Ending loop");
+#endif
 }

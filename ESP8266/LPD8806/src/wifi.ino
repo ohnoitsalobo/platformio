@@ -20,6 +20,7 @@ const char* ssid     = "linksys1";
 const char* password = "9182736450";
 
 IPAddress timeServer(148, 251, 69, 45); // in.pool.ntp.org
+#define SECS_PER_HOUR 3600
 #define timeZone 5.5 * SECS_PER_HOUR;     // Central European Time
 WiFiUDP Udp;
 unsigned int localPort = 8888;  // local port to listen for UDP packets
@@ -223,7 +224,7 @@ void sendNTPpacket(IPAddress &address)
     Udp.write(packetBuffer, NTP_PACKET_SIZE);
     Udp.endPacket();
 }
-
+/*  * /
 void digitalClockDisplay(){
     // digital clock display of the time
     Serial.print(hour());
@@ -245,7 +246,7 @@ void printDigits(int digits){
         Serial.print('0');
     Serial.print(digits);
 }
-
+/*  */
 // ====================================================================================
 // Event handlers for incoming MIDI messages
 // ====================================================================================

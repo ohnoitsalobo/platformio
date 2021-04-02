@@ -1,70 +1,98 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-    <!-- <title>Speaker Light Control</title> -->
-    <script src="p5.js" type="text/javascript"></script>
-    <script src="WebSocket.js" type="text/javascript" data-processing-target="equalizer"></script>
-    <!-- <script src="WebSocket.js" type="text/javascript"></script> -->
+    <title>LED Panel Control</title>
+    <link href="style.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <script src="p5.min.js" type="text/javascript"></script>
+    <script src="script.js" type="text/javascript"></script>
 </head>
 
 <center>
     <header>
-        <!-- <h1>Speaker Light Control</h1> -->
+        <h1><span id="header">LED Panel Control</span></h1>
     </header>
-    <body onload="process();" style="background-color:#000033; color:white; font-family:Consolas">
+    <body onload="process();">
+        <button type="button" id="reconnect" style="width: 10em; height: 2em; display: none;" onclick="openWebSocket();">Reconnect</button>
         <div>
-            <table border=1 style="text-align: center">
-                <tr style="color:white">
+            <table border=1>
+                <tr>
                     <td>Mode: </td>
-                    <td ><input id="m" type="range" min="0" max="2" step="1" oninput="sendRGB('M');" value="0"></td>
-                    <td style="width:150px" colspan=3><a id="mval"></a></td>
+                    <td class="slider"><input id="m" type="range" min="0" max="2" step="1" oninput="sendRGB('M');" value="0"></td>
+                    <td colspan=3 id="mval"></td>
                 </tr>
-                <tr style="color:white">
+                <tr>
                     <td>Brightness: </td>
-                    <td><input id="v" type="range" min="0" max="255" step="1" oninput="sendRGB('V');" value="0"></td>
-                    <td style="width:50px"><a id="vval"></a></td>
+                    <td class="slider"><input id="v" type="range" min="0" max="255" step="1" oninput="sendRGB('V');" value="0"></td>
+                    <td class="value" id="vval"></td>
+                    <td class="button" rowspan=2><button type="button" id="next" onclick="next();">Next pattern</button></td>
+                </tr>
+                <tr style="color: #F00;">
+                    <td>Red: </td>
+                    <td class="slider"><input id="r" type="range" min="0" max="255" step="1" oninput="sendRGB('R');" value="0"></td>
+                    <td class="value" id="rval"></td>
+                </tr>
+                <tr style="color: #0F0;">
+                    <td>Green: </td>
+                    <td class="slider"><input id="g" type="range" min="0" max="255" step="1" oninput="sendRGB('G');" value="0"></td>
+                    <td class="value" id="gval"></td>
+                    <td class="button" rowspan=2><button type="button" id="prev" onclick="prev();">Previous pattern</button></td>
+                </tr>
+                <tr style="color: #00F;">
+                    <td>Blue: </td>
+                    <td class="slider"><input id="b" type="range" min="0" max="255" step="1" oninput="sendRGB('B');" value="0"></td>
+                    <td class="value" id="bval"></td>
+                <tr style="color: yellow;">
+                    <td>Hue: </td>
+                    <td class="slider"><input id="h" type="range" min="0" max="224" step="1" oninput="sendRGB('H');" value="0"></td>
+                    <td class="value" id="hval"></td>
+                    <td class="button" rowspan=2><button type="button" id="next" onclick="reset();">Reset</button></td>
+                </tr>
+                <tr style="color: pink;">
+                    <td>Saturation: </td>
+                    <td class="slider"><input id="s" type="range" min="0" max="255" step="1" oninput="sendRGB('S');" value="0"></td>
+                    <td class="value" id="sval"></td>
+                </tr>
+                <tr style="display: none;">
                     <td><input type="checkbox" id="ll" checked></td>
                     <td><input type="checkbox" id="rr" checked></td>
                 </tr>
-                <tr style="color:red">
-                    <td>Red: </td>
-                    <td><input id="r" type="range" min="0" max="255" step="1" oninput="sendRGB('R');" value="0"></td>
-                    <td><a id="rval"></a></td>
-                    <td colspan=2 rowspan=7><button type="button" id="next" onclick="next();">Next pattern</button></td>
+                <tr>
+                    <td colspan=4>
+                        <table width=100%>
+                            <tr>
+                                <td class="button">
+                                    <button type="button" onclick="leftRight(0);">Left</button>
+                                </td>
+                                <td class="button">
+                                    <button type="button" onclick="leftRight(2);">Both</button>
+                                </td>
+                                <td class="button">
+                                    <button type="button" onclick="leftRight(1);">Right</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
                 </tr>
-                <tr style="color:green">
-                    <td>Green: </td>
-                    <td><input id="g" type="range" min="0" max="255" step="1" oninput="sendRGB('G');" value="0"></td>
-                    <td><a id="gval"></a></td>
-                </tr>
-                <tr style="color:blue">
-                    <td>Blue: </td>
-                    <td><input id="b" type="range" min="0" max="255" step="1" oninput="sendRGB('B');" value="0"></td>
-                    <td><a id="bval"></a></td>
-                <tr style="color:yellow">
-                    <td>Hue: </td>
-                    <td><input id="h" type="range" min="0" max="224" step="1" oninput="sendRGB('H');" value="0"></td>
-                    <td><a id="hval"></a></td>
-                </tr>
-                <tr style="color:pink">
-                    <td>Saturation: </td>
-                    <td><input id="s" type="range" min="0" max="255" step="1" oninput="sendRGB('S');" value="0"></td>
-                    <td><a id="sval"></a></td>
-                </tr>
-                <!-- <tr style="color:white"> -->
-                    <!-- <td>Gradient1: </td> -->
-                    <!-- <td><input id="ga" type="range" min="0" max="255" step="1" oninput="sendRGB('Y');" value="0"></td> -->
-                    <!-- <td><a id="gaval"></a></td> -->
-                <!-- </tr> -->
-                <!-- <tr style="color:white"> -->
-                    <!-- <td>Gradient2: </td> -->
-                    <!-- <td><input id="gb" type="range" min="0" max="255" step="1" oninput="sendRGB('Z');" value="0"></td> -->
-                    <!-- <td><a id="gbval"></a></td> -->
-                <!-- </tr> -->
             </table>
-            <button type="button" id="next" onclick="reset();">Reset</button>
-            <canvas style="text-align:center" id="equalizer"></canvas>
+            <br />
+            <div id="textbox_div">
+                <center>
+                <!-- <form style="width: 50%;"> -->
+                    <br />
+                    <!-- Pick any two colors: <br /> -->
+                    Pick Colour 1 <button type="button" onclick="resetColors();" style="width: 10%; height: 2em;">Reset Colours</button> Pick Colour 2<br />
+                    <input type="color" id="colorpicker1" oninput="setColor1();" style="width: 20%; height: 3em; background: black;">
+                    <input type="color" id="colorpicker2" oninput="setColor2();" style="width: 20%; height: 3em; background: black;"><br />
+                    <input type="text" name="textbox" id="textbox" style="width: 50%; height: 3em; background: black; color: white; text-align: center;" placeholder="Enter text here"><br /><br />
+                    <button type="button" onclick="clearText();" style="width: 20%;">Clear Text</button>
+                    <button type="button" onclick="sendText();"  style="width: 30%;">Send Text To Display</button>
+                    <!-- <br />  -->
+                <!-- </form> -->
+                </center>
+                <br />
+            </div>
+            <div id="p5js"></div>
         </div>
     </body>
 </center>

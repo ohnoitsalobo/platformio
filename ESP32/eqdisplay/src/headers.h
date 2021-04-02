@@ -5,10 +5,10 @@ File fsUploadFile;
 #include <WiFi.h>
 #include <ArduinoOTA.h>
 #include <ESPmDNS.h>
-// const char* ssid = "linksys1";
-// const char* password = "9182736450";
-const char* ssid = "Home";
-const char* password = "12345678";
+const char* ssid = "linksys1";
+const char* password = "9182736450";
+// const char* ssid = "Home";
+// const char* password = "12345678";
 
 #include <TelnetStream.h>
 #include <WebServer.h>
@@ -29,7 +29,10 @@ unsigned int localPort = 8888;  // local port to listen for UDP packets
 time_t getNtpTime();
 void sendNTPpacket(IPAddress &address);
 
+// #define blynk_en 1
+#ifdef blynk_en
 #include <BlynkSimpleEsp32.h>
+#endif
 
 #include <arduinoFFT.h>
 // #define FASTLED_ALLOW_INTERRUPTS 0
@@ -38,7 +41,7 @@ void sendNTPpacket(IPAddress &address);
 // #define FASTLED_ESP32_FLASH_LOCK 1
 #define FASTLED_INTERNAL
 #include <FastLED.h>
-#define NUM_LEDS 144
+#define NUM_LEDS 142
 bool _auto = 0;
 bool manual = 0;
 bool music = 1;

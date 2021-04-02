@@ -1,10 +1,10 @@
 #define LeftPin  36
 #define RightPin 39
 #define samples  512 // must ALWAYS be a power of 2
-#define samplingFrequency 25000 // 25000
+#define samplingFrequency 12500 // 25000
 
 #define noise 1500
-#define MAX 50000
+#define MAX 40000
 #define max_max MAX
 #define max_min MAX/5
 #define min_max noise
@@ -28,18 +28,18 @@ void fftSetup(){
         spectrum[1][i] = 0;
         spectrum[2][i] = 0;
 
-        _serial_.print(i);
-        _serial_.print(",");
-        _serial_.print(((i-1) * 1.0 * samplingFrequency) / samples);
-        _serial_.print(",");
-        _serial_.print((int)spectrum[0][i]);
+        // _serial_.print(i);
+        // _serial_.print(",");
+        // _serial_.print(((i-1) * 1.0 * samplingFrequency) / samples);
+        // _serial_.print(",");
+        // _serial_.print((int)spectrum[0][i]);
         /*  * /
         for(uint8_t x = 0; x < 40; x++){
             _serial_.print((int)(pow((i-2)/(samples/2.0-2), (0.4+x/100.0)) * NUMBER_OF_LEDS/2));
             _serial_.print(",");
         }
         /*  */
-        _serial_.print("\r\n");
+        // _serial_.print("\r\n");
     }
 }
 

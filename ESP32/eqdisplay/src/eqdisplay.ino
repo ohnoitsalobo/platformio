@@ -1,4 +1,5 @@
 #define _serial_ Serial
+#define BLYNK_PRINT Serial
 // #define debug 1
 #include "headers.h"
 
@@ -35,4 +36,3 @@ void loop(){
     _serial_.println("Ending loop");
 #endif
 }
-

@@ -15,7 +15,9 @@ void setupWiFi(){
     
     timeSetup();
     
+#ifdef blynk_en
 	blynkSetup();
+#endif
 }
     
 void setupOTA(){
@@ -83,7 +85,9 @@ void wifiLoop(){
         ArduinoOTA.handle();
         server.handleClient();
         webSocket.loop();
+#ifdef blynk_en
         blynkLoop();
+#endif
         if(!digitalRead(2)){
             digitalWrite(2, HIGH);
             _serial_.println("Wifi connected!");

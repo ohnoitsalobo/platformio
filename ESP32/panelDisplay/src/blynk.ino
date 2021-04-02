@@ -1,3 +1,4 @@
+#ifdef blynk_en
 char blynkAuth[] = "95y13VELKuhBALusysknhF2u_kyyYOEI";
 IPAddress blynkServer(192,168,0,200);
 int blynkPort = 8080;
@@ -12,9 +13,9 @@ void blynkLoop(){
     // }
 }
 
-BLYNK_WRITE(V0){ // MUSIC
+BLYNK_WRITE(V0){ // text
     if(param.asInt()>0){
-        music  = 1;
+        text  = 1;
         _auto  = 0;
         manual = 0;
         _setBrightness = 255;
@@ -22,7 +23,7 @@ BLYNK_WRITE(V0){ // MUSIC
 }
 BLYNK_WRITE(V1){ // AUTO
     if(param.asInt()>0){
-        music  = 0;
+        text  = 0;
         _auto  = 1;
         manual = 0;
         FastLED.setBrightness(30);
@@ -30,7 +31,7 @@ BLYNK_WRITE(V1){ // AUTO
 }
 BLYNK_WRITE(V2){ // MANUAL
     if(param.asInt()>0){
-        music  = 0;
+        text  = 0;
         _auto  = 0;
         manual = 1;
         _setBrightness = 255;
@@ -84,3 +85,4 @@ void setManualcolor(){
     manualColor_L = manualColor;
     manualColor_R = manualColor;
 }
+#endif

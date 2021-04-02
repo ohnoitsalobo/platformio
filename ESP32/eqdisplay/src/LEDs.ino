@@ -36,7 +36,7 @@ uint8_t eq[2][samples/2-2];
 void ledSetup(){
     FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness(currentBrightness);
-    FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
+    FastLED.setMaxPowerInVoltsAndMilliamps(5, 1000);
     
     for(int i = 0; i < samples/2-2; i++){
         eq[0][i] = 0;
@@ -67,6 +67,7 @@ void ledLoop(){
         else if(_auto){
             EVERY_N_MILLISECONDS( 41 ) { gHue1++; }
             EVERY_N_MILLISECONDS( 37 ) { gHue2--; }
+            EVERY_N_SECONDS(60){ nextPattern(); }
             EVERY_N_SECONDS(20){
                 targetPalette = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
                 randomPalette1 = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
@@ -117,8 +118,8 @@ void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping 
         v = temp1*255.0;
         tempRGB1 = CHSV(h, s, v);
         uint8_t p = NUM_LEDS/2-pos;
-        if(tempRGB1 > RIGHT[pos]){
-            RIGHT[pos] = tempRGB1;
+        if(tempRGB1 > RIGHT[p]){
+            RIGHT[p] = tempRGB1;
         }
 
         temp2 = spectrum[2][i]/MAX;
@@ -126,7 +127,7 @@ void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping 
         v = temp2*255.0;
         tempRGB2 = CHSV(h, s, v);
         if(tempRGB2 > LEFT[pos]){
-            LEFT[p] = tempRGB2;
+            LEFT[pos] = tempRGB2;
         }
         yield();
     }
