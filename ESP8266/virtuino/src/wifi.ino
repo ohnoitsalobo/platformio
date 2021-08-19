@@ -1,61 +1,35 @@
-#include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
+  
+String hostname = "ESP8266";
 
-//needed for library
-#include <DNSServer.h>
-#include <ESP8266WebServer.h>
-#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
-
-#include <WiFiUdp.h>
-#include <ArduinoOTA.h>
-#include <ESP8266mDNS.h>
-String hostname = "smart-socket";
-
-#define BLYNK_PRINT Serial
-#include <BlynkSimpleEsp8266.h>
-char blynkAuth[] = "OmFFOH1AMFs_XqB5PEGSn8vf8_TKE8CJ";
-IPAddress blynkServer(192,168,0,200);
-int blynkPort = 8080;
-
-void setup() {
-    // put your setup code here, to run once:
-    Serial.begin(115200);
-
+void setupWifi(){
     WiFiManager wifiManager;
+    wifiManager.setSTAStaticIPConfig(ip, gateway, subnet);
     wifiManager.autoConnect(hostname.c_str());
-    //or use this for auto generated name ESP + ChipID
-    //wifiManager.autoConnect();
 
-    // hostname = "smart-socket-" + String(ESP.getChipId()).c_str();
     hostname = hostname + "-" + String(ESP.getChipId());
     if (MDNS.begin(hostname.c_str())) {
         Serial.print("\r\nMDNS responder started, hostname: ");
         Serial.println(hostname);
     }
     MDNS.addService("http", "tcp", 80);
-
-    setupOTA();
-
-    Blynk.config(blynkAuth, blynkServer, blynkPort);
     
-    //if you get here you have connected to the WiFi
-    Serial.println("connected :)");
-}
+    setupOTA();
+    
+    virtuino.begin(onReceived,onRequested,256);  // Start Virtuino. Set the buffer to 256. With this buffer Virtuino can control about 28 pins (1 command = 9bytes) The T(text) commands with 20 characters need 20+6 bytes
+    virtuino.key="1234";                         // This is the Virtuino password. Only requests the start with this key are accepted from the library
+    virtuinoServer.begin();
 
-void loop() {
-    // put your main code here, to run repeatedly:
-    Blynk.run();
-    ArduinoOTA.handle();
 }
 
 void setupOTA(){
     ArduinoOTA.setHostname(hostname.c_str());
-
+    
     ArduinoOTA.onStart([]() {
         String type;
         if (ArduinoOTA.getCommand() == U_FLASH) {
-        type = "sketch";
+            type = "sketch";
         } else { // U_FS
-        type = "filesystem";
+            type = "filesystem";
         }
 
         // NOTE: if updating FS this would be the place to unmount FS using FS.end()
@@ -82,16 +56,4 @@ void setupOTA(){
         }
     });
     ArduinoOTA.begin();
-}
-
-BLYNK_CONNECTED() {
-    // Blynk.syncAll();
-    resetPins();
-}
-
-void resetPins(){
-    for(uint8_t i = 1; i < 4; i++){
-        pinMode(i, OUTPUT);
-        digitalWrite(i, HIGH);
-    }
 }

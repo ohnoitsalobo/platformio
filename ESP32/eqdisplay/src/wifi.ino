@@ -15,8 +15,8 @@ void setupWiFi(){
     
     timeSetup();
     
-#ifdef blynk_en
-	blynkSetup();
+#ifdef _virtuino
+	virtuinoSetup();
 #endif
 }
     
@@ -77,7 +77,7 @@ void setupOTA(){
 }
 
 void wifiLoop(){
-#ifdef debug
+#ifdef _debug
     _serial_.println("Starting wifiLoop");
 #endif
 
@@ -85,12 +85,13 @@ void wifiLoop(){
         ArduinoOTA.handle();
         server.handleClient();
         webSocket.loop();
-#ifdef blynk_en
-        blynkLoop();
+#ifdef _virtuino
+        virtuinoLoop();
 #endif
         if(!digitalRead(2)){
             digitalWrite(2, HIGH);
             _serial_.println("Wifi connected!");
+            _serial_.println(WiFi.localIP());
         }
     }
     
@@ -103,7 +104,7 @@ void wifiLoop(){
             digitalWrite(2, LOW);
     }
     yield();
-#ifdef debug
+#ifdef _debug
     _serial_.println("Ending wifiLoop");
 #endif
 }
@@ -253,10 +254,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
     case WStype_PONG:
         break;
     }
-}
-
-void wsBroadcast(){
-    webSocket.broadcastTXT(eqBroadcast);
 }
 
 String formatBytes(size_t bytes) { // convert sizes in bytes to KB and MB

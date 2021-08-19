@@ -1,6 +1,5 @@
 #define _serial_ Serial
-#define BLYNK_PRINT Serial
-// #define debug 1
+// #define _debug 1
 #include "headers.h"
 
 // HardwareSerial Serial_1(2);
@@ -8,7 +7,7 @@
 void setup(){
 
     pinMode(2, OUTPUT);
-    Serial.begin(115200);
+    _serial_.begin(115200);
 
     setupWiFi();
     
@@ -22,7 +21,7 @@ void setup(){
 }
 
 void loop(){
-#ifdef debug
+#ifdef _debug
     _serial_.println("Starting loop");
 #endif
     
@@ -32,7 +31,7 @@ void loop(){
 
     ledLoop();
     
-#ifdef debug
+#ifdef _debug
     _serial_.println("Ending loop");
 #endif
 }

@@ -4,14 +4,19 @@
 |         2   EN
 |_________GND 1
 
-RST   -> 10k -> Vcc
-      -> SW  -> Vcc
+RST   -> 10k -> Vcc // pullup
+      -> SW  -> Vcc 
 
 EN    -> 10k -> Vcc
 
-GPIO0 -> 10k -> Vcc
+GPIO0 -> 10k -> Vcc // pullup
       -> SW  -> GND
 
 GPIO1 => TX0
 GPIO2 => TX1
 GPIO3 => RX0
+
+GPIO0 - flash mode, boot fails if LOW
+GPIO1 - HIGH at boot, boot fails if LOW
+GPIO2 - HIGH at boot, LED, boot fails if LOW
+GPIO3 - HIGH at boot

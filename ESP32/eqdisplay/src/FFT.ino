@@ -1,10 +1,10 @@
 #define LeftPin  36
 #define RightPin 39
-#define samples  512 // must ALWAYS be a power of 2
-#define samplingFrequency 12500 // 25000
+#define samples  256 // 512 // must ALWAYS be a power of 2
+#define samplingFrequency 12000 // 25000
 
 #define noise 1500
-#define MAX 40000
+#define MAX 20000
 #define max_max MAX
 #define max_min MAX/5
 #define min_max noise
@@ -24,7 +24,8 @@ void fftSetup(){
     sampling_period_us = round(1000000*(1.0/samplingFrequency));
     // double a = log10(1 + (144/(samples/2.0))*sqrt(NUM_LEDS/2.0));
     for (uint16_t i = 2; i < samples/2; i++){
-        spectrum[0][i] = pow((i-2)/(samples/2.0-2), 0.66) * NUM_LEDS/2;
+        // spectrum[0][i] = pow((i-2)/(samples/2.0-2), 0.66) * NUM_LEDS/2;
+        spectrum[0][i] = pow((i-2)/(samples/2.0-2), 0.81) * NUM_LEDS/2;
         spectrum[1][i] = 0;
         spectrum[2][i] = 0;
 
@@ -33,18 +34,18 @@ void fftSetup(){
         // _serial_.print(((i-1) * 1.0 * samplingFrequency) / samples);
         // _serial_.print(",");
         // _serial_.print((int)spectrum[0][i]);
+        // _serial_.print("\r\n");
         /*  * /
         for(uint8_t x = 0; x < 40; x++){
             _serial_.print((int)(pow((i-2)/(samples/2.0-2), (0.4+x/100.0)) * NUMBER_OF_LEDS/2));
             _serial_.print(",");
         }
         /*  */
-        // _serial_.print("\r\n");
     }
 }
 
 void fftLoop(){
-#ifdef debug
+#ifdef _debug
     _serial_.println("Starting fftLoop");
 #endif
 
@@ -69,7 +70,7 @@ void fftLoop(){
     PrintVector(vReal[0], (samples >> 1), 1);
     // PrintVector(vReal[1], (samples >> 1), 2);
 
-#ifdef debug
+#ifdef _debug
     _serial_.println("Ending fftLoop");
 #endif
 }

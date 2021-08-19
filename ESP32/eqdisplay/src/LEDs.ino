@@ -30,25 +30,17 @@ SimplePatternList autoPatterns = { cylon, drawClock, rainbow, rainbowWithGlitter
 SimplePatternList audioPatterns = { audio_spectrum, audioLight };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
-String eqBroadcast = "";
-uint8_t eq[2][samples/2-2];
-
 void ledSetup(){
     FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness(currentBrightness);
-    FastLED.setMaxPowerInVoltsAndMilliamps(5, 1000);
-    
-    for(int i = 0; i < samples/2-2; i++){
-        eq[0][i] = 0;
-        eq[1][i] = 0;
-    }
+    FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
     
     setupNoise();
     fill_solid (leds, NUM_LEDS, CRGB::Black);
 }
 
 void ledLoop(){
-#ifdef debug
+#ifdef _debug
     _serial_.println("Starting ledLoop");
 #endif
     adjustBrightness();
@@ -81,7 +73,7 @@ void ledLoop(){
             FastLED.show();
         }
     }
-#ifdef debug
+#ifdef _debug
     _serial_.println("Ending ledLoop");
 #endif
 }
@@ -102,7 +94,7 @@ void adjustColors(){
 }
 
 void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping them to light spectrum
-#ifdef debug
+#ifdef _debug
     _serial_.println("Starting audio_spectrum");
 #endif
     uint8_t fadeval = 90;
@@ -131,13 +123,13 @@ void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping 
         }
         yield();
     }
-#ifdef debug
+#ifdef _debug
     _serial_.println("Ending audio_spectrum");
 #endif
 }
 
 void audioLight(){ // directly sampling ADC values mapped to brightness
-#ifdef debug
+#ifdef _debug
     _serial_.println("Starting audioLight");
 #endif
     EVERY_N_MILLISECONDS( 55 ) { gHue1++; }
@@ -169,7 +161,7 @@ void audioLight(){ // directly sampling ADC values mapped to brightness
         L1[NUM_LEDS/4-1] = R1[NUM_LEDS/4-1];
         L2[0] = L1[NUM_LEDS/4-1];
     }
-#ifdef debug
+#ifdef _debug
     _serial_.println("Ending audioLight");
 #endif
 }

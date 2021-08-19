@@ -1,7 +1,7 @@
 USING_NAMESPACE_APPLEMIDI
 
 void MIDIsetup(){
-    MIDI.begin(1); // listen on channel 1
+    MIDI.begin();
     AppleMIDI.setHandleConnected(OnAppleMidiConnected);
     AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
     // AppleMIDI.setHandleError(OnAppleMidiError);
@@ -12,8 +12,8 @@ void MIDIsetup(){
     // MDNS.begin(AppleMIDI.getName());
     MDNS.addService(host, "udp", AppleMIDI.getPort());
     // MDNS.addService("http", "tcp", 80);
-    IPAddress remote(192, 168, 1, 4);
-    AppleMIDI.sendInvite(remote); // port is 5004 by default
+    // IPAddress remote(192, 168, 1, 4);
+    // AppleMIDI.sendInvite(remote); // port is 5004 by default
 }
 
 void MIDIloop(){
