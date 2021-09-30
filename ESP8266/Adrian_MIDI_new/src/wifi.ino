@@ -1,12 +1,13 @@
-  
-String hostname = "ESP8266";
-
 void setupWifi(){
-    WiFiManager wifiManager;
-    // wifiManager.setSTAStaticIPConfig(ip, gateway, subnet);
-    wifiManager.autoConnect(hostname.c_str());
-
-    hostname = hostname + "-" + String(ESP.getChipId());
+    
+    setupVirtuino();
+    
+    
+    // WiFi.setOutputPower(0);
+    WiFi.mode(WIFI_STA);
+    // WiFi.softAP(hostname.c_str(), "password");
+    WiFi.begin(ssid, password);
+    
     if (MDNS.begin(hostname.c_str())) {
         Serial.print("\r\nMDNS responder started, hostname: ");
         Serial.println(hostname);
@@ -14,11 +15,6 @@ void setupWifi(){
     MDNS.addService("http", "tcp", 80);
     
     setupOTA();
-    
-    virtuino.begin(onReceived,onRequested,256);  // Start Virtuino. Set the buffer to 256. With this buffer Virtuino can control about 28 pins (1 command = 9bytes) The T(text) commands with 20 characters need 20+6 bytes
-    virtuino.key="1234";                         // This is the Virtuino password. Only requests the start with this key are accepted from the library
-    virtuinoServer.begin();
-
 }
 
 void setupOTA(){
@@ -34,12 +30,20 @@ void setupOTA(){
 
         // NOTE: if updating FS this would be the place to unmount FS using FS.end()
         Serial.println("Start updating " + type);
+        FastLED.setBrightness(100);
+        fill_solid (leds, NUM_LEDS, CRGB::Black);
+        FastLED.show();
     });
     ArduinoOTA.onEnd([]() {
         Serial.println("\nEnd");
+        fill_solid (leds, NUM_LEDS, CRGB::Black);
+        FastLED.show();
     });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+        int temp = progress / (total / 100);
+        Serial.printf("Progress: %u%%\r", temp);
+        leds[map(temp, 0, 100, 0, NUM_LEDS)] = 0x111111;
+        FastLED.show();
     });
     ArduinoOTA.onError([](ota_error_t error) {
         Serial.printf("Error[%u]: ", error);
@@ -56,4 +60,17 @@ void setupOTA(){
         }
     });
     ArduinoOTA.begin();
+}
+
+void runWifi(){
+    if(WiFi.status() == WL_CONNECTED){
+        ArduinoOTA.handle();
+        virtuinoRun();        // Necessary function to communicate with Virtuino. Client handler
+    }
+    if(WiFi.status() != WL_CONNECTED){
+        EVERY_N_SECONDS(10){
+            WiFi.begin(ssid, password);
+        }
+    }
+    yield();
 }

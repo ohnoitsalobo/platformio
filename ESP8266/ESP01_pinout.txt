@@ -12,7 +12,7 @@ EN    -> 10k -> Vcc
 GPIO0 -> 10k -> Vcc // pullup
       -> SW  -> GND
 
-GPIO1 => TX0
+GPIO1 => TX0 // built-in LED
 GPIO2 => TX1
 GPIO3 => RX0
 

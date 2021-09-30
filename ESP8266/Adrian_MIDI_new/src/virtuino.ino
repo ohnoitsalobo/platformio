@@ -1,31 +1,66 @@
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <ArduinoOTA.h>
-#include <DNSServer.h>
-#include <ESP8266WebServer.h>
-#include <WiFiManager.h>         // https://github.com/tzapu/WiFiManager
-
-////////////////////////////  VIRTUINO FUNCTIONS  //////////////////////////////
-
-#include <VirtuinoCM.h>
-VirtuinoCM virtuino;               
-#define V_memory_count 32          // the size of V memory. You can change it to a number <=255)
-float V[V_memory_count];           // This array is synchronized with Virtuino V memory. You can change the type to int, long etc.
-// float V_prev[V_memory_count];
-// #define debug 1
-WiFiServer virtuinoServer(8000);                   // Default Virtuino Server port 
-
 //============================================================== onCommandReceived
 //==============================================================
 /* This function is called every time Virtuino app sends a request to server to change a Pin value
  * The 'variableType' can be a character like V, T, O  V=Virtual pin  T=Text Pin    O=PWM Pin 
  * The 'variableIndex' is the pin number index of Virtuino app
  * The 'valueAsText' is the value that has sent from the app   */
- void onReceived(char variableType, uint8_t variableIndex, String valueAsText){     
+void onReceived(char variableType, uint8_t variableIndex, String valueAsText){     
     if (variableType=='V'){
         float value = valueAsText.toFloat();        // convert the value to float. The valueAsText have to be numerical
         if (variableIndex<V_memory_count) V[variableIndex]=value;              // copy the received value to arduino V memory array
+
+        if (variableIndex < 3){
+            _midi   = (variableIndex == 0) ? true : false;
+            _auto   = (variableIndex == 1) ? true : false;
+            _manual = (variableIndex == 2) ? true : false;
+            if(_midi)
+                _setBrightness = 255;
+            else
+                _setBrightness = 100*100/255;
+        }
+        else if(variableIndex == 3){ // brightness
+            int x = (int)V[variableIndex];
+            x = (x*x)/255.0;
+            _setBrightness = x;
+            V_prev[variableIndex] = V[variableIndex];
+        }
+        else if(variableIndex == 4){ // next pattern
+            nextPattern();
+            V[variableIndex] = 0;
+        }
+        else if(variableIndex == 5){ // previous pattern
+            previousPattern();
+            V[variableIndex] = 0;
+        }
+        else if(variableIndex > 5){
+            int x = (int)V[variableIndex];
+            x = (x*x)/255.0;
+            if      (variableIndex == 6 ){ // red
+                manualColor.r = x;
+            }else if(variableIndex == 7 ){ // green
+                manualColor.g = x;
+            }else if(variableIndex == 8 ){ // blue
+                manualColor.b = x;
+            }else if(variableIndex == 9 ){ // hue
+                manualHSV.h = x;
+                manualColor = manualHSV;
+            }else if(variableIndex == 10){ // saturation
+                manualHSV.s = x;
+                manualColor = manualHSV;
+            }
+            setManualcolor();
+            V_prev[variableIndex] = V[variableIndex];
+        }
+        V[0] = _midi  ;
+        V[1] = _auto  ;
+        V[2] = _manual;
+        
     }
+}
+
+void setManualcolor(){
+    manualColor_L = manualColor;
+    manualColor_R = manualColor;
 }
 
 //==============================================================
@@ -79,6 +114,7 @@ void virtuinoRun(){
 #ifdef debug
     Serial.println("Disconnected");
 #endif
+    yield();
 }
 
 
@@ -89,4 +125,9 @@ void vDelay(int delayInMillis){
         virtuinoRun();
 }
 
-////////////////////////////  END VIRTUINO FUNCTIONS  //////////////////////////////
+void setupVirtuino(){
+    virtuino.begin(onReceived,onRequested,256);  // Start Virtuino. Set the buffer to 256. With this buffer Virtuino can control about 28 pins (1 command = 9bytes) The T(text) commands with 20 characters need 20+6 bytes
+    virtuino.key="1234";                         // This is the Virtuino password. Only requests the start with this key are accepted from the library
+    virtuinoServer.begin();
+}
+

@@ -5,17 +5,14 @@ void setup(){
     OTAsetup();
 
     LEDsetup();
-    
-    blynkSetup();
+
 }
 
 void loop(){
     wifiLoop();
 
     LEDloop();
-        
-    blynkLoop();
-    
+
     yield();
 
 }
