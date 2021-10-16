@@ -3,7 +3,7 @@ void setupMIDI(){
     MIDI.setHandleNoteOff(handleNoteOff);
     MIDI.setHandlePitchBend(handlePitchBend);
     MIDI.setHandleControlChange(handleControlChange);
-    
+    MIDI.setHandleClock(handleClock);
     MIDI.begin(MIDI_CHANNEL_OMNI);
     
     AppleMIDI_W.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
@@ -19,12 +19,14 @@ void setupMIDI(){
     MIDI_W.setHandleNoteOff(handleNoteOff);
     MIDI_W.setHandlePitchBend(handlePitchBend);
     MIDI_W.setHandleControlChange(handleControlChange);
+    
+    // MIDI_W.setHandleClock(handleClock);
 
     MIDI_W.begin(MIDI_CHANNEL_OMNI);
 }
 
 void runMIDI(){
-    MIDI.read();
+    // MIDI.read();
 
     MIDI_W.read();
     yield();
@@ -32,6 +34,12 @@ void runMIDI(){
 
 // do X when a key is pressed
 void handleNoteOn(byte channel, byte pitch, byte velocity) {
+    // Serial.print("Note on - Channel ");
+    // Serial.print(channel);
+    // Serial.print(" | Pitch ");
+    // Serial.print(pitch);
+    // Serial.print(" | Velocity ");
+    // Serial.println(velocity);
     // MIDI note values 0 - 127 
     // 36-96 (for 61-key) mapped to LED 0-60
     int temp = map(pitch, 36, 96, 0, NUM_LEDS-1);
@@ -51,6 +59,12 @@ void handleNoteOn(byte channel, byte pitch, byte velocity) {
 
 // do X when a key is released
 void handleNoteOff(byte channel, byte pitch, byte velocity) {
+    // Serial.print("Note off - Channel ");
+    // Serial.print(channel);
+    // Serial.print(" | Pitch ");
+    // Serial.print(pitch);
+    // Serial.print(" | Velocity ");
+    // Serial.println(velocity);
     yield();
 }
 
@@ -78,25 +92,29 @@ void handleControlChange(byte channel, byte number, byte value){
     }
 }
 
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Device connected
-// -----------------------------------------------------------------------------
-void handleConnected(uint32_t ssrc, char* name) {
-    isConnected  = true;
-    // Serial.print("Connected to session ");
-    // Serial.println(name);
-    delay(1000);
+void handleClock() {
+    
+    if(ticks < 24){
+        if(ticks == 0){
+            lastClock = millis();
+        }
+        ticks++;
+    }
+    else{
+        ticks = 0;
+        currentClock = millis();
+        
+        uint16_t temp = currentClock - lastClock;
+        _BPM = (1000.0 / temp) * 60.0;
+        Serial.print("Quarter note: ");
+        Serial.print(temp);
+        Serial.print(" ms\tFrequency: ");
+        Serial.print(1000.0 / temp);
+        Serial.print(" Hz\tBPM: ");
+        Serial.println(_BPM);
+    }
 }
 
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Device disconnected
-// -----------------------------------------------------------------------------
-void handleDisconnected(uint32_t ssrc) {
-    isConnected  = false;
-    // Serial.println("Disconnected");
-    delay(1000);
-}
 
 // ====================================================================================
 // Event handlers for incoming MIDI messages

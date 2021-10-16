@@ -33,20 +33,10 @@ uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 void ledSetup(){
     FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness(currentBrightness);
-    FastLED.setMaxPowerInVoltsAndMilliamps(5, 250);
+    FastLED.setMaxPowerInVoltsAndMilliamps(5, 1000);
     
     setupNoise();
     fill_solid (leds, NUM_LEDS, CRGB::Black);
-}
-
-void ledLoop_1(){
-    EVERY_N_MILLISECONDS(1000/10){
-        for(int i = 0; i < NUM_LEDS; i++){
-            leds[i] = CRGB::White;
-        }
-        fadeToBlackBy( leds, NUM_LEDS, 80);
-        FastLED.show();
-    }
 }
 
 void ledLoop(){

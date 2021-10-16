@@ -1,8 +1,8 @@
 #include "headers.h"
 
 void setup() {
-    // // Serial.begin(115200);
-    // Serial.println("Booting");
+    // Serial.begin(115200);
+    Serial.println("Booting");
     
     setupWifi();
     

@@ -29,7 +29,7 @@ void loop(){
     
     MIDIloop();
 
-    ledLoop_1();
+    ledLoop();
         
 #ifdef _debug
     _serial_.println("Ending loop");
