@@ -131,7 +131,8 @@ void dot_beat() {
 
     uint8_t BPM, inner, outer, middle;
     
-    BPM = 33;
+    // BPM = 33;
+    BPM = _BPM / 2;
 
     inner  = beatsin8(BPM, NUM_LEDS/4, NUM_LEDS/4*3);    // Move 1/4 to 3/4
     outer  = beatsin8(BPM, 0, NUM_LEDS-1);               // Move entire length
@@ -157,7 +158,8 @@ void juggle() {
 void bpm()
 {
     // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
-    uint8_t BeatsPerMinute = 62;
+    // uint8_t BeatsPerMinute = 62;
+    uint8_t BeatsPerMinute = _BPM;
     // CRGBPalette16 palette = PartyColors_p;
     CRGBPalette16 palette = RainbowColors_p;
     uint8_t beat = beatsin8( BeatsPerMinute, 64, 255);
@@ -324,7 +326,7 @@ double _smear = 4.0*sqrt(1.0/(width*width*width)); // this calculates the necess
 void cylon(){
     nscale8( leds, NUM_LEDS, 20);
     int pos, val;
-    pos = beatsin16(20, 0.9*width*temp, (NUM_LEDS-0.9*width)*temp);  // range of input. the 'w' prevents it from hitting the sides
+    pos = beatsin16(_BPM/2, 0.9*width*temp, (NUM_LEDS-0.9*width)*temp);  // range of input. the 'w' prevents it from hitting the sides
     double a;
     double scaledpos = pos/(NUM_LEDS*temp) * NUM_LEDS; // range scaled down to working length
     for(int i = 0; i < NUM_LEDS; i++){
@@ -336,12 +338,12 @@ void cylon(){
 }
 
 void cylon1(){
-    EVERY_N_MILLISECONDS( 55 ) { gHue1++; }
-    EVERY_N_MILLISECONDS( 57 ) { gHue2--; }
+    EVERY_N_MILLISECONDS( _BPM   ) { gHue1++; }
+    EVERY_N_MILLISECONDS( _BPM+2 ) { gHue2--; }
     nscale8( leds, NUM_LEDS, 20);
     int posL, posR, val;
-    posL = beatsin16(23, 0.9*width*temp, (NUM_LEDS-0.9*width)*temp);  // range of input. the 'w' prevents it from hitting the sides
-    posR = beatsin16(27, 0.9*width*temp, (NUM_LEDS-0.9*width)*temp);  // range of input. the 'w' prevents it from hitting the sides
+    posL = beatsin16(_BPM, 0.9*width*temp, (NUM_LEDS-0.9*width)*temp);  // range of input. the 'w' prevents it from hitting the sides
+    posR = beatsin16(_BPM, 0.9*width*temp, (NUM_LEDS-0.9*width)*temp);  // range of input. the 'w' prevents it from hitting the sides
     double a;
     double scaledposL = posL/(NUM_LEDS*temp) * NUM_LEDS/2; // range scaled down to working length
     double scaledposR = posR/(NUM_LEDS*temp) * NUM_LEDS/2; // range scaled down to working length

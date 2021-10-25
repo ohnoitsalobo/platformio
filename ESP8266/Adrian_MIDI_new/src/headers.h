@@ -17,6 +17,9 @@ APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI_W, hostname.c_str(), DEFAULT_CONTROL_POR
 unsigned long t0 = millis();
 int8_t isConnected = 0;
 
+uint16_t lastClock = 0, currentClock = 0, _BPM = 60;
+byte ticks = 0;
+
 #if __cplusplus > 199711L
 #define register      // Deprecated in C++11.
 #endif  // #if __cplusplus > 199711L
