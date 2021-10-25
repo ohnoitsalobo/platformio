@@ -1,0 +1,6 @@
+[submodule "ESP32/NightDriverStrip"]
+	path = ESP32/NightDriverStrip
+	url = https://github.com/PlummersSoftwareLLC/NightDriverStrip.git
+[submodule "ESP32/WLED"]
+	path = ESP32/WLED
+	url = https://github.com/Aircoookie/WLED.git

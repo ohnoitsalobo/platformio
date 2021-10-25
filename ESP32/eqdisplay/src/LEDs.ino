@@ -39,16 +39,6 @@ void ledSetup(){
     fill_solid (leds, NUM_LEDS, CRGB::Black);
 }
 
-void ledLoop_1(){
-    EVERY_N_MILLISECONDS(1000/10){
-        for(int i = 0; i < NUM_LEDS; i++){
-            leds[i] = CRGB::White;
-        }
-        fadeToBlackBy( leds, NUM_LEDS, 80);
-        FastLED.show();
-    }
-}
-
 void ledLoop(){
 #ifdef _debug
     _serial_.println("Starting ledLoop");
