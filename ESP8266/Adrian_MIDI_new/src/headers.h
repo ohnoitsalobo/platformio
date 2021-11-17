@@ -19,6 +19,7 @@ int8_t isConnected = 0;
 
 uint16_t lastClock = 0, currentClock = 0, _BPM = 60;
 byte ticks = 0;
+uint16_t timeSinceLastMIDI = 0;
 
 #if __cplusplus > 199711L
 #define register      // Deprecated in C++11.
@@ -27,6 +28,7 @@ byte ticks = 0;
 #define FASTLED_ALLOW_INTERRUPTS 0
 #define FASTLED_INTERRUPT_RETRY_COUNT 1
 // #define FASTLED_INTERNAL
+#include <Wire.h>
 #include <FastLED.h>
 
 #define LED_TYPE    WS2812    // LED strip type

@@ -10,7 +10,6 @@ const char* password = "9182736450";
 // const char* ssid = "Home";
 // const char* password = "12345678";
 
-#include <TelnetStream.h>
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 WebServer server(80); const char* host = "panelDisplay";
@@ -29,11 +28,6 @@ unsigned int localPort = 8888;  // local port to listen for UDP packets
 time_t getNtpTime();
 void sendNTPpacket(IPAddress &address);
 
-// #define blynk_en 1
-#ifdef blynk_en
-#include <BlynkSimpleEsp32.h>
-#endif
-
 #include <arduinoFFT.h>
 // #define FASTLED_ALLOW_INTERRUPTS 0
 // #define INTERRUPT_THRESHOLD 1
@@ -41,6 +35,7 @@ void sendNTPpacket(IPAddress &address);
 // #define FASTLED_ESP32_FLASH_LOCK 1
 #define FASTLED_INTERNAL
 #include <FastLED.h>
+#include <Adafruit_I2CDevice.h>
 #include <LEDMatrix.h>
 #include <LEDText.h>
 #include <FontMatrise.h>
@@ -48,22 +43,8 @@ void sendNTPpacket(IPAddress &address);
 #define MATRIX_HEIGHT  9
 #define MATRIX_TYPE    HORIZONTAL_ZIGZAG_MATRIX
 #define NUM_LEDS MATRIX_WIDTH * MATRIX_HEIGHT
-bool _auto = 0;
+bool _auto = 1;
 bool manual = 0;
-bool text = 1;
+bool text = 0;
 bool FFTenable = true;
 
-#define APPLEMIDI_INITIATOR
-#include <AppleMIDI.h>
-bool MIDIconnected = false;
-byte MIDIdata[] = {0, 0, 0};
-uint8_t _hue = 0;             // modifier for key color cycling
-bool sustain = false;         // is sustain pedal on?
-bool MidiEventReceived = false;
-CRGB lastPressed;  // holder for last-detected key color
-
-
-// APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE();
-// #define APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE() \
-// APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI, "ESP32", DEFAULT_CONTROL_PORT);
-APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI, host, DEFAULT_CONTROL_PORT);

@@ -15,10 +15,10 @@ void setupMIDI(){
         DBG(F("Disconnected"), ssrc);
     });
 
-    MIDI_W.setHandleNoteOn(handleNoteOn);
-    MIDI_W.setHandleNoteOff(handleNoteOff);
-    MIDI_W.setHandlePitchBend(handlePitchBend);
-    MIDI_W.setHandleControlChange(handleControlChange);
+    // MIDI_W.setHandleNoteOn(handleNoteOn);
+    // MIDI_W.setHandleNoteOff(handleNoteOff);
+    // MIDI_W.setHandlePitchBend(handlePitchBend);
+    // MIDI_W.setHandleControlChange(handleControlChange);
     
     // MIDI_W.setHandleClock(handleClock);
 
@@ -26,10 +26,18 @@ void setupMIDI(){
 }
 
 void runMIDI(){
-    // MIDI.read();
+    MIDI.read();
 
-    MIDI_W.read();
+    // MIDI_W.read();
     yield();
+    
+    if(millis() - timeSinceLastMIDI > 10000){
+        _midi   = false;
+        _auto   = true;
+        _setBrightness = 150*150/255;
+        currentBrightness = 0;
+        FastLED.setBrightness(currentBrightness);
+    }
 }
 
 // do X when a key is pressed
@@ -42,6 +50,8 @@ void handleNoteOn(byte channel, byte pitch, byte velocity) {
     // Serial.println(velocity);
     // MIDI note values 0 - 127 
     // 36-96 (for 61-key) mapped to LED 0-60
+    
+    timeSinceLastMIDI = millis();
     int temp = map(pitch, 36, 96, 0, NUM_LEDS-1);
     
     if(temp < 0)
@@ -54,6 +64,8 @@ void handleNoteOn(byte channel, byte pitch, byte velocity) {
     // assign color based on note position and intensity (velocity)
     leds[_pos] = CHSV(_pitch + gHue, 255 - velocity, velocity/127.0 * 255);
     lastPressed = leds[_pos]; // remember last-detected note color
+    
+    MIDI_W.sendNoteOn(pitch, velocity, channel);
     yield();
 }
 
@@ -65,6 +77,7 @@ void handleNoteOff(byte channel, byte pitch, byte velocity) {
     // Serial.print(pitch);
     // Serial.print(" | Velocity ");
     // Serial.println(velocity);
+    MIDI_W.sendNoteOff(pitch, velocity, channel);
     yield();
 }
 

@@ -1,7 +1,7 @@
 FASTLED_USING_NAMESPACE
 
 typedef void (*SimplePatternList[])();
-SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, rainbow_scaling, fireSparks, confetti, ripple_blur, sinelon, /* dot_beat, */ juggle, bpm, blendwave, cylon, cylon1, noise1 };
+SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, rainbow_scaling, fireSparks, confetti, ripple_blur, sinelon, juggle, bpm, blendwave, cylon, cylon1, noise1 };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
 CRGBPalette16 currentPalette;
@@ -20,6 +20,12 @@ void setupLED(){
 }
 
 void runLED(){
+    if(MIDI.read()){
+        FastLED.clear();
+        FastLED.setBrightness(currentBrightness);
+        _midi   = true;
+        _auto   = false;
+    }
     if(_midi){
         runMIDI();
         EVERY_N_MILLISECONDS(20){ 
@@ -122,6 +128,7 @@ void sinelon()
     fadeToBlackBy( leds, NUM_LEDS, 12);
     int pos = beatsin16(11, 0, NUM_LEDS-1);
     leds [pos] = ColorFromPalette(currentPalette, pos, 255, LINEARBLEND);   // Use that value for both the location as well as the palette index colour for the pixel.
+    yield();
 }
 
 void dot_beat() {
@@ -142,6 +149,7 @@ void dot_beat() {
     leds[middle] = CHSV( gHue+96 , 200, 255);
     leds[inner]  = CHSV( gHue+160, 200, 255);
 
+    yield();
 } // dot_beat()
 
 void juggle() {
@@ -182,6 +190,7 @@ void blendwave() {
     fill_gradient_RGB(leds, 0, clr2, loc1, clr1);
     fill_gradient_RGB(leds, loc1, clr2, NUM_LEDS-1, clr1);
     
+    yield();
 } // blendwave()
 
 uint8_t _xhue[NUM_LEDS], _yhue[NUM_LEDS]; // x/y coordinates for noise function
@@ -218,6 +227,7 @@ void noise1() {
 
         leds[i] = CHSV( _hue, _sat, _val);
         
+        yield();
     }
 }
 
@@ -243,6 +253,7 @@ void noise2() {
         _val = _noise;
 
         leds[i] = CHSV( _hue, _sat, _val);
+        yield();
     }
 }
 
@@ -270,18 +281,19 @@ void noise3() {
         _val = _noise;
 
         leds[i] = CHSV( _hue, _sat, _val);
+        yield();
     }
 }
 
-uint8_t fadeval = 235, frameRate = 45;
+uint8_t fadeval = 235, frameRate = 30; // 45
 void fire(){ // my own simpler 'fire' code - randomly generate fire and move it up the strip while fading
     EVERY_N_MILLISECONDS(1000/frameRate){
         uint8_t _hue = 0, _sat = 255, _val = 0;
-        _val = random(0, 255);
+        _val = random(100, 255);
         _sat = 255 - (_val/255.0 * 50);
         _hue = _val/255.0 *_val/255.0 * 55;
         LEFT [NUM_LEDS/2-1] = CHSV( _hue, _sat, _val*_val/255);
-        _val = random(0, 255);
+        _val = random(100, 255);
         _sat = 255 - (_val/255.0 * 50);
         _hue = _val/255.0 *_val/255.0 * 55;
         RIGHT[0] = CHSV( _hue, _sat, _val*_val/255);
@@ -291,6 +303,7 @@ void fire(){ // my own simpler 'fire' code - randomly generate fire and move it 
         int j = NUM_LEDS/2-1-i;
         RIGHT[j] = RIGHT[j-1].nscale8(fadeval); if(RIGHT[j].g > 0) RIGHT[j].g--;
 
+        yield();
     }
 }
 
@@ -335,6 +348,7 @@ void cylon(){
         val = 255.0*pow(2, a);  // 
         leds [i] |= CHSV(0, 255, val);
     }
+    yield();
 }
 
 void cylon1(){
@@ -357,4 +371,5 @@ void cylon1(){
         val = 255.0*pow(2, a);  // 
         RIGHT[i] |= CHSV(gHue1, 255, val);
     }
+    yield();
 }

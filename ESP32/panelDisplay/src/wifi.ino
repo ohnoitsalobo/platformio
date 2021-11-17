@@ -15,9 +15,6 @@ void setupWiFi(){
     
     timeSetup();
     
-#ifdef blynk_en
-	blynkSetup();
-#endif
 }
     
 void setupOTA(){
@@ -88,9 +85,6 @@ void wifiLoop(){
         // EVERY_N_SECONDS(1){
             // webSocket.cleanupClients();
         // }
-#ifdef blynk_en
-        blynkLoop();
-#endif
         if(!digitalRead(2)){
             digitalWrite(2, HIGH);
             _serial_.println("Wifi connected!");

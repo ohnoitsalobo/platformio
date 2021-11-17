@@ -20,3 +20,12 @@ GPIO0 - flash mode, boot fails if LOW
 GPIO1 - HIGH at boot, boot fails if LOW
 GPIO2 - HIGH at boot, LED, boot fails if LOW
 GPIO3 - HIGH at boot
+
+GPIO0:  flash mode if pulled LOW
+GPIO1:  pin is high at BOOT, boot failure if pulled LOW
+GPIO2:  pin is high on BOOT, boot failure if pulled LOW
+GPIO3:  pin is high at BOOT
+GPIO9:  pin is high at BOOT
+GPIO10: pin is high at BOOT
+GPIO15: boot failure if pulled HIGH
+GPIO16: pin is high at BOOT

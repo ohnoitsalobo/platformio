@@ -1,1 +1,1 @@
-pio run -t buildfs && "c:\python38\python.exe" "C:\Users\Anand\.platformio\packages\framework-arduinoespressif32\tools\espota.py" --debug --progress -i paneldisplay.local -s -f .pio\build\bpi-bit\spiffs.bin
+pio run -t buildfs && "c:\python38\python.exe" "C:\Users\mukai\.platformio\packages\framework-arduinoespressif32\tools\espota.py" --debug --progress -i 192.168.137.24 -s -f .pio\build\bpi-bit\spiffs.bin

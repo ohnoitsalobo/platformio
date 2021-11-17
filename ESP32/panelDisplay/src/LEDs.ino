@@ -3,15 +3,22 @@ FASTLED_USING_NAMESPACE
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
 #define LED_PINS    13
-#define BRIGHTNESS  10
+#define BRIGHTNESS  100
 
 CRGBArray<NUM_LEDS> leds;                              // LED array containing all LEDs
 CRGBSet RIGHT (leds (0,            NUM_LEDS/2-1)   );  // < subset containing only left  LEDs
-CRGBSet R1    (leds (0,            NUM_LEDS/4-1)   );  // < subset containing only left  side of left  LEDs
-CRGBSet R2    (leds (NUM_LEDS/4,   NUM_LEDS/2-1)   );  // < subset containing only right side of left  LEDs
 CRGBSet LEFT  (leds (NUM_LEDS/2,   NUM_LEDS)       );  // < subset containing only right LEDs
-CRGBSet L1    (leds (NUM_LEDS/2,   3*NUM_LEDS/4-1) );  // < subset containing only left  side of right LEDs
-CRGBSet L2    (leds (3*NUM_LEDS/4, NUM_LEDS)       );  // < subset containing only right side of right LEDs
+CRGBSet row1  (leds ( 0,  7)); CRGBSet R1  (leds ( 0,  3)); CRGBSet L1  (leds ( 4,  7)); 
+CRGBSet row2  (leds ( 8, 15)); CRGBSet L2  (leds ( 8, 11)); CRGBSet R2  (leds (12, 15)); 
+CRGBSet row3  (leds (16, 23)); CRGBSet R3  (leds (16, 19)); CRGBSet L3  (leds (20, 23)); 
+CRGBSet row4  (leds (24, 31)); CRGBSet L4  (leds (24, 27)); CRGBSet R4  (leds (28, 31)); 
+CRGBSet row5  (leds (32, 39)); CRGBSet R5  (leds (32, 35)); CRGBSet L5  (leds (36, 39)); 
+CRGBSet row6  (leds (40, 47)); CRGBSet L6  (leds (40, 43)); CRGBSet R6  (leds (44, 47)); 
+CRGBSet row7  (leds (48, 55)); CRGBSet R7  (leds (48, 51)); CRGBSet L7  (leds (52, 55)); 
+CRGBSet row8  (leds (56, 63)); CRGBSet L8  (leds (56, 59)); CRGBSet R8  (leds (60, 63)); 
+CRGBSet row9  (leds (64, 71)); CRGBSet R9  (leds (64, 67)); CRGBSet L9  (leds (68, 71)); 
+struct CRGB * rightArray[] ={ R1, R2, R3, R4, R5, R6, R7, R8, R9 }; 
+struct CRGB * leftArray [] ={ L1, L2, L3, L4, L5, L6, L7, L8, L9 }; 
 
 CRGBPalette16 currentPalette, randomPalette1;
 CRGBPalette16 targetPalette, randomPalette2;
@@ -26,7 +33,7 @@ uint8_t gHue = 0, gHue1 = 0, gHue2 = 0; // rotating "base color" used by many of
 
 typedef void (*SimplePatternList[])();
 // SimplePatternList autoPatterns = { cylon, rainbow, rainbowWithGlitter, rainbow_scaling, fire, fireSparks, fireRainbow, noise1, noise2, noise3, pacifica_loop, blendwave, confetti, ripple_blur, sinelon, dot_beat, juggle };
-SimplePatternList autoPatterns = { matrixTest, rainbow_scaling, noise1, noise2, noise3 };
+SimplePatternList autoPatterns = { confetti, rainbow_scaling, matrixTest, noise1};
 SimplePatternList audioPatterns = { audio_spectrum, audioLight };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
@@ -68,12 +75,12 @@ const unsigned char TxtDemo[] = {
     // EFFECT_HSV "\x00\xff\x00"
     // EFFECT_HSV_AV       "\x00\xff\xff\xe0\xff\xff"
     // EFFECT_SCROLL_RIGHT " AILICEC "
-    EFFECT_RGB_CV       "\x00\x00\xff\xaa\xaa\xff"
-    EFFECT_SCROLL_LEFT  "   OHNOITSALOBO   "
     EFFECT_RGB_CV       "\x00\xff\x00\x44\ff\xaa"
-    EFFECT_SCROLL_LEFT  "   BUILDS  "
+    EFFECT_SCROLL_LEFT  "   LEMONGRASS   "
     EFFECT_HSV_AH       "\x00\xe0\xff\xe0\xe0\xff"
-    EFFECT_SCROLL_LEFT  "   STUFF   "
+    EFFECT_SCROLL_LEFT  "   ACOUSTIC  "
+    EFFECT_RGB_CV       "\x00\x00\xff\xaa\xaa\xff"
+    EFFECT_SCROLL_LEFT  "   TRIO   "
 };
 
 char *wifiText = "";
@@ -82,7 +89,7 @@ void ledSetup(){
     FastLED.addLeds<LED_TYPE, LED_PINS, COLOR_ORDER>(leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
     // FastLED.addLeds<LED_TYPE, LED_PINS, COLOR_ORDER>(ledMatrix[0], ledMatrix.Size());
     FastLED.setBrightness(currentBrightness);
-    FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
+    FastLED.setMaxPowerInMilliWatts(5*500);
 
     setupNoise();
     fill_solid (leds, NUM_LEDS, CRGB::Black);
@@ -95,39 +102,36 @@ void ledLoop(){
     _serial_.println("Starting ledLoop");
 #endif
     adjustBrightness();
-    if(MIDIconnected){
-        runLED();
-    }else{
-        // if(text && gCurrentPatternNumber == 0)
-            // FFTenable = true;
-        // else if(FFTenable)
-            // FFTenable = false;
-        
-        if(text){
-            EVERY_N_MILLISECONDS( 50 ) { 
-                textLoop(); 
-            }
-            FastLED.show();
+    // if(text && gCurrentPatternNumber == 0)
+        // FFTenable = true;
+    // else if(FFTenable)
+        // FFTenable = false;
+    
+    if(text){
+        EVERY_N_MILLISECONDS( 50 ) { 
+            textLoop(); 
         }
-        else if(_auto){
-            EVERY_N_MILLISECONDS( 41 ) { gHue1++; }
-            EVERY_N_MILLISECONDS( 37 ) { gHue2--; }
-            // EVERY_N_SECONDS(60){ nextPattern(); }
-            EVERY_N_SECONDS(20){
-                targetPalette = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
-                randomPalette1 = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
-                randomPalette2 = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
-            }
-            EVERY_N_MILLISECONDS( 50 ) { 
-                autoPatterns[gCurrentPatternNumber]();
-            }
-            FastLED.show();
-        }
-        else if(manual){
-            adjustColors();
-            FastLED.show();
-        }
+        FastLED.show();
     }
+    else if(_auto){
+        EVERY_N_MILLISECONDS( 41 ) { gHue1++; }
+        EVERY_N_MILLISECONDS( 37 ) { gHue2--; }
+        // EVERY_N_SECONDS(60){ nextPattern(); }
+        EVERY_N_SECONDS(20){
+            targetPalette = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
+            randomPalette1 = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
+            randomPalette2 = CRGBPalette16(CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 255, random8(128,255)), CHSV(random8(), 192, random8(128,255)), CHSV(random8(), 255, random8(128,255)));
+        }
+        // EVERY_N_MILLISECONDS( 20 ) { 
+        autoPatterns[gCurrentPatternNumber]();
+        // }
+        FastLED.show();
+    }
+    else if(manual){
+        adjustColors();
+        FastLED.show();
+    }
+
 #ifdef debug
     _serial_.println("Ending ledLoop");
 #endif
@@ -163,12 +167,22 @@ void adjustBrightness(){
     else if(currentBrightness > _setBrightness) FastLED.setBrightness(--currentBrightness);
 }
 void adjustColors(){
-    for(int i = 0; i < NUM_LEDS/2; i++){
-        for(int j = 0; j < 3; j++){
-                 if(LEFT [i][j] < manualColor_L[j]) LEFT [i][j]++;
-            else if(LEFT [i][j] > manualColor_L[j]) LEFT [i][j]--;
-                 if(RIGHT[i][j] < manualColor_R[j]) RIGHT[i][j]++;
-            else if(RIGHT[i][j] > manualColor_R[j]) RIGHT[i][j]--;
+    // for(int i = 0; i < NUM_LEDS/2; i++){
+        // for(int j = 0; j < 3; j++){
+                 // if(LEFT [i][j] < manualColor_L[j]) LEFT [i][j]++;
+            // else if(LEFT [i][j] > manualColor_L[j]) LEFT [i][j]--;
+                 // if(RIGHT[i][j] < manualColor_R[j]) RIGHT[i][j]++;
+            // else if(RIGHT[i][j] > manualColor_R[j]) RIGHT[i][j]--;
+        // }
+    // }
+    for(int i = 0; i < 9; i++){
+        for(int j = 0; j < 4; j++){
+            for(int k = 0; k < 3; k++){
+                     if(leftArray  [i][j][k] < manualColor_L[k]) leftArray  [i][j][k]++;
+                else if(leftArray  [i][j][k] > manualColor_L[k]) leftArray  [i][j][k]--;
+                     if(rightArray [i][j][k] < manualColor_R[k]) rightArray [i][j][k]++;
+                else if(rightArray [i][j][k] > manualColor_R[k]) rightArray [i][j][k]--;
+            }
         }
     }
 }
@@ -292,12 +306,27 @@ void rainbowWithGlitter() {
     addGlitter();
 } // rainbow with glitter
 
+// void rainbow_scaling(){
+    // for(int i = 0; i <= NUM_LEDS/4; i++){
+        // R1[i] = CHSV((millis()/77*i+1)%255 + gHue1, 255, 255);
+        // R2[NUM_LEDS/4-i] = R1[i];
+        // L1[i] = CHSV((millis()/73*i+1)%255 - gHue2, 255, 255);
+        // L2[NUM_LEDS/4-i] = L1[i];
+    // }
+// } // rainbow scaling
+
 void rainbow_scaling(){
-    for(int i = 0; i <= NUM_LEDS/4; i++){
-        R1[i] = CHSV((millis()/77*i+1)%255 + gHue1, 255, 255);
-        R2[NUM_LEDS/4-i] = R1[i];
-        L1[i] = CHSV((millis()/73*i+1)%255 - gHue2, 255, 255);
-        L2[NUM_LEDS/4-i] = L1[i];
+    long t = millis();
+    for(int i = 0; i < 8; i++){
+        row1[i] = CHSV((t/12*i+1)%255 + gHue1, 255, 255);
+        row2[i] = CHSV((t/15*i+1)%255 + gHue1, 255, 255);
+        row3[i] = CHSV((t/18*i+1)%255 + gHue1, 255, 255);
+        row4[i] = CHSV((t/20*i+1)%255 + gHue1, 255, 255);
+        row5[i] = CHSV((t/24*i+1)%255 + gHue1, 255, 255);
+        row6[i] = CHSV((t/30*i+1)%255 + gHue1, 255, 255);
+        row7[i] = CHSV((t/36*i+1)%255 + gHue1, 255, 255);
+        row8[i] = CHSV((t/45*i+1)%255 + gHue1, 255, 255);
+        row9[i] = CHSV((t/60*i+1)%255 + gHue1, 255, 255);
     }
 } // rainbow scaling
 
@@ -312,11 +341,11 @@ void addGlitter() {
 void confetti() 
 {    // random colored speckles that blink in and fade smoothly
     EVERY_N_MILLISECONDS(1000/30){
-        fadeToBlackBy( leds, NUM_LEDS, 30);
-        int pos = random16(NUM_LEDS/2);
-        // leds[pos] += CHSV( random8(255), 255, 255);
-        RIGHT[pos] += CHSV( gHue1 + random8(64), 190+random8(65), 255);
-        LEFT [pos] += CHSV( gHue2 + random8(64), 190+random8(65), 255);
+        fadeToBlackBy( leds, NUM_LEDS, 5);
+    }
+    EVERY_N_MILLISECONDS(1000/10){
+        int pos = random16(NUM_LEDS);
+        leds[pos] += CHSV( random8(64)+gHue1, 255, 255);
     }
 }
 

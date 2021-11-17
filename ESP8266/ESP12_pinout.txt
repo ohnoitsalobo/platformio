@@ -22,3 +22,12 @@
 15
 
 6-11 memory
+
+GPIO0:  flash mode if pulled LOW
+GPIO1:  pin is high at BOOT, boot failure if pulled LOW
+GPIO2:  pin is high on BOOT, boot failure if pulled LOW
+GPIO3:  pin is high at BOOT
+GPIO9:  pin is high at BOOT
+GPIO10: pin is high at BOOT
+GPIO15: boot failure if pulled HIGH
+GPIO16: pin is high at BOOT

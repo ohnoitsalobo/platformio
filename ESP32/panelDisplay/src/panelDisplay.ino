@@ -1,5 +1,4 @@
 #define _serial_ Serial
-#define BLYNK_PRINT Serial
 // #define debug 1
 #include "headers.h"
 
@@ -16,8 +15,6 @@ void setup(){
     
     ledSetup();
     
-    MIDIsetup();
-
     // dualCoreInit();
 }
 
@@ -28,7 +25,6 @@ void loop(){
     
     wifiLoop();
     
-    MIDIloop();
 
     ledLoop();
     
