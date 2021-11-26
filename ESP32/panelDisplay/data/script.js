@@ -1,8 +1,3 @@
-// var connection = new WebSocket('ws://panelDisplay.local:81/', ['arduino']);
-// function openWebSocket(){
-    // connection = new WebSocket('ws://panelDisplay.local:81/', ['arduino']);
-// }
-
 var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
 function openWebSocket(){
     connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
@@ -15,7 +10,6 @@ connection.onopen = function () {
 connection.onerror = function (error) {
     console.log('WebSocket Error ', error);
 };
-
 
 connection.onclose = function(){
     console.log('WebSocket connection closed');
@@ -133,15 +127,6 @@ function setup(){
     frameRate(10);
     // img = loadImage('hue_square.png');
     img = loadImage('hue_circle.png');
-    // colorMode(HSB, 255);
-    // for(let i = 0; i < width; i++){
-        // for(let j = 0; j < height/2; j++){
-            // stroke(i*224.0/width, j, 255);
-            // point(i, j);
-            // stroke(i*224.0/width, 255, 255-j);
-            // point(i, j+height/2);
-        // }
-    // }
 }
 
 function rainbowHeader(){
@@ -201,34 +186,10 @@ function colorWheel(){
     if(_rr) rightcolor = c;
     if(_ll) leftcolor = c;
     noFill(); strokeWeight(t);
-    // stroke(c);
-    // circle(width/2, height/2, width+t+20);
     stroke(rightcolor);
     arc(width/2, height/2, width+t+20, width+t+20, -PI/2, PI/2);
     stroke(leftcolor);
     arc(width/2, height/2, width+t+20, width+t+20, PI/2, -PI/2);
-    /*  * /
-    colorMode(HSB, 255);
-    translate(width/2, height/2);
-    rotate(PI);
-    angleMode(DEGREES);
-    fill(255); noStroke();
-    let radius = 0.9*width/2;
-    circle(0, 0, width*0.975);
-    strokeWeight(4);
-    let deg = 360;
-    for(let j = 0; j < deg; j++){
-        rotate(360/deg);
-        for(let i = 0; i < radius; i++){
-            let _hue = j/deg*255;
-            let _sat = (i < radius/2) ? 255 : 255-((i-radius/2)/(radius/2))*255;
-            let _val = (i > radius/2) ? 255 : (i/(radius/2))*255;
-            stroke(_hue, _sat, _val);
-            point(0, i);
-        }
-    }
-    noLoop();
-    /*  */
 }
 
 function setHue(hue) { // Set the RGB LED to a given hue (color) (0° = Red, 120° = Green, 240° = Blue)

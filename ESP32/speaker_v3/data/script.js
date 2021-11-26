@@ -1,6 +1,6 @@
-var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
+var connection = new WebSocket('ws://'+location.hostname+'/ws',['arduino']);
 function openWebSocket(){
-    connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
+    connection = new WebSocket('ws://'+location.hostname+'/ws', ['arduino']);
 }
 
 connection.onopen = function () {
@@ -14,7 +14,7 @@ connection.onerror = function (error) {
 connection.onclose = function(){
     console.log('WebSocket connection closed');
 };
-
+/*  * /
 window.addEventListener('keydown',function(e){
     if(e.keyIdentifier=='U+000A'||e.keyIdentifier=='Enter'||e.keyCode==13){
         if(e.target.nodeName=='INPUT'&&e.target.type=='text'){
@@ -23,7 +23,7 @@ window.addEventListener('keydown',function(e){
         }
     }
 },true);
-
+/*  */
 var m = 0, r = 0, g = 0, b = 0, h = 0, s = 0, v = 0, _ll = false, _rr = false;
 var rr, gg, bb;
 
@@ -106,11 +106,6 @@ function process(){
     document.getElementById('b' ).disabled = en;
     document.getElementById('h' ).disabled = en;
     document.getElementById('s' ).disabled = en;
-    if(m == 0){
-        document.getElementById('textbox_div').style['display'] = "block";
-    }else{
-        document.getElementById('textbox_div').style['display'] = "none";
-    }
     if(connection.readyState === WebSocket.CLOSED || connection.readyState === WebSocket.CLOSING){
         document.getElementById('reconnect').style['display'] = "block";
     }else if(connection.readyState === WebSocket.OPEN || connection.readyState === WebSocket.CONNECTING){
@@ -231,34 +226,3 @@ function leftRight(x){
         document.getElementById('rr').checked = true;
     }
 }
-
-var colorpicker1 = "#000000";
-var colorpicker2 = "#000000";
-function setColor1(){
-    colorpicker1 = document.getElementById('colorpicker1' ).value;
-}
-function setColor2(){
-    colorpicker2 = document.getElementById('colorpicker2' ).value;
-}
-function resetColors(){
-    colorpicker1 = "#000000";
-    colorpicker2 = "#000000";
-    document.getElementById('colorpicker1' ).value = colorpicker1;
-    document.getElementById('colorpicker2' ).value = colorpicker2;
-}
-function clearText(){
-    document.getElementById('textbox').value = "";
-    var text = '! ';
-    connection.send(text);
-}
-
-function sendText(){
-    var text = document.getElementById('textbox').value;
-    text = '! ' + colorpicker1 + ' ' + colorpicker2 + '   ' + text + ' ';
-    connection.send(text);
-}
-
-// ! #abcdef #abcdef 
-// 1234567890123456789
-// ! #rrrgggbbb #rrrgggbbb
-// 123456789012345678901234

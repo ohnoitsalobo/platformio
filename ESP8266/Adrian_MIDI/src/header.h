@@ -1,6 +1,6 @@
-#define wifissid "Home"
-#define wifipassword "12345678"
-#define host_name "keyboard-MODX"
+#define wifissid "linksys1"
+#define wifipassword "9182736450"
+#define host_name "keyboard"
 
 #include <ESP8266WiFi.h>               // 
 #include <ESP8266mDNS.h>               // 

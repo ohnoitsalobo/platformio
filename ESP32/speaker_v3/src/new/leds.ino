@@ -1,37 +1,33 @@
-#define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000/x)
-#define TIMES_PER_MINUTE(x) EVERY_N_SECONDS(60/x)
-#define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
-
 #include <Gaussian.h>
+
+#define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
 FASTLED_USING_NAMESPACE
 
 typedef void (*SimplePatternList[])();
+SimplePatternList audioPatterns = { audio_spectrum };
 SimplePatternList gPatterns = { fireworks, confetti, ripple_blur, fire, cylon, cylon1, sinelon, juggle, bpm, rainbow, rainbowWithGlitter, rainbow_scaling };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
-void setupLeds(){
+void ledSetup(){
     FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness(currentBrightness);
     FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
     
     fill_solid (leds, NUM_LEDS, CRGB::Black);
     FastLED.show();
-
 }
 
-void runLeds(){
-    EVERY_N_SECONDS(1){
-        checkMIDI();
-    }
-    adjustBrightness();
+void ledLoop(){
     EVERY_N_MILLISECONDS(50){ gHue++; gHue1++; gHue2--;}
     
     switch(_mode){
+        case _audio:
+            audioPatterns[gCurrentPatternNumber]();
+        break;
         case _midi:
-            runMIDI();
-            displayMIDI();
-            
+            // MIDIloop();
+            // displayMIDI();
         break;
         case _auto:
             EVERY_N_MILLISECONDS( 1000 / 60 ){  // Call the current pattern function once, updating the 'leds' array
@@ -52,8 +48,6 @@ void runLeds(){
     adjustBrightness();
     
     FastLED.show();
-    yield();
-    
 }
 
 void adjustBrightness(){
@@ -63,10 +57,10 @@ void adjustBrightness(){
 void adjustColors(){
     for(int i = 0; i < NUM_LEDS/2; i++){
         for(int j = 0; j < 3; j++){
-                 if(LEFT [i][j] < manualColor_LEFT [j]) LEFT [i][j]++;
-            else if(LEFT [i][j] > manualColor_LEFT [j]) LEFT [i][j]--;
-                 if(RIGHT[i][j] < manualColor_RIGHT[j]) RIGHT[i][j]++;
-            else if(RIGHT[i][j] > manualColor_RIGHT[j]) RIGHT[i][j]--;
+                 if(LEFT [i][j] < manualColor_L [j]) LEFT [i][j]++;
+            else if(LEFT [i][j] > manualColor_L [j]) LEFT [i][j]--;
+                 if(RIGHT[i][j] < manualColor_R[j]) RIGHT[i][j]++;
+            else if(RIGHT[i][j] > manualColor_R[j]) RIGHT[i][j]--;
         }
     }
 }
@@ -85,6 +79,46 @@ void previousPattern(){
     gCurrentPatternNumber = (gCurrentPatternNumber + (temp-1)) % temp;
 } // advance to the previous pattern
 
+//////////////// Audio reactive patterns ////////////////
+
+void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping them to light spectrum
+#ifdef _debug
+    _serial_.println("Starting audio_spectrum");
+#endif
+    uint8_t fadeval = 90;
+    nscale8(leds, NUM_LEDS, fadeval); // smaller = faster fade
+    CRGB tempRGB1, tempRGB2;
+    uint8_t pos = 0, h = 0, s = 0, v = 0;
+    double temp1 = 0, temp2 = 0;
+    for(int i = 2; i < samples/2; i++){
+        pos = spectrum[0][i];
+        h = pos/(NUM_LEDS/2.0)*224;
+        temp1 = spectrum[1][i]/MAX;
+        s = 255 - (temp1*30.0);
+        v = temp1*255.0;
+        tempRGB1 = CHSV(h, s, v);
+        uint8_t p = NUM_LEDS/2-pos;
+        if(tempRGB1 > RIGHT[p]){
+            RIGHT[p] = tempRGB1;
+        }
+
+        temp2 = spectrum[2][i]/MAX;
+        s = 255 - (temp2*30.0);
+        v = temp2*255.0;
+        tempRGB2 = CHSV(h, s, v);
+        if(tempRGB2 > LEFT[pos]){
+            LEFT[pos] = tempRGB2;
+        }
+        // yield();
+    }
+    yield();
+#ifdef _debug
+    _serial_.println("Ending audio_spectrum");
+#endif
+}
+/////////////////////////////////////////////////////////
+
+//////////////// Normal patterns ////////////////
 void rainbow() {
     // FastLED's built-in rainbow generator
     fill_rainbow( leds, NUM_LEDS, gHue);
@@ -148,23 +182,25 @@ void fire(){ // my own simpler 'fire' code - randomly generate fire and move it 
 }
 
 const int sparks = 15;
-FireWork _firework[sparks];
+FireWork _firework[2][sparks];
 void fireworks(){
     fadeToBlackBy(leds, NUM_LEDS, 100);
     for (int i = 0; i < sparks; i++){
-        _firework[i].draw();
+        _firework[0][i].draw(0);
+        _firework[1][i].draw(1);
     }
     EVERY_N_SECONDS(2){
-        if(random8() < 150){
+        // if(random8() < 150){
             firework_init();
-        }
+        // }
     }
 }
 
 void firework_init(){
     int temp = random16(NUM_LEDS/8, 7*NUM_LEDS/4);
     for (int i = 0; i < sparks; i++){
-        _firework[i].init(temp);
+        _firework[0][i].init(temp);
+        _firework[1][i].init(temp);
     }
 }
 
@@ -308,3 +344,132 @@ void DrawPixels(float fPos, float count, CRGB color){
         leds[iPos] += ColorFraction(color, remaining);
     }
 }
+
+void DrawPixels(uint8_t segment, float fPos, float count, CRGB color){
+    // Calculate how much the first pixel will hold
+    float availFirstPixel = 1.0f - (fPos - (long)(fPos));
+    float amtFirstPixel = min(availFirstPixel, count);
+    float remaining = min(count, FastLED.size()-fPos);
+    int iPos = fPos;
+
+    // Blend (add) in the color of the first partial pixel
+
+    if (remaining > 0.0f){
+        led_array[segment][iPos++] += ColorFraction(color, amtFirstPixel);
+        remaining -= amtFirstPixel;
+    }
+
+    // Now draw any full pixels in the middle
+
+    while (remaining > 1.0f){
+        led_array[segment][iPos++] += color;
+        remaining--;
+    }
+
+    // Draw tail pixel, up to a single full pixel
+
+    if (remaining > 0.0f){
+        led_array[segment][iPos] += ColorFraction(color, remaining);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*  * /
+#define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000/x)
+#define TIMES_PER_MINUTE(x) EVERY_N_SECONDS(60/x)
+#define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
+
+#include <Gaussian.h>
+
+FASTLED_USING_NAMESPACE
+
+typedef void (*SimplePatternList[])();
+SimplePatternList audioPatterns = { audio_spectrum };
+SimplePatternList gPatterns = { fireworks, confetti, ripple_blur, fire, cylon, cylon1, sinelon, juggle, bpm, rainbow, rainbowWithGlitter, rainbow_scaling };
+uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
+
+void ledSetup(){
+    FastLED.addLeds< LED_TYPE, LED_PINS, COLOR_ORDER >( leds, NUM_LEDS ).setCorrection( TypicalLEDStrip );
+    FastLED.setBrightness(currentBrightness);
+    FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
+    
+    fill_solid (leds, NUM_LEDS, CRGB::Black);
+    FastLED.show();
+
+}
+
+void ledLoop(){
+    EVERY_N_SECONDS(1){
+        checkMIDI();
+    }
+    adjustBrightness();
+    EVERY_N_MILLISECONDS(50){ gHue++; gHue1++; gHue2--;}
+    
+    switch(_mode){
+        case _audio:
+            audioPatterns[gCurrentPatternNumber]();
+        break;
+        case _midi:
+            // MIDIloop();
+            displayMIDI();
+        break;
+        case _auto:
+            EVERY_N_MILLISECONDS( 1000 / 60 ){  // Call the current pattern function once, updating the 'leds' array
+                gPatterns[gCurrentPatternNumber]();
+            }
+            if(auto_advance) {
+                EVERY_N_SECONDS( 40 ) { 
+                    nextPattern(); 
+                }
+            }   // change patterns periodically
+        break;
+        case _manual:
+            adjustColors();
+        break;
+        default:
+        break;
+    }
+    adjustBrightness();
+    
+    FastLED.show();
+    yield();
+    
+}
+
+/*  */
