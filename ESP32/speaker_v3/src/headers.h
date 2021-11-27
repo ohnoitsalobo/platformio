@@ -83,7 +83,7 @@ enum mode_select {   // self-explanatory
     _manual,            // manual control mode
     _midi               // midi responsiveness mode
 };
-mode_select _mode = _auto; // initialize with audio spectrum
+mode_select _mode = _audio; // initialize with audio spectrum
 
 ///////////// FFT
 #include <arduinoFFT.h>

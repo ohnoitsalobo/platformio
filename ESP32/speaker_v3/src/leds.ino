@@ -176,8 +176,8 @@ void audioLight(){ // directly sampling ADC values mapped to brightness
 
 void rainbow() {
     // FastLED's built-in rainbow generator
-    fill_rainbow( RIGHT, NUM_LEDS/2, gHue1);
-    fill_rainbow( LEFT , NUM_LEDS/2, gHue2);
+    fill_rainbow( RIGHT, half_size, gHue1, 23);
+    fill_rainbow( LEFT , half_size, gHue2, 23);
 } // rainbow
 
 void rainbowWithGlitter() {
@@ -288,11 +288,11 @@ void tape_reel(){
     for(float i = 0; i < spots; i++){
         float offset = half_size/spots;
 
-        float _fractL = beat16(30)/65535.0;
+        float _fractL = beat16(23)/65535.0;
         b = _fractL * half_size + i*offset;
         DrawPixels(b, 1.5, CHSV(gHue1, 255, 255),  LEFT, half_size);
 
-        float _fractR = beat16(29)/65535.0;
+        float _fractR = beat16(22)/65535.0;
         b = (_fractR) * half_size + i*offset;
         DrawPixels(b, 1.5, CHSV(gHue2, 255, 255), RIGHT, half_size);
     }
