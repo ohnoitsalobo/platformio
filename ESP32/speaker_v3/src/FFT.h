@@ -41,11 +41,8 @@ void fftSetup(){
     }
 }
 
-const uint16_t max_max = MAX;
-const uint16_t min_max = MAX/10;
-const uint16_t max_min = noise;
-const uint16_t min_min = noise/5;
-uint16_t _min = max_min, _max = min_max;
+const uint32_t min_max = MAX/10;
+uint32_t _max = min_max;
 void PrintVector(double *vData, uint16_t bufferSize, int leftRight) {
     for (uint16_t i = 2; i < bufferSize; i++){
         if(vData[i] > noise){

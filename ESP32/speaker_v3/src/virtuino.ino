@@ -44,7 +44,7 @@ void onReceived(char variableType, uint8_t variableIndex, String valueAsText){
             if(_mode == _midi || _mode == _audio)
                 _setBrightness = 255;
             else
-                _setBrightness = 100*100/255;
+                _setBrightness = 150*150/255;
         }
         else if(variableIndex == 3){ // brightness
             int x = (int)V[variableIndex];

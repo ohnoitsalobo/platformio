@@ -7,7 +7,7 @@
 FASTLED_USING_NAMESPACE
 
 typedef void (*SimplePatternList[])();
-SimplePatternList audioPatterns = { audioLight, audio_spectrum };
+SimplePatternList audioPatterns = { audio_spectrum, audioFire };
 SimplePatternList gPatterns = { fire, tape_reel, fireworks, confetti, ripple_blur, cylon1, sinelon, juggle, bpm, rainbow, rainbowWithGlitter, rainbow_scaling, drawClock };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
@@ -25,7 +25,11 @@ void ledLoop(){
     EVERY_N_SECONDS(1){
         checkMIDI();
     }
-    EVERY_N_MILLISECONDS(50){ gHue++; gHue1++; gHue2--;}
+    
+    if(_mode == _audio && !FFTenable)
+        FFTenable = true;
+    else if(_mode != _audio)
+        FFTenable = false;
     
     switch(_mode){
         case _audio:
@@ -36,6 +40,7 @@ void ledLoop(){
             displayMIDI();
         break;
         case _auto:
+            EVERY_N_MILLISECONDS(50){ gHue++; gHue1++; gHue2--;}
             EVERY_N_MILLISECONDS( 1000 / 60 ){  // Call the current pattern function once, updating the 'leds' array
                 gPatterns[gCurrentPatternNumber]();
             }
@@ -108,7 +113,7 @@ void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping 
     for(int i = 2; i < samples/2; i++){
         pos = spectrum[0][i];
         h = pos/(NUM_LEDS/4.0)*224;
-        temp1 = spectrum[1][i]/MAX;
+        temp1 = spectrum[1][i]/_max;
         s = 255 - (temp1*30.0);
         v = temp1*255.0;
         tempRGB1 = CHSV(h, s, v);
@@ -118,7 +123,7 @@ void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping 
         }
         R2[p] = R1[pos];
 
-        temp2 = spectrum[2][i]/MAX;
+        temp2 = spectrum[2][i]/_max;
         s = 255 - (temp2*30.0);
         v = temp2*255.0;
         tempRGB2 = CHSV(h, s, v);
@@ -133,14 +138,15 @@ void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping 
 #endif
 }
 
-void audioLight(){ // directly sampling ADC values mapped to brightness
+uint16_t _MAX = 250;
+void audioFire(){ // directly sampling ADC values mapped to brightness
 #ifdef debug
-    _serial_.println("Starting audioLight");
+    _serial_.println("Starting audioFire");
 #endif
     EVERY_N_MILLISECONDS( 55 ) { gHue1++; }
     EVERY_N_MILLISECONDS( 57 ) { gHue2--; }
     EVERY_N_MILLISECONDS( 15 ) {
-        uint8_t fadeval = 210;
+        uint8_t fadeval = 200;
         for(int i = 0; i < NUM_LEDS/4; i++){
             R1[NUM_LEDS/4-i] = R1[NUM_LEDS/4-1-i].nscale8(fadeval);
             R2[i] = R1[NUM_LEDS/4-i];
@@ -151,8 +157,11 @@ void audioLight(){ // directly sampling ADC values mapped to brightness
         uint8_t _hue = 0, _sat = 255, _val = 0;
         int temp1 = abs(mid - analogRead( RightPin));
         if(temp1 > _noise){
-            _val = (temp1-_noise)/float(mid) * 255;
-            _hue = _val/255.0 * 65;
+            temp1 -= noise;
+            if(temp1 > _MAX) _MAX = temp1;
+            _val = temp1/float(_MAX) * 255;
+            _hue = _val/255.0 * 64;
+            // _hue = (1.0f - _val/255.0) * 96;
         }
         R1[0] = CHSV( _hue+gHue1, _sat, _val);
         R2[NUM_LEDS/4] = R1[0];
@@ -160,14 +169,19 @@ void audioLight(){ // directly sampling ADC values mapped to brightness
         _hue = 0; _val = 0;
         int temp2 = abs(mid - analogRead( LeftPin));
         if(temp2 > _noise){
-            _val = (temp2-_noise)/float(mid) * 255;
-            _hue = _val/255.0 * 65;
+            temp2 -= noise;
+            if(temp2 > _MAX) _MAX = temp2;
+            _val = temp2/float(_MAX) * 255;
+            _hue = _val/255.0 * 64;
+            // _hue = (1.0f - _val/255.0) * 96;
         }
         L2[NUM_LEDS/4] = CHSV( _hue+gHue2, _sat, _val);
         L1[0] = L2[NUM_LEDS/4];
     }
+    if(_MAX > 50) _MAX--;
+    // EVERY_N_MILLISECONDS(100){ _serial_.println(_MAX); }
 #ifdef debug
-    _serial_.println("Ending audioLight");
+    _serial_.println("Ending audioFire");
 #endif
 }
 /////////////////////////////////////////////////////////
