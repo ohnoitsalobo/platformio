@@ -121,7 +121,7 @@ void cylon(){
     for (int i = 0; i < NUM_LEDS; i++){
         float _val;
         _cylon.mean = pos/res;
-        _val = _cylon.plot(i)*(width/0.399); // divide by 0.3989 to normalize to ~1.0
+        _val = _cylon.plot(i)*(width/0.399); // divide by 0.3989 to normalize to ~1.0 
         leds[i] = CHSV(0, 255, _val*255);
     }
     yield();
