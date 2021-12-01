@@ -5,7 +5,7 @@ bool FFTenable = true;
 #define samples  256 // must ALWAYS be a power of 2
 #define samplingFrequency 25600 // 25000
 
-#define noise 1500
+#define noise 1000 // 1500
 #define MAX 50000
 
 unsigned int sampling_period_us;
@@ -81,7 +81,6 @@ void fftLoop(){
 
     PrintVector(vReal[0], (samples >> 1), 1);
     PrintVector(vReal[1], (samples >> 1), 2);
-    if(_max > min_max) _max -= 100;
 
 #ifdef debug
     _serial_.println("Ending fftLoop");

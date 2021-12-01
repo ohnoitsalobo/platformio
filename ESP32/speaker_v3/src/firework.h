@@ -27,10 +27,14 @@ class FireWork{
             _color.v *= 0.98;
             _pos += _vel;
             _vel *= _acc;
-            if(_pos > half_size-2)
-                _vel *= -1;
-            else if (_pos < 0)
-                _vel *= -1;
+            // if(_pos > half_size-2)
+                // _vel *= -1;
+            // else if (_pos < 0)
+                // _vel *= -1;
+            if(_pos >= half_size)
+                _pos -= half_size;
+            else if (_pos <= 0)
+                _pos += half_size;
         }
         
         CRGB ColorFraction(CRGB colorIn, float fraction){

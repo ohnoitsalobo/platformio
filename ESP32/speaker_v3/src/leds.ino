@@ -18,7 +18,7 @@ void ledSetup(){
     
     fill_solid (leds, NUM_LEDS, CRGB::Black);
     FastLED.show();
-
+    randomSeed(analogRead(0));
 }
 
 void ledLoop(){
@@ -133,6 +133,7 @@ void audio_spectrum(){ // using arduinoFFT to calculate frequencies and mapping 
         L2[p] = L1[pos];
         yield();
     }
+    if(_max > min_max) _max -= 1000;
 #ifdef _debug
     _serial_.println("Ending audio_spectrum");
 #endif
@@ -159,7 +160,9 @@ void audioFire(){ // directly sampling ADC values mapped to brightness
         if(temp1 > _noise){
             temp1 -= noise;
             if(temp1 > _MAX) _MAX = temp1;
-            _val = temp1/float(_MAX) * 255;
+            // _val = temp1/float(_MAX) * 255;
+            _val = temp1/float(_MAX) * temp1/float(_MAX) * 255;
+            _sat = 255 - (_val/255.0 * 65);
             _hue = _val/255.0 * 64;
             // _hue = (1.0f - _val/255.0) * 96;
         }
@@ -171,7 +174,9 @@ void audioFire(){ // directly sampling ADC values mapped to brightness
         if(temp2 > _noise){
             temp2 -= noise;
             if(temp2 > _MAX) _MAX = temp2;
-            _val = temp2/float(_MAX) * 255;
+            // _val = temp2/float(_MAX) * 255;
+            _val = temp2/float(_MAX) * temp2/float(_MAX) * 255;
+            _sat = 255 - (_val/255.0 * 65);
             _hue = _val/255.0 * 64;
             // _hue = (1.0f - _val/255.0) * 96;
         }
@@ -190,8 +195,9 @@ void audioFire(){ // directly sampling ADC values mapped to brightness
 
 void rainbow() {
     // FastLED's built-in rainbow generator
+    EVERY_N_MILLISECONDS(10){ gHue1++; gHue++;}
     fill_rainbow( RIGHT, half_size, gHue1, 23);
-    fill_rainbow( LEFT , half_size, gHue2, 23);
+    fill_rainbow( LEFT , half_size, gHue , 23);
 } // rainbow
 
 void rainbowWithGlitter() {
@@ -243,14 +249,16 @@ void fire(){ // my own 'fire' code - randomly generate color and move it up the 
         }
         uint8_t _hue = 0, _sat = 255, _val = 0;
         _val = random(0, 255);
-        _sat = 255 - (_val/255.0 * 45);
+        _sat = 255 - (_val/255.0 * 65);
         _hue = _val/255.0 *_val/255.0 * 55;
+        // _hue = _val/255.0 * 55;
         R1[0] = CHSV( _hue, _sat, _val*_val/255);
         R2[quarter_size] = R1[0];
         
         _val = random(0, 255);
-        _sat = 255 - (_val/255.0 * 45);
+        _sat = 255 - (_val/255.0 * 65);
         _hue = _val/255.0 *_val/255.0 * 55;
+        // _hue = _val/255.0 * 55;
         L2[quarter_size] = CHSV( _hue, _sat, _val*_val/255);
         L1[0] = L2[quarter_size];
     }
@@ -265,12 +273,14 @@ void fireworks(){
         _firework[0][i].draw(LEFT , half_size);
         _firework[1][i].draw(RIGHT, half_size);
     }
-    EVERY_N_SECONDS(2){
+    EVERY_N_MILLISECONDS(1600){
         if(random8() < 150){
             for (int i = 0; i < sparks; i++){
                 _firework[0][i].init(random16(NUM_LEDS/6, NUM_LEDS/3));
             }
         }
+    }
+    EVERY_N_MILLISECONDS(1700){
         if(random8() < 150){
             for (int i = 0; i < sparks; i++){
                 _firework[1][i].init(random16(NUM_LEDS/6, NUM_LEDS/3));
@@ -283,15 +293,6 @@ void firework_init(){
     for (int i = 0; i < sparks; i++){
         _firework[1][i].init(random16(NUM_LEDS/6, NUM_LEDS/3));
     }
-}
-
-void figure_8(){
-    FastLED.clear();
-    float b = beat16(20)/65535.0 * (half_size);
-    DrawPixels(b, 2, CHSV(gHue, 255, 255), LEFT, half_size);
-    float c = beat16(19)/65535.0 * (half_size);
-    DrawPixels(c, 2, CHSV(gHue, 255, 255), RIGHT, half_size);
-    FastLED.show();
 }
 
 void tape_reel(){
@@ -317,25 +318,6 @@ void tape_reel(){
         incr = -0.005;
     }
     spots += incr;
-}
-
-void tape_reel3(){
-    //fadeToBlackBy( leds, NUM_LEDS, 200);
-    FastLED.clear();
-    float b;
-    b = (beat16(30)/65535.0) * half_size;
-    DrawPixels(b, 1.5, CHSV(gHue, 255, 255),  LEFT, half_size);
-    b+= NUM_LEDS/3;
-    DrawPixels(b, 1.5, CHSV(gHue, 255, 255),  LEFT, half_size);
-    b+= NUM_LEDS/3;
-    DrawPixels(b, 1.5, CHSV(gHue, 255, 255),  LEFT, half_size);
-
-    b = (beat16(29)/65535.0) * half_size;
-    DrawPixels(b, 1.5, CHSV(gHue, 255, 255), RIGHT, half_size);
-    b+= NUM_LEDS/3;
-    DrawPixels(b, 1.5, CHSV(gHue, 255, 255), RIGHT, half_size);
-    b+= NUM_LEDS/3;
-    DrawPixels(b, 1.5, CHSV(gHue, 255, 255), RIGHT, half_size);
 }
 
 void confetti() 
@@ -419,7 +401,7 @@ void bpm()
     uint8_t beatR = beatsin8( BeatsPerMinute, 64, 255);
     for( int i = 0; i < half_size; i++) { //9948
         LEFT [i] = ColorFromPalette(palette, gHue+(i*2), beatL-gHue1+(i*10));
-        RIGHT[half_size-i] = ColorFromPalette(palette, gHue+(i*2), beatR-gHue2+(i*10));
+        RIGHT[half_size-1-i] = ColorFromPalette(palette, gHue+(i*2), beatR-gHue2+(i*10));
         yield();
     }
 }
@@ -470,10 +452,11 @@ void drawClock(){
         int   p       = beatsin16(60, (NUM_LEDS*5)/3, (NUM_LEDS*5)/3*2);              // range of input
         float pPos    = p/(NUM_LEDS*5.0) * (NUM_LEDS/2-1); // range scaled down to working length
         
-        DrawPixels(hourPos, 1.0, CRGB::Red  , RIGHT, half_size);
-        DrawPixels(minPos , 1.0, CRGB::Green, RIGHT, half_size);
-        DrawPixels(secPos , 1.0, CRGB::Blue , RIGHT, half_size);
-        DrawPixels(pPos   , 1.0, CRGB::Brown, LEFT , half_size);
+        float _w = 1.25;
+        DrawPixels(hourPos, _w, CRGB::Red  , RIGHT, half_size);
+        DrawPixels(minPos , _w, CRGB::Green, RIGHT, half_size);
+        DrawPixels(secPos , _w, CRGB::Blue , RIGHT, half_size);
+        DrawPixels(pPos   , _w, CRGB::Brown, LEFT , half_size);
         /*  * /
         for(int i = 0; i < NUM_LEDS/2; i++){
             double a, b, c, y, w = 2;

@@ -41,10 +41,11 @@ void onReceived(char variableType, uint8_t variableIndex, String valueAsText){
             V[variableIndex] = 0;
             V[12] = 0; V[13] = 0;
             gCurrentPatternNumber = 0;
-            if(_mode == _midi || _mode == _audio)
-                _setBrightness = 255;
-            else
-                _setBrightness = 150*150/255;
+            // if(_mode == _midi || _mode == _audio)
+                // _setBrightness = 255;
+            // else
+            _setBrightness = 150*150/255.0;
+            V[ 3] = 150; // brightness
         }
         else if(variableIndex == 3){ // brightness
             int x = (int)V[variableIndex];

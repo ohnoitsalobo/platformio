@@ -54,7 +54,7 @@ File fsUploadFile;
 #define quarter_size NUM_LEDS/4
 #define half_sizef    NUM_LEDS/2.0
 #define quarter_sizef NUM_LEDS/4.0
-#define _bright      255
+#define _bright      150
 #define BRIGHTNESS   _bright*_bright/255
 // scale the brightness non-linearly which looks better because our eyes detect light intensity logarithmically
 CRGBArray<NUM_LEDS> _leds_;
