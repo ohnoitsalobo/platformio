@@ -5,7 +5,7 @@ bool FFTenable = true;
 #define samples  256 // must ALWAYS be a power of 2
 #define samplingFrequency 25600 // 25000
 
-#define noise 1000 // 1500
+#define _noise 1000 // 1500
 #define MAX 50000
 
 unsigned int sampling_period_us;
@@ -45,9 +45,9 @@ const uint32_t min_max = MAX/10;
 uint32_t _max = min_max;
 void PrintVector(double *vData, uint16_t bufferSize, int leftRight) {
     for (uint16_t i = 2; i < bufferSize; i++){
-        if(vData[i] > noise){
+        if(vData[i] > _noise){
             // _serial_.println(vData[i], 4);
-            spectrum[leftRight][i] = vData[i]-noise;
+            spectrum[leftRight][i] = vData[i]-_noise;
             if(spectrum[leftRight][i] > _max) { _max =  spectrum[leftRight][i]; }
         }else{
             spectrum[leftRight][i] = 0;

@@ -1,53 +1,76 @@
-USING_NAMESPACE_APPLEMIDI
-/* */
+#define wireless_MIDI 1
+#define wired_MIDI 0
+/*  */
+uint32_t launchFirework = 0;
 void checkMIDI(){
-    if((_mode == _midi) && (millis() - timeSinceLastMIDI > 10000)){     // if no MIDI detected for 10 seconds
+    if((_mode == _midi) && (millis() - timeSinceLastMIDI > 5000)){     // if no MIDI detected for 1 seconds
         _mode = _auto;                                                  //     switch to auto mode
-        _setBrightness = 100*100/255.0;                                  //
-    }else if(MIDI.read()){                                              // if MIDI detected
+        _setBrightness = 200*200/255.0;                                  //
+    }else if((_mode != _midi) && (MIDI_W.read())){                                            // if MIDI detected
         _mode = _midi;                                                  //     switch to MIDI mode
         FastLED.clear();
         _setBrightness = 255;
     }
 }
-/*  */
-void MIDIsetup(){
-    AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
+
+void setupMIDI(){
+#if wired_MIDI                                       // MIDI event handler functions for hardware MIDI connection
+    MIDI.setHandleNoteOn(handleNoteOn);                 //         
+    MIDI.setHandleNoteOff(handleNoteOff);               // 
+    MIDI.setHandlePitchBend(handlePitchBend);           // 
+    MIDI.setHandleControlChange(handleControlChange);   // 
+    MIDI.setHandleClock(handleClock);                   // 
+                                                        // 
+    MIDI.begin(MIDI_CHANNEL_OMNI);                      // 
+#endif
+
+#if wireless_MIDI
+    AppleMIDI_W.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
         isConnected++;
         DBG(F("Connected to session"), ssrc, name);
     });
-    AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
+    AppleMIDI_W.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
         isConnected--;
         DBG(F("Disconnected"), ssrc);
     });
 
-    MIDI.setHandleNoteOn(handleNoteOn);                 //    ONLY IF wired MIDI is disabled
-    MIDI.setHandleNoteOff(handleNoteOff);               //    to avoid confusion
-    MIDI.setHandlePitchBend(handlePitchBend);           // 
-    MIDI.setHandleControlChange(handleControlChange);   // 
-    MIDI.setHandleClock(handleClock);                   // 
+#if !wired_MIDI                                           // MIDI event handler functions for wireless MIDI connection
+    MIDI_W.setHandleNoteOn(handleNoteOn);                 //    ONLY IF wired MIDI is disabled
+    MIDI_W.setHandleNoteOff(handleNoteOff);               //    to avoid confusion
+    MIDI_W.setHandlePitchBend(handlePitchBend);           // 
+    MIDI_W.setHandleControlChange(handleControlChange);   // 
+    MIDI_W.setHandleClock(handleClock);                   // 
+#endif
 
-    MIDI.begin(MIDI_CHANNEL_OMNI);
+    MIDI_W.begin(MIDI_CHANNEL_OMNI);
+#endif
     
     for (int i = 0; i < 127; i++){
         midiNotes[i] = 0;
     }
 }
 
-void MIDIloop(){
+void runMIDI(){
+#if wired_MIDI
     MIDI.read();
+#endif
+
+#if wireless_MIDI
+#if !wired_MIDI
+    MIDI_W.read();
+#endif
+#endif
     yield();
 
 }
 
-uint32_t launchFirework = 0;
 const int pedal_sparks = 20;
 FireWork pedal_firework[pedal_sparks];
 
+const uint8_t min_min = 0, max_min = 36, min_max = 96, max_max = 127;
+uint8_t _min = max_min, _max = min_max;
 
 void displayMIDI(){
-    const uint8_t min_min = 0, max_min = 36, min_max = 96, max_max = 127;
-    static uint8_t _min = max_min, _max = min_max;
     EVERY_N_MILLISECONDS(20){ 
         fadeToBlackBy( leds, NUM_LEDS, ( sustain ? 10 : 20) );
     }
@@ -58,7 +81,7 @@ void displayMIDI(){
     float factor = 1.0f * (NUM_LEDS-1)/(_max-_min);     // 
     for (int i = 0; i < 127; i++){
         float _pos = factor*(_lastPressed-_min);
-        DrawPixels(_pos, 1.5, CHSV(map(_pos, 0, NUM_LEDS-1, 0, 224)+gHue, 255-midiNotes[_lastPressed], midiNotes[_lastPressed]/127.0*255), leds, NUM_LEDS); 
+        DrawPixels(_pos, 2, CHSV(map(_pos, 0, NUM_LEDS-1, 0, 224)+gHue, 255-midiNotes[_lastPressed], midiNotes[_lastPressed]/127.0*255)); 
         // thanks to https://github.com/davepl/DavesGarageLEDSeries/blob/e725a11c81bd9bf3aa74da791622979a482d5425/LED%20Episode%2009/src/main.cpp#L50
         midiNotes[_lastPressed] = 0;
     }
@@ -69,7 +92,7 @@ void displayMIDI(){
     if(millis() - launchFirework < 1000){
         fadeToBlackBy(leds, NUM_LEDS, 80);
         for (int i = 0; i < pedal_sparks; i++){
-            // pedal_firework[i].draw();
+            pedal_firework[i].draw();
         }
     }
 }
@@ -79,12 +102,20 @@ void handleNoteOn(byte channel, byte pitch, byte velocity) {
     midiNotes[pitch] = velocity;
     _lastPressed = pitch;
     timeSinceLastMIDI = millis();
+    
+#if wireless_MIDI
+    MIDI_W.sendNoteOn(pitch, velocity, channel);
+#endif
     yield();
 }
 
 // do X when a key is released
 void handleNoteOff(byte channel, byte pitch, byte velocity) {
     midiNotes[pitch] = 0;
+
+#if wireless_MIDI
+    MIDI_W.sendNoteOff(pitch, velocity, channel);
+#endif
 }
 
 
@@ -128,15 +159,15 @@ void handleClock() {
         
         uint16_t temp = currentClock - lastClock;
         _BPM = (1000.0 / temp) * 60.0;
-        // _serial_.print("Quarter note: ");
-        // _serial_.print(temp);
-        // _serial_.print(" ms\tFrequency: ");
-        // _serial_.print(1000.0 / temp);
-        // _serial_.print(" Hz\tBPM: ");
-        // _serial_.println(_BPM);
+        // Serial.print("Quarter note: ");
+        // Serial.print(temp);
+        // Serial.print(" ms\tFrequency: ");
+        // Serial.print(1000.0 / temp);
+        // Serial.print(" Hz\tBPM: ");
+        // Serial.println(_BPM);
     }
 }
-
+/*  */
 // ====================================================================================
 // Event handlers for incoming MIDI messages
 // ====================================================================================

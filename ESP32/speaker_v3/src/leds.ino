@@ -4,11 +4,13 @@
 
 #include <Gaussian.h>
 
+#include "noise_patterns.h"
+
 FASTLED_USING_NAMESPACE
 
 typedef void (*SimplePatternList[])();
 SimplePatternList audioPatterns = { audio_spectrum, audioFire };
-SimplePatternList gPatterns = { fire, tape_reel, fireworks, confetti, ripple_blur, cylon1, sinelon, juggle, bpm, rainbow, rainbowWithGlitter, rainbow_scaling, drawClock };
+SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, rainbow_scaling, fire, tape_reel, fireworks, confetti, ripple_blur, cylon1, sinelon, juggle, bpm, drawClock };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
 void ledSetup(){
@@ -19,6 +21,9 @@ void ledSetup(){
     fill_solid (leds, NUM_LEDS, CRGB::Black);
     FastLED.show();
     randomSeed(analogRead(0));
+    
+    XYsetup();
+
 }
 
 void ledLoop(){
@@ -154,10 +159,10 @@ void audioFire(){ // directly sampling ADC values mapped to brightness
             L1[NUM_LEDS/4-i] = L1[NUM_LEDS/4-1-i].nscale8(fadeval);
             L2[i] = L1[NUM_LEDS/4-i];
         }
-        uint16_t mid = 1800, _noise = 180;
+        const uint16_t mid = 1800, noise = 180;
         uint8_t _hue = 0, _sat = 255, _val = 0;
         int temp1 = abs(mid - analogRead( RightPin));
-        if(temp1 > _noise){
+        if(temp1 > noise){
             temp1 -= noise;
             if(temp1 > _MAX) _MAX = temp1;
             // _val = temp1/float(_MAX) * 255;
@@ -171,7 +176,7 @@ void audioFire(){ // directly sampling ADC values mapped to brightness
         
         _hue = 0; _val = 0;
         int temp2 = abs(mid - analogRead( LeftPin));
-        if(temp2 > _noise){
+        if(temp2 > noise){
             temp2 -= noise;
             if(temp2 > _MAX) _MAX = temp2;
             // _val = temp2/float(_MAX) * 255;
@@ -195,7 +200,7 @@ void audioFire(){ // directly sampling ADC values mapped to brightness
 
 void rainbow() {
     // FastLED's built-in rainbow generator
-    EVERY_N_MILLISECONDS(10){ gHue1++; gHue++;}
+    EVERY_N_MILLISECONDS(5){ gHue1++; gHue++;}
     fill_rainbow( RIGHT, half_size, gHue1, 23);
     fill_rainbow( LEFT , half_size, gHue , 23);
 } // rainbow
@@ -208,7 +213,7 @@ void rainbowWithGlitter() {
 
 void addGlitter() {
     EVERY_N_MILLISECONDS(1000/30){
-        if( random8() < 80) {
+        if( random8() < 50) {
             leds[ random16(NUM_LEDS) ] += CRGB::White;
         }
     }
