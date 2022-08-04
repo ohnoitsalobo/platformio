@@ -9,11 +9,13 @@ byte coordsY[NUM_LEDS] = { 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255
 byte angles [NUM_LEDS] = { 247, 246, 246, 245, 244, 243, 242, 240, 239, 236, 233, 229, 223, 215, 204, 191, 178, 167, 159, 154, 149, 146, 144, 142, 141, 139, 138, 137, 137, 136, 133, 130, 128, 125, 122, 119, 116, 115, 114, 113, 112, 111, 109, 106, 104, 100, 96, 90, 83, 74, 64, 54, 45, 38, 32, 27, 24, 21, 19, 17, 15, 14, 13, 12, 11, 11, 8, 5, 3, 0, 252, 250 };
 byte radii  [NUM_LEDS] = { 240, 224, 209, 194, 179, 164, 149, 134, 119, 105, 91, 78, 66, 56, 50, 47, 50, 56, 66, 78, 91, 105, 119, 134, 149, 164, 179, 194, 209, 224, 237, 235, 235, 235, 237, 240, 228, 213, 198, 183, 169, 154, 140, 126, 113, 100, 89, 78, 70, 65, 63, 65, 70, 78, 89, 100, 113, 126, 140, 154, 169, 183, 198, 213, 228, 243, 255, 253, 251, 251, 251, 253 };
 
+#include "noise_patterns.h"
+
 FASTLED_USING_NAMESPACE
 
 typedef void (*SimplePatternList[])();
 // SimplePatternList gPatterns = { fire, rainbow, fireworks, confetti, ripple_blur, fire, cylon, cylon1, sinelon, juggle, bpm };
-SimplePatternList gPatterns = { rainbow, fireworks, confetti, ripple_blur, fire };
+SimplePatternList gPatterns = { noise3, rainbow, fireworks, confetti, ripple_blur, fire };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
 void setupLeds(){
@@ -101,13 +103,6 @@ void previousPattern(){
     gCurrentPatternNumber = (gCurrentPatternNumber + (temp-1)) % temp;
 } // advance to the previous pattern
 
-void test(){
-    uint8_t speed = 30; 
-    for (int i = 0; i < NUM_LEDS; i++) {
-        leds[i] = ColorFromPalette(PartyColors_p, beat8(60)-radii[i]);
-    }
-}
-
 void rainbow() {
     uint8_t speed = 5; 
     for (int i = 0; i < NUM_LEDS; i++) {
@@ -145,7 +140,7 @@ void cylon(){
 }
 
 
-uint8_t fadeval = 200, frameRate = 55; // 45
+uint8_t fadeval = 210, frameRate = 45; // 45
 void fire(){ // my own simpler 'fire' code - randomly generate fire and move it up the strip while fading
     CRGBSet _left  (leds ( 30, 50) );
     CRGBSet _right (leds ( 51, 71) );

@@ -4,6 +4,7 @@
 
 #include <ESP8266WiFi.h>               // 
 #include <ESP8266mDNS.h>               // 
+#include <WebSocketsServer.h>
 #include <WiFiUdp.h>                   // necessary WIFI stuff
 #include <ArduinoOTA.h>                // 
 const char* ssid = wifissid;             // wifi SSID
@@ -13,6 +14,9 @@ String hostname = host_name;          // device name on mDNS and wireless MIDI
 IPAddress _ip(192, 168, 137, 4);
 IPAddress _gateway(192, 168, 137, 1);
 IPAddress _netmask(255, 255, 255, 0);
+
+WiFiServer TelnetServer(23);
+WiFiClient telnet;
 
 #define FASTLED_ALLOW_INTERRUPTS 0
 #define FASTLED_INTERRUPT_RETRY_COUNT 0
@@ -47,11 +51,6 @@ enum mode_select {   // self-explanatory
     _manual             // manual control mode
 };
 mode_select _mode = _auto; // initialize with MIDI control
-
-#include <ESPAsyncE131.h>
-#define UNIVERSE 1                      // First DMX Universe to listen for
-#define UNIVERSE_COUNT 2                // Total number of Universes to listen for, starting at UNIVERSE
-ESPAsyncE131 e131(UNIVERSE_COUNT);
 
 #include <MIDI.h>
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial,  MIDI);   // create MIDI instance

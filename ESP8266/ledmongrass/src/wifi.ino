@@ -1,3 +1,5 @@
+#include"websockets.h"
+
 void setupWifi(){
     
     WiFi.mode(WIFI_STA);
@@ -8,19 +10,23 @@ void setupWifi(){
         Serial.print("\r\nMDNS responder started, hostname: ");
         Serial.println(hostname);
     }
-    MDNS.addService("http", "tcp", 80);
+    // MDNS.addService("http", "tcp", 80);
     
     setupOTA();
     
     setupVirtuino();
     
+    setupWebSockets();
+    
+    setupTelnet();
 }
 
 void runWifi(){
     if(WiFi.status() == WL_CONNECTED){
         ArduinoOTA.handle();
         virtuinoRun();        // Necessary function to communicate with Virtuino. Client handler
-        handleE131();
+        webSocket_loop();
+        handleTelnet();
     }
     if(WiFi.status() != WL_CONNECTED){
         EVERY_N_SECONDS(10){
@@ -76,25 +82,18 @@ void setupOTA(){
     ArduinoOTA.begin();
 }
 
-void setupE131(){
-    // Choose one to begin listening for E1.31 data
-    if (e131.begin(E131_UNICAST))                               // Listen via Unicast
-    // if (e131.begin(E131_MULTICAST, UNIVERSE, UNIVERSE_COUNT))   // Listen via Multicast
-        Serial.println(F("Listening for data..."));
-    else 
-        Serial.println(F("*** e131.begin failed ***"));
+void setupTelnet(){
+    TelnetServer.begin();
+    TelnetServer.setNoDelay(true);
 }
 
-void handleE131(){
-    if (!e131.isEmpty()) {
-        e131_packet_t packet;
-        e131.pull(&packet);     // Pull packet from ring buffer
-        
-        // telnet.print("Universe %u / %u Channels | Packet#: %u / Errors: %u / CH1: %u\n",
-                // htons(packet.universe),                 // The Universe for this packet
-                // htons(packet.property_value_count) - 1, // Start code is ignored, we're interested in dimmer data
-                // e131.stats.num_packets,                 // Packet counter
-                // e131.stats.packet_errors,               // Packet error counter
-                // packet.property_values[1]);             // Dimmer data for Channel 1
+void handleTelnet(){
+    if(TelnetServer.hasClient()){
+        if(!telnet || !telnet.connected())
+            if(telnet)
+                telnet.stop();
+        telnet = TelnetServer.available();
+    } else {
+        TelnetServer.available().stop();
     }
 }

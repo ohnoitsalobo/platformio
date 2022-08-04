@@ -14,8 +14,6 @@ void setup(){
     
     setupLeds();
     
-    setupE131();
-    
     Serial.println(". Done!");
 }
 
