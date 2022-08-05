@@ -39,7 +39,7 @@ const audioMotion = new AudioMotionAnalyzer( null, {
                             <div class="peak" style="bottom: ${ ( peak - value ) * -maxHeight }px; ${ isPeakUp ? 'box-shadow: 0 0 10px 1px #f00' : 'opacity: ' + ( peak > 0 ? .7 : 0 ) }"></div>
                          </div>`;
             eq_str += ",";
-            eq_str += Math.round(value*255);
+            eq_str += Math.round(value*value*255);
         }
         if (connection.readyState === WebSocket.OPEN && micButton.checked) {
             // connection.send(instance.getBars()[0].value[0]);
