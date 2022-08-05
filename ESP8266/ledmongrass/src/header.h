@@ -4,6 +4,8 @@
 
 #include <ESP8266WiFi.h>               // 
 #include <ESP8266mDNS.h>               // 
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
 #include <WiFiUdp.h>                   // necessary WIFI stuff
 #include <ArduinoOTA.h>                // 
@@ -14,6 +16,15 @@ String hostname = host_name;          // device name on mDNS and wireless MIDI
 IPAddress _ip(192, 168, 137, 4);
 IPAddress _gateway(192, 168, 137, 1);
 IPAddress _netmask(255, 255, 255, 0);
+WebSocketsServer webSocket = WebSocketsServer(81);
+ESP8266WebServer server(80);
+
+String WSdata = "";
+String WSdata_temp[255];
+int WSdata_int[255];
+char _temp[255];
+int _index = 0;
+
 
 WiFiServer TelnetServer(23);
 WiFiClient telnet;
@@ -44,6 +55,7 @@ CHSV manualHSV (0, 255, 255);
 uint8_t currentBrightness = BRIGHTNESS, _setBrightness = BRIGHTNESS;
 uint8_t auto_advance = 1;
 #include "fireworks.h"
+uint8_t bands = 9;
 
 enum mode_select {   // self-explanatory
     _midi,              // midi responsiveness mode

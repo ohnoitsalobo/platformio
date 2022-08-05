@@ -1,24 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Speaker LED Control</title>
-    <script type="module" src="script.js" type="application/javascript"></script>
+
+    <script src="websockets.js"></script>
+    <script src="audioMotion-analyzer.js"></script>
+    <script type="module" src="script.js"></script>
     <link href="style.css" rel="stylesheet">
 </head>
 
-<center>
-    <header>
-        <h1><span id="header">Speaker LED Control</span></h1>
-    </header>
-    <body>
+<body>
 <!-- analyzer container -->
 <div id="container"></div>
-<!-- on/off button -->
-<label>
-  <input type="checkbox" id="mic">
-  🎤 ON/OFF
-</label>
-<!-- module info -->
-<div class="info"><a href="https://audiomotion.dev">audioMotion-analyzer</a> <span id="version"></span></div>    </body>
-</center>
+
+<div class="flex">
+  <!-- audio element -->
+  <audio id="audio" controls crossorigin></audio>
+
+  <div id="fps"></div>
+
+  <!-- <div style="display: none;"> -->
+  <div>
+    Mode:
+    <select id="mode">
+      <option value="1">1/24th octave bands</option>
+      <option value="2">1/12th octave bands</option>
+      <option value="3">1/8th octave bands</option>
+      <option value="4">1/6th octave bands</option>
+      <option value="5">1/4th octave bands</option>
+      <option value="6">1/3rd octave bands</option>
+      <option value="7">half octave bands</option>
+      <option value="8">full octave bands</option>
+    </select>
+  </div>
+
+  <label>
+    <input type="checkbox" id="mic">
+    Audio ON/OFF
+  </label>
+  <div class="info"><a href="https://audiomotion.dev">audioMotion-analyzer</a> <span id="version"></span></div>
+</div>
+</body>
 </html>

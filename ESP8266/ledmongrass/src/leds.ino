@@ -11,6 +11,10 @@ byte radii  [NUM_LEDS] = { 240, 224, 209, 194, 179, 164, 149, 134, 119, 105, 91,
 
 #include "noise_patterns.h"
 
+CRGBSet downRight = leds( 0, 14);
+CRGBSet downLeft  = leds(15, 29);
+CRGBSet upLeft    = leds(36, 51);
+CRGBSet upRight   = leds(52, 65);
 FASTLED_USING_NAMESPACE
 
 typedef void (*SimplePatternList[])();
@@ -29,18 +33,29 @@ void setupLeds(){
 }
 
 void runLeds(){
-    EVERY_N_SECONDS(1){
-        checkMIDI();
-    }
+    // EVERY_N_SECONDS(1){
+        // checkMIDI();
+    // }
     adjustBrightness();
     EVERY_N_MILLISECONDS(50){ gHue++; gHue1++; gHue2--;}
     
     switch(_mode){
         case _midi:
-            runMIDI();
-            displayMIDI();
+            // runMIDI();
+            // displayMIDI();
             // _mode = _auto;
-            
+            for(int i = 1; i < _index; i++){
+                int _hue = (i-1)/(float)_index * 255;
+                int pos1 = 14-i+1; 
+                int pos2 = 15+i-1;
+                int pos3 = pos1+36; if (pos1 < 0) pos1+= NUM_LEDS;
+                int pos4 = pos2+36; if (pos4 > NUM_LEDS) pos4-= NUM_LEDS;
+                leds[pos1] = CHSV(_hue, 255, WSdata_int[i]);
+                leds[pos2] = CHSV(_hue, 255, WSdata_int[i]);
+                leds[pos3] = CHSV(_hue, 255, WSdata_int[i]);
+                leds[pos4] = CHSV(_hue, 255, WSdata_int[i]);
+            }
+            fadeToBlackBy( leds, NUM_LEDS, 30);
         break;
         case _auto:
             EVERY_N_MILLISECONDS( 1000 / 60 ){  // Call the current pattern function once, updating the 'leds' array
