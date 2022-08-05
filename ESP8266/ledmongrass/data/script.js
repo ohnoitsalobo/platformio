@@ -1,67 +1,68 @@
-
 /**
- * for documentation and more demos,
- * visit https://audiomotion.dev
+ * Quick & easy spectrum analyzer with audioMotion!
+ *
+ * For audioMotion-analyzer documentation and
+ * more demos, visit https://audiomotion.dev
  */
 
 // load module from Skypack CDN
 import AudioMotionAnalyzer from './audioMotion-analyzer.js';
 
-// container element
-const container = document.getElementById('container');
-
 // audio source
 const audioEl = document.getElementById('audio');
 
 // instantiate analyzer
-const audioMotion = new AudioMotionAnalyzer( null, {
+const audioMotion = new AudioMotionAnalyzer(
+  document.getElementById('container'),
+  {
     source: audioEl,
+    height: window.innerHeight - 50,
+    // you can set other options below - check the docs!
     mode: 7,
-    mirror: -1,
+    loRes: true,
     fftSize: 1024,
-    // smoothing: 0.25,
-    useCanvas: false, // don't use the canvas
-    onCanvasDraw: instance => {
-        const maxHeight = container.clientHeight;
+    barSpace: .6,
+    showLeds: true,
+    showFPS: true,
 
-        let html = '';
+    onCanvasDraw: instance => {
         let eq_str = "";
             eq_str += instance.getBars().length;
         // get analyzer bars data
         for ( const bar of instance.getBars() ) {
-
-            const value    = bar.value[0],
-            peak     = bar.peak[0],
-            hold     = bar.hold[0],
-            isPeakUp = hold > 0 && peak > 0; // if hold < 0 the peak is falling down
-            // build our visualization using only DIVs
-            html += `<div class="bar" style="height: ${ value * 100 }%; background: rgba( 255, 255, 255, ${ value } )">
-                            <div class="peak" style="bottom: ${ ( peak - value ) * -maxHeight }px; ${ isPeakUp ? 'box-shadow: 0 0 10px 1px #f00' : 'opacity: ' + ( peak > 0 ? .7 : 0 ) }"></div>
-                         </div>`;
+            const value = bar.value[0];
             eq_str += ",";
             eq_str += Math.round(value*value*255);
         }
-        if (connection.readyState === WebSocket.OPEN && micButton.checked) {
+        // if (connection.readyState === WebSocket.OPEN && micButton.checked) {
+        if (connection.readyState === WebSocket.OPEN) {
             // connection.send(instance.getBars()[0].value[0]);
-            // console.log(instance.getBars().length);
+            // console.log(eq_str);
             connection.send(eq_str);
         }
-        container.innerHTML = html;
-        document.getElementById('fps').innerText = instance.fps.toFixed(1);
     }
-  
-});
-
-// visualization mode selection
-const elMode = document.getElementById('mode');
-elMode.value = audioMotion.mode;
-elMode.addEventListener( 'change', () => audioMotion.mode = elMode.value );
+  }
+);
 
 // display module version
 document.getElementById('version').innerText = `v${AudioMotionAnalyzer.version}`;
 
+// play stream
+document.getElementById('live').addEventListener( 'click', () => {
+  audioEl.src = 'https://icecast2.ufpel.edu.br/live';
+  audioEl.play();
+});
 
-// toggle microphone on/off
+// file upload
+// document.getElementById('upload').addEventListener( 'change', e => {
+	// const fileBlob = e.target.files[0];
+
+	// if ( fileBlob ) {
+		// audioEl.src = URL.createObjectURL( fileBlob );
+		// audioEl.play();
+	// }
+// });
+
 const micButton = document.getElementById('mic');
 
 micButton.addEventListener( 'change', () => {

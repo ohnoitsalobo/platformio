@@ -6,7 +6,7 @@ body {
 audio {
   display: inline-block;
   height: 40px;
-  width: 50%; 
+  width: calc( 100% - 650px );
 }
 
 label, button {
@@ -14,7 +14,7 @@ label, button {
   border: 1px solid #999;
   border-radius: 5px;
   display: inline-block;
-  margin: 5px 10px;
+  margin: 5px 10px 0;
   padding: 8px 40px;
   vertical-align: top;
 }
@@ -23,46 +23,13 @@ label input {
   display: none;
 }
 
-select {
-  margin: 5px;
-  padding: 8px;
-}
-
-.flex {
-  display: flex;
-  justify-content: space-between;
+canvas {
+  display: block;
+  width: 100%;
 }
 
 .info {
   display: inline-block;
   float: right;
   margin: 15px 20px 0;
-}
-
-#container {
-  background: #222;
-  display: flex;
-  height: calc( 100vh - 45px );
-  transform: rotate(180deg) scaleX(-1);
-}
-
-.bar {
-  background: #fff;
-  margin: 0 2px;
-  position: relative;
-  width: 100%;
-}
-
-#fps {
-  color: #ff0;
-  font-size: 2em;
-  top: 10px;
-  position: fixed;
-  right: 20px;
-}
-.peak {
-  background: #f00;
-  height: 2px;
-  width: 100%;
-  position: absolute;
 }
