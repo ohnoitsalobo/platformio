@@ -39,7 +39,7 @@ WiFiClient telnet;
 #define COLOR_ORDER GRB        // order of color in data stream
 #define LED_PINS    2          // data output pin
 #define NUM_LEDS    72         // number of LEDs in strip
-#define BRIGHTNESS  150
+#define BRIGHTNESS  255
 // scale the brightness non-linearly which looks better because our eyes detect light intensity logarithmically
 CRGBArray<NUM_LEDS> _leds_;
 CRGBSet leds(_leds_, NUM_LEDS);    // 

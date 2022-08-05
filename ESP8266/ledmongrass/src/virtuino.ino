@@ -38,10 +38,6 @@ void onReceived(char variableType, uint8_t variableIndex, String valueAsText){
             if(variableIndex == 1){ _mode = _auto  ; }
             if(variableIndex == 2){ _mode = _manual; }
             V[variableIndex] = 0;
-            if(_mode == _midi)
-                _setBrightness = 255;
-            else
-                _setBrightness = 200*200/255;
         }
         else if(variableIndex == 3){ // brightness
             int x = (int)V[variableIndex];
