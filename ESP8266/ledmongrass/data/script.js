@@ -76,6 +76,7 @@ micButton.addEventListener( 'change', () => {
         audioMotion.connectInput( micStream );
         // mute output to prevent feedback loops from the speakers
         audioMotion.volume = 0;
+        connection = new WebSocket('ws://192.168.137.4:81',['arduino']);
       })
       .catch( err => {
         alert('Microphone access denied by user');
@@ -88,6 +89,6 @@ micButton.addEventListener( 'change', () => {
   else {
     // disconnect all input audio sources
     audioMotion.disconnectInput();
-    // audioMotion.volume = 1;
+    connection.close();
   }
 });
