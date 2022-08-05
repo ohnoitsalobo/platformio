@@ -18,7 +18,8 @@ const audioMotion = new AudioMotionAnalyzer( null, {
     source: audioEl,
     mode: 7,
     mirror: -1,
-    fftSize: 2048,
+    fftSize: 1024,
+    smoothing: 0.25,
     useCanvas: false, // don't use the canvas
     onCanvasDraw: instance => {
         const maxHeight = container.clientHeight;
