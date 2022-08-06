@@ -45,7 +45,7 @@ void runLeds(){
             // displayMIDI();
             // _mode = _auto;
             for(int i = 1; i < _index; i++){
-                int _hue = (i-1)/(float)_index * 255;
+                int _hue = (i-1)/(float)_index * 127 + gHue1;
                 int pos1 = 14-i+1; 
                 int pos2 = 15+i-1;
                 int pos3 = pos1+36; if (pos1 < 0) pos1+= NUM_LEDS;
