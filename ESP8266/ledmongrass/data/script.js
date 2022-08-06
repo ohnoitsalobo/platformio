@@ -23,7 +23,7 @@ const audioMotion = new AudioMotionAnalyzer(
     loRes: true,
     fftSize: 4096,
     barSpace: .5,
-    // showLeds: true,
+    showLeds: true,
     showFPS: true,
     useCanvas: false,
 
