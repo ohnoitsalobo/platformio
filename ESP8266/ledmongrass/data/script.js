@@ -21,7 +21,7 @@ const audioMotion = new AudioMotionAnalyzer(
     // you can set other options below - check the docs!
     mode: 7,
     loRes: true,
-    fftSize: 4096,
+    fftSize: 2048,
     barSpace: .5,
     showLeds: true,
     showFPS: true,
@@ -34,10 +34,10 @@ const audioMotion = new AudioMotionAnalyzer(
         for ( const bar of instance.getBars() ) {
             const value = bar.value[0];
             eq_str += ",";
-            var temp = Math.round(value*value*255);
-            if (temp > maxValue)
-                maxValue = temp
-            else if (maxValue > 50)
+            var temp = Math.round(value*value*1024);
+            if (maxValue < temp)
+                maxValue = temp;
+            if (maxValue > 255)
                 maxValue--;
             eq_str += Math.round((temp/maxValue)*255);
         }
