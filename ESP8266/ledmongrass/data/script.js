@@ -22,8 +22,10 @@ const audioMotion = new AudioMotionAnalyzer(
     mode: 7,
     loRes: true,
     fftSize: 2048,
+    // maxFreq: 18000,
+    // smoothing: 0.9,
     barSpace: .5,
-    showLeds: true,
+    showLeds: false,
     showFPS: true,
     useCanvas: true,
 
@@ -37,15 +39,16 @@ const audioMotion = new AudioMotionAnalyzer(
             var temp = Math.round(value*value*1024);
             if (maxValue < temp)
                 maxValue = temp;
+            eq_str += Math.round((temp/maxValue)*255);
             if (maxValue > 255)
                 maxValue--;
-            eq_str += Math.round((temp/maxValue)*255);
         }
-        // if (connection.readyState === WebSocket.OPEN && micButton.checked) {
-        if (connection.readyState === WebSocket.OPEN) {
-            // connection.send(instance.getBars()[0].value[0]);
-            // console.log(eq_str);
-            connection.send(eq_str);
+        if ( micButton.checked) {
+            if (connection.readyState === WebSocket.OPEN) {
+                // connection.send(instance.getBars()[0].value[0]);
+                // console.log(eq_str);
+                connection.send(eq_str);
+            }
         }
     }
   }
@@ -83,7 +86,9 @@ micButton.addEventListener( 'change', () => {
         audioMotion.connectInput( micStream );
         // mute output to prevent feedback loops from the speakers
         audioMotion.volume = 0;
-        connection = new WebSocket('ws://192.168.137.4:81',['arduino']);
+        if (connection.readyState != WebSocket.OPEN) {
+            connection = new WebSocket('ws://192.168.137.4:81',['arduino']);
+        }
       })
       .catch( err => {
         alert('Microphone access denied by user');

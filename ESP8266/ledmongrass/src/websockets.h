@@ -32,6 +32,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             break;
         case WStype_TEXT:
             // USE_SERIAL.printf("[%u] get Text: %s\r\n", num, payload);
+            if(num > 0)
+                break;
             WSdata = "";
             _index = 0;
             for(int i = 0; i < length; i++){
