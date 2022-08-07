@@ -27,7 +27,7 @@ const audioMotion = new AudioMotionAnalyzer(
     barSpace: .5,
     showLeds: false,
     showFPS: true,
-    useCanvas: true,
+    useCanvas: false,
 
     onCanvasDraw: instance => {
         let eq_str = "";
