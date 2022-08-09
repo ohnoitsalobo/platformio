@@ -36,7 +36,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
                 break;
             WSdata = "";
             _index = 0;
-            for(int i = 0; i < length; i++){
+            for(uint16_t i = 0; i < length; i++){
                 // WSdata += String(char(payload[i]));
                 char comma = char(payload[i]);
                 if(comma != ',')

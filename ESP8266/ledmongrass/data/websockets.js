@@ -1,12 +1,14 @@
 // var connection = new WebSocket('ws://'+location.hostname+':81',['arduino']);
 var connection = new WebSocket('ws://192.168.137.4:81',['arduino']);
 function openWebSocket(){
-    connection = new WebSocket('ws://192.168.137.4:81',['arduino']);
+    if (connection.readyState === WebSocket.CLOSED){
+        connection = new WebSocket('ws://192.168.137.4:81',['arduino']);
+        console.log('Opening WebSocket');
+    }
 }
 
-if(connection.readyState === WebSocket.OPEN){
-    document.getElementById('reconnect');
-}
+setInterval(openWebSocket, 5000);
+
 connection.onopen = function () {
     // connection.send('Connect ' + new Date());
 };

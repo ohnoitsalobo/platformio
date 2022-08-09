@@ -17,17 +17,22 @@ const audioMotion = new AudioMotionAnalyzer(
   document.getElementById('container'),
   {
     source: audioEl,
-    height: window.innerHeight - 50,
+    // height: window.innerHeight - 50,
     // you can set other options below - check the docs!
     mode: 7,
     loRes: true,
     fftSize: 2048,
     // maxFreq: 18000,
     // smoothing: 0.9,
-    barSpace: .5,
+    barSpace: .1,
     showLeds: false,
     showFPS: true,
-    useCanvas: false,
+    useCanvas: true,
+    width: 640,
+    height: 270,
+    lumiBars: true,
+    mirror: -1,
+    gradient: 'rainbow',
 
     onCanvasDraw: instance => {
         let eq_str = "";
@@ -89,9 +94,10 @@ micButton.addEventListener( 'change', () => {
         if (connection.readyState != WebSocket.OPEN) {
             connection = new WebSocket('ws://192.168.137.4:81',['arduino']);
         }
+        sound.play();
       })
       .catch( err => {
-        alert('Microphone access denied by user');
+        // alert('Microphone access denied by user');
       });
     }
     else {
@@ -102,5 +108,6 @@ micButton.addEventListener( 'change', () => {
     // disconnect all input audio sources
     audioMotion.disconnectInput();
     connection.close();
+    sound.stop();
   }
 });

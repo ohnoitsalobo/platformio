@@ -26,9 +26,9 @@ void setupWifi(){
     
     setupWebSockets();
     
-    setupTelnet();
+    // setupTelnet();
     
-    setupServer();
+    // setupServer();
 }
 
 void runWifi(){
@@ -36,8 +36,8 @@ void runWifi(){
         ArduinoOTA.handle();
         virtuinoRun();        // Necessary function to communicate with Virtuino. Client handler
         webSocket_loop();
-        handleTelnet();
-        server.handleClient();
+        // handleTelnet();
+        // server.handleClient();
 
     }
     if(WiFi.status() != WL_CONNECTED){
@@ -192,7 +192,8 @@ void handleNotFound() {
 void setupServer(){
     fileSystemConfig.setAutoFormat(false);
     fileSystem->setConfig(fileSystemConfig);
-    bool fsOK = fileSystem->begin();
+    // bool fsOK = fileSystem->begin();
+    fileSystem->begin();
     
     server.onNotFound(handleNotFound);
     

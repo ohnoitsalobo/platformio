@@ -19,7 +19,7 @@ FASTLED_USING_NAMESPACE
 
 typedef void (*SimplePatternList[])();
 // SimplePatternList gPatterns = { fire, rainbow, fireworks, confetti, ripple_blur, fire, cylon, cylon1, sinelon, juggle, bpm };
-SimplePatternList gPatterns = { noise3, rainbow, fireworks, confetti, ripple_blur, fire };
+SimplePatternList gPatterns = { fireworks, confetti, rainbow, noise3, ripple_blur, fire };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
 void setupLeds(){
@@ -44,17 +44,7 @@ void runLeds(){
             // runMIDI();
             // displayMIDI();
             // _mode = _auto;
-            for(int i = 1; i < _index; i++){
-                int _hue = (i-1)/(float)_index * 127 + gHue1;
-                int pos1 = 14-i+1; 
-                int pos2 = 15+i-1;
-                int pos3 = pos1+36; if (pos1 < 0) pos1+= NUM_LEDS;
-                int pos4 = pos2+36; if (pos4 > NUM_LEDS) pos4-= NUM_LEDS;
-                leds[pos1] = CHSV(_hue, 255, WSdata_int[i]);
-                leds[pos2] = CHSV(_hue, 255, WSdata_int[i]);
-                leds[pos3] = CHSV(_hue, 255, WSdata_int[i]);
-                leds[pos4] = CHSV(_hue, 255, WSdata_int[i]);
-            }
+            audioSpectrum();
             fadeToBlackBy( leds, NUM_LEDS, 30);
         break;
         case _auto:
@@ -76,7 +66,7 @@ void runLeds(){
     adjustBrightness();
     
     FastLED.show();
-    FastLED.delay(1);
+    // FastLED.delay(1);
     yield();
     
 }
@@ -101,6 +91,27 @@ void adjustColors(){
                  if(RIGHT[i][j] < manualColor_RIGHT[j]) RIGHT[i][j]++;
             else if(RIGHT[i][j] > manualColor_RIGHT[j]) RIGHT[i][j]--;
         }
+    }
+}
+
+void audioSpectrum(){
+    int _hue = 0;
+    for(int i = 1; i < _index; i++){
+        if((gCurrentPatternNumber % 2) == 0)
+            _hue = (i-1)/(float)_index * 127 + gHue1;
+        else
+            _hue = (i-1)/(float)_index * 255;
+        int pos1 = 14-i+1; 
+        int pos2 = 15+i-1;
+        int pos3 = pos1+36;
+        int pos4 = pos2+36;
+        if (pos1 < 0) pos1+= NUM_LEDS;
+        if (pos4 > NUM_LEDS) pos4-= NUM_LEDS;
+        
+        leds[pos1] = CHSV(_hue, 255, WSdata_int[i]);
+        leds[pos2] = CHSV(_hue, 255, WSdata_int[i]);
+        leds[pos3] = CHSV(_hue, 255, WSdata_int[i]);
+        leds[pos4] = CHSV(_hue, 255, WSdata_int[i]);
     }
 }
 

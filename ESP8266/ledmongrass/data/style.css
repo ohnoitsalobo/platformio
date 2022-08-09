@@ -4,7 +4,8 @@ body {
 }
 
 audio {
-  display: inline-block;
+  /* display: inline-block; */
+  display: none;
   height: 40px;
   width: calc( 100% - 650px );
 }
@@ -25,11 +26,12 @@ label input {
 
 canvas {
   display: block;
-  width: 100%;
+  /* width: 100%; */
 }
 
 .info {
-  display: inline-block;
+  /* display: inline-block; */
+  display: none;
   float: right;
   margin: 15px 20px 0;
 }
