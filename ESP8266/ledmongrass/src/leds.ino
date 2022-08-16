@@ -11,15 +11,11 @@ byte radii  [NUM_LEDS] = { 240, 224, 209, 194, 179, 164, 149, 134, 119, 105, 91,
 
 #include "noise_patterns.h"
 
-CRGBSet downRight = leds( 0, 14);
-CRGBSet downLeft  = leds(15, 29);
-CRGBSet upLeft    = leds(36, 51);
-CRGBSet upRight   = leds(52, 65);
 FASTLED_USING_NAMESPACE
 
 typedef void (*SimplePatternList[])();
 // SimplePatternList gPatterns = { fire, rainbow, fireworks, confetti, ripple_blur, fire, cylon, cylon1, sinelon, juggle, bpm };
-SimplePatternList gPatterns = { fireworks, confetti, rainbow, noise3, ripple_blur, fire };
+SimplePatternList gPatterns = { fireworks, confetti, rainbow, noise3, ripple_blur, fire, sinelon };
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
 void setupLeds(){
@@ -171,14 +167,14 @@ void fire(){ // my own simpler 'fire' code - randomly generate fire and move it 
     CRGBSet _left  (leds ( 30, 50) );
     CRGBSet _right (leds ( 51, 71) );
     EVERY_N_MILLISECONDS(1000/frameRate){
-        uint8_t _hue = 0, _sat = 255, _val = 0;                       // 
-        _val = random(100, 255);                                      // generate a random brightness value between 100-255 (never zero)
-        _sat = 255 - (_val/255.0 * 60);                               // brighter = less saturated / more white-ish
-        _hue = _val/255.0 *_val/255.0 * 55;                           // keep hue in the red/yellow/orange range, but nonlinear scaling
-        _left[0] = CHSV( _hue, _sat, _val*_val/255);       // LEDs in the center get this new random color
-        _val = random(100, 255);                                      // generate a random brightness value between 100-255 (never zero)
-        _sat = 255 - (_val/255.0 * 60);                               // brighter = less saturated / more white-ish
-        _hue = _val/255.0 *_val/255.0 * 55;                           // keep hue in the red/yellow/orange range, but nonlinear scaling
+        uint8_t _hue = 0, _sat = 255, _val = 0;
+        _val = random(100, 255);                             // generate a random brightness value between 100-255 (never zero)
+        _sat = 255 - (_val/255.0 * 60);                      // brighter = less saturated / more white-ish
+        _hue = _val/255.0 *_val/255.0 * 55;                  // keep hue in the red/yellow/orange range, but nonlinear scaling
+        _left[0] = CHSV( _hue, _sat, _val*_val/255);
+        _val = random(100, 255);
+        _sat = 255 - (_val/255.0 * 60);
+        _hue = _val/255.0 *_val/255.0 * 55;
         _right[20] = CHSV( _hue, _sat, _val*_val/255);       // LEDs in the center get this new random color
         if( random8() < 20) {
             _left[0] = CRGB::Gold;
@@ -201,11 +197,6 @@ void fire(){ // my own simpler 'fire' code - randomly generate fire and move it 
             if(leds[15+i].g > 0) leds[15+i].g--;        // and reduce green in particular to fade the yellow faster than the red
         }
     }
-    
-    // for(int i = NUM_LEDS/3; i > 0; i--){
-        // leds[i] = leds[i-1].nscale8(fadeval); // shift the color to the next LED, dim the brightness very slightly,
-        // if(leds[i].g > 0) leds[i].g--;        // and reduce green in particular to fade the yellow faster than the red
-    // }
     yield();
 }
 
@@ -280,11 +271,18 @@ void juggle() {
     // colored dots, weaving in and out of sync with each other
     fadeToBlackBy( leds, NUM_LEDS, 30);
     byte dothue = 0;
-    for( int i = 0; i < 6; i++) {
-        float _pos = beatsin16(i+7,0,NUM_LEDS-1);
+    for( int i = 0; i < 4; i++) {
+        float _pos = beatsin16(i+7,0,29);
         // leds[beatsin16(i+7,0,NUM_LEDS-1)] |= CHSV(dothue, 200, 255);
         DrawPixels(_pos, 1.5, CHSV(dothue, 200, 255));
         dothue += 32;
+        yield();
+    }
+    for( int i = 0; i < 4; i++) {
+        float _pos = beatsin16(i+5,0,29);
+        // leds[beatsin16(i+7,0,NUM_LEDS-1)] |= CHSV(dothue, 200, 255);
+        DrawPixels(_pos+36, 1.5, CHSV(dothue, 200, 255));
+        dothue -= 32;
         yield();
     }
 }
@@ -322,9 +320,12 @@ void blendwave() {
 void sinelon()
 {
     // a colored dot sweeping back and forth, with fading trails
-    fadeToBlackBy( leds, NUM_LEDS, 20);
-    float pos = beatsin16(_BPM/3, 0, (NUM_LEDS-1)*5.0)/5.0;
-    DrawPixels(pos, 1.5, ColorFromPalette(RainbowColors_p, pos, 255, LINEARBLEND));
+    fadeToBlackBy( leds, NUM_LEDS, 30);
+    float pos1 = beatsin16(_BPM/5, 0, (29)*5.0)/5.0;
+    float pos2 = beatsin16(_BPM/7, 0, (29)*5.0)/5.0;
+    DrawPixels(pos1   , 1.5, CHSV(gHue1, 200, 255));
+    DrawPixels(pos2+36, 1.5, CHSV(gHue2, 200, 255));
+    // DrawPixels(pos, 1.5, ColorFromPalette(RainbowColors_p, pos, 255, LINEARBLEND));
     // leds [pos] = ColorFromPalette(RainbowColors_p, pos, 255, LINEARBLEND);   // Use that value for both the location as well as the palette index colour for the pixel.
     yield();
 }

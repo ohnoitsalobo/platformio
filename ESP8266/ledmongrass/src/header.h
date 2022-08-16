@@ -47,6 +47,10 @@ CRGBSet DOWN  (leds ( 0, 29) );    // when changing these layouts, remember
 CRGBSet LEFT  (leds (30, 35) );    // to check 'adjustcolors' in leds.ino
 CRGBSet UP    (leds (36, 65) );    // 
 CRGBSet RIGHT (leds (66, 71) );    // 
+CRGBSet downRight = leds( 0, 14);
+CRGBSet downLeft  = leds(15, 29);
+CRGBSet upLeft    = leds(36, 51);
+CRGBSet upRight   = leds(52, 65);
 uint8_t _hue = 0;             // modifier for color cycling
 uint8_t gHue = 0, gHue1 = 0, gHue2 = 0; // rotating "base color" used by many of the patterns
 CRGB manualColor = 0x000000;

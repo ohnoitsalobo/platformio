@@ -27,12 +27,12 @@ const audioMotion = new AudioMotionAnalyzer(
     barSpace: .1,
     showLeds: false,
     showFPS: true,
-    useCanvas: true,
     width: 640,
     height: 270,
     lumiBars: true,
     mirror: -1,
     gradient: 'rainbow',
+    useCanvas: true,
 
     onCanvasDraw: instance => {
         let eq_str = "";
