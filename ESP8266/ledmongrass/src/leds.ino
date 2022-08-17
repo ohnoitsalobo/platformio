@@ -39,7 +39,7 @@ void runLeds(){
         case _midi:
             // runMIDI();
             // displayMIDI();
-            // _mode = _auto;
+
             audioSpectrum();
             fadeToBlackBy( leds, NUM_LEDS, 30);
         break;

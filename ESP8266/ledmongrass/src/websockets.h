@@ -26,7 +26,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
                 IPAddress ip = webSocket.remoteIP(num);
                 USE_SERIAL.printf("[%u] Connected from %d.%d.%d.%d url: %s\r\n", num, ip[0], ip[1], ip[2], ip[3], payload);
 				_mode = _midi;
-                gCurrentPatternNumber = 0;
+                if(gCurrentPatternNumber % 2 != 0)
+                    gCurrentPatternNumber--;
 				// send message to client
 				webSocket.sendTXT(num, "Connected");
             }
