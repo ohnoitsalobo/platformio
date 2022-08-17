@@ -92,7 +92,7 @@ void adjustColors(){
 
 void audioSpectrum(){
     int _hue = 0;
-    for(int i = 1; i < _index; i++){
+    for(int i = 0; i < _index; i++){
         if((gCurrentPatternNumber % 2) == 0)
             _hue = (i-1)/(float)_index * 127 + gHue1;
         else

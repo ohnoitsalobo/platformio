@@ -26,12 +26,13 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
                 IPAddress ip = webSocket.remoteIP(num);
                 USE_SERIAL.printf("[%u] Connected from %d.%d.%d.%d url: %s\r\n", num, ip[0], ip[1], ip[2], ip[3], payload);
 				_mode = _midi;
+                gCurrentPatternNumber = 0;
 				// send message to client
 				webSocket.sendTXT(num, "Connected");
             }
             break;
         case WStype_TEXT:
-            // USE_SERIAL.printf("[%u] get Text: %s\r\n", num, payload);
+            USE_SERIAL.printf("[%u] get Text: %s\r\n", num, payload);
             if(num > 0)
                 break;
             WSdata = "";
@@ -46,7 +47,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
                 
             }
             // if(WSdata != "")
-                handleWSdata();
+                // handleWSdata();
             // send message to client
             // webSocket.sendTXT(num, "message here");
 
@@ -56,6 +57,15 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         case WStype_BIN:
             USE_SERIAL.printf("[%u] get binary length: %u\r\n", num, length);
             hexdump(payload, length);
+            _index = length;
+            for( uint16_t i = 0; i < length; i++ ) {
+                // float val = farray[i];
+                USE_SERIAL.print(payload[i]);
+                USE_SERIAL.print("\t");
+                WSdata_int[i] = payload[i];
+            }
+            USE_SERIAL.println();
+
 
             // send message to client
             // webSocket.sendBIN(num, payload, length);

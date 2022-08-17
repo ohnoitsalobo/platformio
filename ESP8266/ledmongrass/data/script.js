@@ -27,32 +27,37 @@ const audioMotion = new AudioMotionAnalyzer(
     barSpace: .1,
     showLeds: false,
     showFPS: true,
+    stereo: false,
     width: 640,
     height: 270,
     lumiBars: true,
     mirror: -1,
     gradient: 'rainbow',
-    useCanvas: true,
+    useCanvas: false,
 
     onCanvasDraw: instance => {
-        let eq_str = "";
-            eq_str += instance.getBars().length;
+        var byteArray = new Uint8Array( instance.getBars().length );
+        // let eq_str = "";
+            // eq_str += instance.getBars().length;
         // get analyzer bars data
+        var i = 0;
         for ( const bar of instance.getBars() ) {
             const value = bar.value[0];
-            eq_str += ",";
             var temp = Math.round(value*value*1024);
             if (maxValue < temp)
                 maxValue = temp;
-            eq_str += Math.round((temp/maxValue)*255);
+            // eq_str += ",";
+            // eq_str += Math.round((temp/maxValue)*255);
+            byteArray[i++] = Math.round((temp/maxValue)*255);
             if (maxValue > 255)
                 maxValue--;
         }
         if ( micButton.checked) {
             if (connection.readyState === WebSocket.OPEN) {
                 // connection.send(instance.getBars()[0].value[0]);
-                // console.log(eq_str);
-                connection.send(eq_str);
+                // console.log(byteArray);
+                // connection.send(eq_str);
+                connection.send(byteArray);
             }
         }
     }
@@ -111,3 +116,14 @@ micButton.addEventListener( 'change', () => {
     sound.stop();
   }
 });
+
+function openWebSocket(){
+        if (connection.readyState === WebSocket.CLOSED) {
+            if ( micButton.checked) {
+                connection = new WebSocket('ws://192.168.137.4:81',['arduino']);
+                console.log('Opening WebSocket');
+            }
+        }
+}
+
+setInterval(openWebSocket, 5000);

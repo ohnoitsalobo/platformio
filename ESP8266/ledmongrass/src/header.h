@@ -21,10 +21,9 @@ ESP8266WebServer server(80);
 
 String WSdata = "";
 String WSdata_temp[255];
-int WSdata_int[255];
+uint8_t WSdata_int[255];
 char _temp[255];
-int _index = 0;
-
+uint8_t _index = 0;
 
 WiFiServer TelnetServer(23);
 WiFiClient telnet;
