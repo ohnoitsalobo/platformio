@@ -22,7 +22,7 @@ const audioMotion = new AudioMotionAnalyzer(
     mode: 7,
     loRes: true,
     fftSize: 2048,
-    // maxFreq: 18000,
+    maxFreq: 25000,
     // smoothing: 0.9,
     barSpace: .1,
     showLeds: false,

@@ -41,14 +41,13 @@ void runLeds(){
             // displayMIDI();
 
             audioSpectrum();
-            fadeToBlackBy( leds, NUM_LEDS, 30);
         break;
         case _auto:
             EVERY_N_MILLISECONDS( 1000 / 60 ){  // Call the current pattern function once, updating the 'leds' array
                 gPatterns[gCurrentPatternNumber]();
             }
             if(auto_advance) {
-                EVERY_N_SECONDS( 40 ) { 
+                EVERY_N_SECONDS( 40 ) {
                     nextPattern(); 
                 }
             }   // change patterns periodically
@@ -94,11 +93,11 @@ void audioSpectrum(){
     int _hue = 0;
     for(int i = 0; i < _index; i++){
         if((gCurrentPatternNumber % 2) == 0)
-            _hue = (i-1)/(float)_index * 127 + gHue1;
+            _hue = i/(float)_index * 127 + gHue1;
         else
-            _hue = (i-1)/(float)_index * 255;
-        int pos1 = 14-i+1; 
-        int pos2 = 15+i-1;
+            _hue = i/(float)_index * 255;
+        int pos1 = 14-i; 
+        int pos2 = 15+i;
         int pos3 = pos1+36;
         int pos4 = pos2+36;
         if (pos1 < 0) pos1+= NUM_LEDS;
@@ -108,6 +107,8 @@ void audioSpectrum(){
         leds[pos2] = CHSV(_hue, 255, WSdata_int[i]);
         leds[pos3] = CHSV(_hue, 255, WSdata_int[i]);
         leds[pos4] = CHSV(_hue, 255, WSdata_int[i]);
+        if (WSdata_int[i] > 0)
+            WSdata_int[i]--;
     }
 }
 
