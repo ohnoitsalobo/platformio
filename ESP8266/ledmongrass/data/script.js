@@ -11,7 +11,6 @@ import AudioMotionAnalyzer from './audioMotion-analyzer.js';
 // audio source
 const audioEl = document.getElementById('audio');
 
-var maxValue = 255;
 // instantiate analyzer
 const audioMotion = new AudioMotionAnalyzer(
   document.getElementById('container'),
@@ -22,8 +21,8 @@ const audioMotion = new AudioMotionAnalyzer(
     mode: 7,
     loRes: true,
     fftSize: 2048,
-    maxFreq: 25000,
-    // smoothing: 0.9,
+    // maxFreq: 40000,
+    // smoothing: 0.75,
     barSpace: .1,
     showLeds: false,
     showFPS: true,
@@ -41,6 +40,7 @@ const audioMotion = new AudioMotionAnalyzer(
             // eq_str += instance.getBars().length;
         // get analyzer bars data
         var i = 0;
+        var maxValue = 255;
         for ( const bar of instance.getBars() ) {
             const value = bar.value[0];
             var temp = Math.round(value*value*1024);
@@ -54,7 +54,6 @@ const audioMotion = new AudioMotionAnalyzer(
         }
         if ( micButton.checked) {
             if (connection.readyState === WebSocket.OPEN) {
-                // connection.send(instance.getBars()[0].value[0]);
                 // console.log(byteArray);
                 // connection.send(eq_str);
                 connection.send(byteArray);
