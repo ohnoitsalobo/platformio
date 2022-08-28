@@ -6,19 +6,15 @@ static const char TEXT_PLAIN[] PROGMEM = "text/plain";
 static const char FS_INIT_ERROR[] PROGMEM = "FS INIT ERROR";
 static const char FILE_NOT_FOUND[] PROGMEM = "FileNotFound";
 
-#include"websockets.h"
+#include "websockets.h"
 
 void setupWifi(){
     
+    // WiFi.mode(WIFI_AP_STA);
+    // WiFi.softAP(hostname);
     WiFi.mode(WIFI_STA);
     WiFi.config(_ip, _gateway, _netmask);
     WiFi.begin(ssid, password);
-    
-    if (MDNS.begin(hostname.c_str())) {
-        Serial.print("\r\nMDNS responder started, hostname: ");
-        Serial.println(hostname);
-    }
-    // MDNS.addService("http", "tcp", 80);
     
     setupOTA();
     
@@ -26,18 +22,26 @@ void setupWifi(){
     
     setupWebSockets();
     
-    // setupTelnet();
+    setupTelnet();
     
-    // setupServer();
+    setupServer();
+    
+    if (MDNS.begin(hostname.c_str())) {
+        _serial_.print("\r\nMDNS responder started, hostname: ");
+        _serial_.println(hostname);
+    }
+    MDNS.addService("http", "tcp", 80);
+    
 }
 
 void runWifi(){
     if(WiFi.status() == WL_CONNECTED){
+        MDNS.update();
         ArduinoOTA.handle();
         virtuinoRun();        // Necessary function to communicate with Virtuino. Client handler
         webSocket_loop();
-        // handleTelnet();
-        // server.handleClient();
+        handleTelnet();
+        server.handleClient();
 
     }
     if(WiFi.status() != WL_CONNECTED){
@@ -50,7 +54,7 @@ void runWifi(){
 }
 
 void setupOTA(){
-    ArduinoOTA.setHostname(hostname.c_str());
+    // ArduinoOTA.setHostname(hostname.c_str());
     
     ArduinoOTA.onStart([]() {
         String type;
@@ -61,34 +65,34 @@ void setupOTA(){
         }
 
         // NOTE: if updating FS this would be the place to unmount FS using FS.end()
-        Serial.println("Start updating " + type);
+        _serial_.println("Start updating " + type);
         FastLED.setBrightness(100);
         FastLED.clear();
         FastLED.show();
     });
     ArduinoOTA.onEnd([]() {
-        Serial.println("\nEnd");
+        _serial_.println("\nEnd");
         FastLED.clear();
         FastLED.show();
     });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
         int temp = progress / (total / 100);
-        Serial.printf("Progress: %u%%\r", temp);
+        _serial_.printf("Progress: %u%%\r", temp);
         leds[map(temp, 0, 100, 0, NUM_LEDS)] = 0x111111;
         FastLED.show();
     });
     ArduinoOTA.onError([](ota_error_t error) {
-        Serial.printf("Error[%u]: ", error);
+        _serial_.printf("Error[%u]: ", error);
         if (error == OTA_AUTH_ERROR) {
-            Serial.println("Auth Failed");
+            _serial_.println("Auth Failed");
         } else if (error == OTA_BEGIN_ERROR) {
-            Serial.println("Begin Failed");
+            _serial_.println("Begin Failed");
         } else if (error == OTA_CONNECT_ERROR) {
-            Serial.println("Connect Failed");
+            _serial_.println("Connect Failed");
         } else if (error == OTA_RECEIVE_ERROR) {
-            Serial.println("Receive Failed");
+            _serial_.println("Receive Failed");
         } else if (error == OTA_END_ERROR) {
-            Serial.println("End Failed");
+            _serial_.println("End Failed");
         }
     });
     ArduinoOTA.begin();
@@ -136,7 +140,7 @@ bool handleFileRead(String path) {
   telnet.println(String("handleFileRead: ") + path);
 
   if (path.endsWith("/")) {
-    path += "index.htm";
+    path += "index.html";
   }
 
   String contentType = mime::getContentType(path);

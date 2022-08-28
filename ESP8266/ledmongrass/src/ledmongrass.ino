@@ -2,11 +2,12 @@
 #define register // keyword 'register' is banned with c++17
 #endif
 
+#define _serial_ telnet
 #include "header.h" // all the gory libraries and global details go here
 
 void setup(){
-    Serial.begin(115200);
-    Serial.print("Booting ...");
+    // Serial.begin(115200);
+    // Serial.print("Booting ...");
     
     setupWifi();
     
@@ -14,7 +15,7 @@ void setup(){
     
     setupLeds();
     
-    Serial.println(". Done!");
+    // Serial.println(". Done!");
 }
 
 void loop(){

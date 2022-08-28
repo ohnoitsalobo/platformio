@@ -1,3 +1,5 @@
+// #define debug 1
+
 void setupVirtuino(){
     virtuino.begin(onReceived,onRequested,256);  // Start Virtuino. Set the buffer to 256. With this buffer Virtuino can control about 28 pins (1 command = 9bytes) The T(text) commands with 20 characters need 20+6 bytes
     virtuino.key="1234";                         // This is the Virtuino password. Only requests that start with this key are accepted from the library
@@ -99,13 +101,13 @@ void virtuinoRun(){
     if (!client)
         return;
 #ifdef debug
-    Serial.println("Connected");
+    _serial_.println("Connected");
 #endif
     unsigned long timeout = millis() + 3000;
     while (!client.available() && millis() < timeout)
         delay(1);
     if (millis() > timeout) {
-        Serial.println("timeout");
+        _serial_.println("timeout");
         client.flush();
         client.stop();
         return;
@@ -115,23 +117,23 @@ void virtuinoRun(){
         char c = client.read();         // read the incoming data
         virtuino.readBuffer+=c;         // add the incoming character to Virtuino input buffer
 #ifdef debug
-        Serial.write(c);
+        _serial_.write(c);
 #endif
     }
     client.flush();
 #ifdef debug
-    Serial.println("\nReceived data: "+virtuino.readBuffer);
+    _serial_.println("\nReceived data: "+virtuino.readBuffer);
 #endif
     String* response= virtuino.getResponse();    // get the text that has to be sent to Virtuino as reply. The library will check the inptuBuffer and it will create the response text
 #ifdef debug
-    Serial.println("Response : "+*response);
+    _serial_.println("Response : "+*response);
 #endif
     client.print(*response);
     client.flush();
     delay(10);
     client.stop(); 
 #ifdef debug
-    Serial.println("Disconnected");
+    _serial_.println("Disconnected");
 #endif
     yield();
 }

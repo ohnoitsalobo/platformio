@@ -159,12 +159,12 @@ void handleClock() {
         
         uint16_t temp = currentClock - lastClock;
         _BPM = (1000.0 / temp) * 60.0;
-        // Serial.print("Quarter note: ");
-        // Serial.print(temp);
-        // Serial.print(" ms\tFrequency: ");
-        // Serial.print(1000.0 / temp);
-        // Serial.print(" Hz\tBPM: ");
-        // Serial.println(_BPM);
+        // _serial_.print("Quarter note: ");
+        // _serial_.print(temp);
+        // _serial_.print(" ms\tFrequency: ");
+        // _serial_.print(1000.0 / temp);
+        // _serial_.print(" Hz\tBPM: ");
+        // _serial_.println(_BPM);
     }
 }
 /*  */

@@ -1,5 +1,3 @@
-#define USE_SERIAL telnet
-
 void handleWSdata(){
    // WSdata.toCharArray(WSdata_temp, 1024);
    
@@ -19,12 +17,12 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
     switch(type) {
         case WStype_DISCONNECTED:
             _mode = _auto;
-            USE_SERIAL.printf("[%u] Disconnected!\r\n", num);
+            _serial_.printf("[%u] Disconnected!\r\n", num);
             break;
         case WStype_CONNECTED:
             {
                 IPAddress ip = webSocket.remoteIP(num);
-                USE_SERIAL.printf("[%u] Connected from %d.%d.%d.%d url: %s\r\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+                _serial_.printf("[%u] Connected from %d.%d.%d.%d url: %s\r\n", num, ip[0], ip[1], ip[2], ip[3], payload);
 				_mode = _midi;
                 if(gCurrentPatternNumber % 2 != 0)
                     gCurrentPatternNumber--;
@@ -33,7 +31,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             }
             break;
         case WStype_TEXT:
-            USE_SERIAL.printf("[%u] get Text: %s\r\n", num, payload);
+            _serial_.printf("[%u] get Text: %s\r\n", num, payload);
             if(num > 0)
                 break;
             WSdata = "";
@@ -56,16 +54,16 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             // webSocket.broadcastTXT("message here");
             break;
         case WStype_BIN:
-            USE_SERIAL.printf("[%u] get binary length: %u\r\n", num, length);
+            _serial_.printf("[%u] get binary length: %u\r\n", num, length);
             hexdump(payload, length);
             _index = length;
             for( uint16_t i = 0; i < length; i++ ) {
                 // float val = farray[i];
-                USE_SERIAL.print(payload[i]);
-                USE_SERIAL.print("\t");
+                _serial_.print(payload[i]);
+                _serial_.print("\t");
                 WSdata_int[i] = payload[i];
             }
-            USE_SERIAL.println();
+            _serial_.println();
 
 
             // send message to client

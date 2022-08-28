@@ -22,7 +22,7 @@ const audioMotion = new AudioMotionAnalyzer(
     loRes: true,
     fftSize: 2048,
     // maxFreq: 40000,
-    // smoothing: 0.75,
+    smoothing: 0.25,
     barSpace: .1,
     showLeds: false,
     showFPS: true,
@@ -32,7 +32,7 @@ const audioMotion = new AudioMotionAnalyzer(
     lumiBars: true,
     mirror: -1,
     gradient: 'rainbow',
-    useCanvas: false,
+    useCanvas: true,
 
     onCanvasDraw: instance => {
         var byteArray = new Uint8Array( instance.getBars().length );
@@ -67,10 +67,10 @@ const audioMotion = new AudioMotionAnalyzer(
 document.getElementById('version').innerText = `v${AudioMotionAnalyzer.version}`;
 
 // play stream
-document.getElementById('live').addEventListener( 'click', () => {
-  audioEl.src = 'https://icecast2.ufpel.edu.br/live';
-  audioEl.play();
-});
+// document.getElementById('live').addEventListener( 'click', () => {
+  // audioEl.src = 'https://icecast2.ufpel.edu.br/live';
+  // audioEl.play();
+// });
 
 // file upload
 // document.getElementById('upload').addEventListener( 'change', e => {
@@ -112,8 +112,23 @@ micButton.addEventListener( 'change', () => {
     // disconnect all input audio sources
     audioMotion.disconnectInput();
     connection.close();
-    sound.stop();
   }
+});
+
+const canvasButton = document.getElementById('lores');
+
+canvasButton.addEventListener( 'change', () => {
+    if ( canvasButton.checked ) {
+        audioMotion.loRes=false;
+        audioMotion.fftSize=8192;
+        audioMotion.smoothing=0.2;
+    } else {
+        audioMotion.loRes=true;
+        audioMotion.fftSize=2048;
+        audioMotion.smoothing=0.5;
+    }
+    // console.log(audioMotion.loRes);
+    // console.log(audioMotion.fftSize);
 });
 
 function openWebSocket(){

@@ -100,7 +100,6 @@ VirtuinoCM virtuino;
 #define V_memory_count 32          // the size of V memory. You can change it to a number <=255)
 int V[V_memory_count];           // This array is synchronized with Virtuino V memory. You can change the type to int, long etc.
 int V_prev[V_memory_count];
-// #define debug 1
 WiFiServer virtuinoServer(8000);                   // Default Virtuino Server port 
 
 
