@@ -18,7 +18,8 @@ void setupWiFi(){
 }
 
 void runWiFi(){
-    
+    runOTA();
+    runVirtuino();        // Necessary function to communicate with Virtuino. Client handler
 }
 
 void setupOTA(){

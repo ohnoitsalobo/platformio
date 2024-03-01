@@ -18,9 +18,5 @@ void setup() {
 void loop() {
     runWiFi();
     
-    runOTA();
-    
-    runVirtuino();
-    
     runSpeedControl();
 }

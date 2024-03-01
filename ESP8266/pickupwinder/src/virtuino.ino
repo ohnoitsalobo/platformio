@@ -19,44 +19,9 @@ void runVirtuino(){
  * The 'valueAsText' is the value that has sent from the app   */
 void onReceived(char variableType, uint8_t variableIndex, String valueAsText){     
     if (variableType=='V'){
+        V_prev[variableIndex] = V[variableIndex];
         float value = valueAsText.toFloat();        // convert the value to float. The valueAsText have to be numerical
         if (variableIndex<V_memory_count) V[variableIndex]=value;              // copy the received value to arduino V memory array
-    }
-    uint8_t v = variableIndex;
-    if(v == 0){
-        float temp = V[v];
-        if (temp < 0){
-            desiredPWM = -temp;
-            direction = -1;
-        } else if (temp > 0){
-            desiredPWM = temp;
-            direction = 1;
-        }
-    }
-    if(v == 1){
-        
-    }
-    if(v == 2){
-        
-    }
-    if(v == 3){
-        
-    }
-    if(v == 4){
-        
-    }
-    if(v == 5){
-        
-    }
-    if(v == 6){
-        
-    }
-    if(v == 7){
-        
-    }
-    if(v == 8){
-        RPS++;
-        msSinceLastRPS = currentms;
     }
 }
 
@@ -66,6 +31,8 @@ String onRequested(char variableType, uint8_t variableIndex){
     if (variableType=='V') {
         if (variableIndex<V_memory_count)
             return String(V[variableIndex]);   // return the value of the arduino V memory array
+    }
+    if(variableIndex == 0){
     }
     return "";
 }
