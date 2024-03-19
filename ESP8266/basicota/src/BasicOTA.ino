@@ -12,7 +12,7 @@ const char* ssid = STASSID;
 const char* password = STAPSK;
 
 void setup() {
-  // Serial.begin(115200);
+  Serial.begin(115200);
   Serial.println("Booting");
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);

@@ -1,16 +1,16 @@
-#define D0 16
+        //    STATE at boot | boot FAILS if
+#define D0 16  // 1 | -
 #define D1 5
 #define D2 4
-#define D3 0
-#define D4 2
+#define D3 0   // - | 0
+#define D4 2   // 1 | 0
 #define D5 14
 #define D6 12
 #define D7 13
-#define D8 15
-#define RX 3
-#define TX 1
-#define S3 10
-#define S2 9
+#define D8 15  // - | 1
+#define RX 3   // 1 | -
+#define TX 1   // 1 | 0
+
 #define _serial_ Serial
 
 #include <ESP8266WiFi.h>
@@ -20,38 +20,93 @@
 
 #include <VirtuinoCM.h>
 #define virtuinoServerPort 8000
-#define V_memory_count 32          // the size of V memory. You can change it to a number <=255)
+#define V_memory_count 50          // the size of V memory. You can change it to a number <=255)
 VirtuinoCM virtuino;               
 WiFiServer virtuinoServer(virtuinoServerPort);  // Default Virtuino Server port 
 float V[V_memory_count];           // This array is synchronized with Virtuino V memory. You can change the type to int, long etc.
 float V_prev[V_memory_count];           // This array is synchronized with Virtuino V memory. You can change the type to int, long etc.
 
-#define sensorPin D2         // rpm sensor
+enum  { IDLE, WINDING, PAUSE } winder_state = IDLE;
+enum  { ms_1, ms_2, ms_4, ms_8, ms_16} microstepping = ms_1;
 
-#define  dir_A D3
-#define  motorA D1
+#include <AccelStepper.h>
+#define stepPin1  D1
+#define  dirPin1  D2
+#define stepPin2  D5
+#define  dirPin2  D6
+
+#define MS1 D0
+#define MS2 D7
+#define MS3 RX
+
+AccelStepper stepper1(AccelStepper::DRIVER, stepPin1, dirPin1);
+AccelStepper stepper2(AccelStepper::DRIVER, stepPin2, dirPin2);
 
 void setupPins(){
-    pinMode(LED_BUILTIN, OUTPUT);               digitalWrite(LED_BUILTIN, LOW);
-    pinMode(sensorPin, INPUT_PULLUP);
-    
-    pinMode( dir_A, OUTPUT);       digitalWrite( dir_A, LOW);
-    pinMode( motorA, OUTPUT);       digitalWrite( motorA, LOW);
-    
-    analogWriteRange(1024);
-    analogWriteFreq(100);
+    pinMode( stepPin1, OUTPUT ); digitalWrite( stepPin1, LOW );
+    pinMode(  dirPin1, OUTPUT ); digitalWrite(  dirPin1, LOW );
+    pinMode( stepPin2, OUTPUT ); digitalWrite( stepPin2, LOW );
+    pinMode(  dirPin2, OUTPUT ); digitalWrite(  dirPin2, LOW );
+    pinMode(      MS1, OUTPUT ); digitalWrite(      MS1, LOW );
+    pinMode(      MS2, OUTPUT ); digitalWrite(      MS2, LOW );
+    pinMode(      MS3, OUTPUT ); digitalWrite(      MS3, LOW );
 }
 
+float stepsToRPM(int x){
+    return x*(60.0/200.0);
+}
+int RPMToSteps(float x){
+    return x*(200.0/60.0);
+}
+
+int turnsToSteps(float x){
+    return x*200.0;
+}
+float stepsToTurns(int x){
+    return x/200.0;
+}
+
+long int currentSteps = 0;
+long int desiredSteps = 0;
+int currentRPM = 0;
+int desiredRPM = 0;
+float currentTurns = 0;
+
+int desiredTurns = 0;
+int coilHeight = 0;
+int wireDiameter = 0;
+
+void resetValues(){
+    desiredSteps = 0;
+    desiredRPM = 0;
+
+    desiredTurns = 0;
+    coilHeight = 0;
+    wireDiameter = 0;
+
+}
 /*
-V0 = desired RPM
-V1 = current RPM
-V2 = desired turns
-V3 = current turns
-V4 = forward
-V5 = reverse
-V6 = tension stop
-V7 = emergency stop
+
+V0 = emergency stop
+V1 = reset all values
+V2 = current position
+V3 = desired position
+V4 = distance to go
+V5 = current rpm
+V6 = desired RPM
+V7 = desired turns
+V8 = coil height
+V9 = wire diameter
+V10 = start/stop
+
+V20 = 1 rev forward
+V21 = 1 rev backward
+V22 = step forward
+V23 = step backward
+
 */
+
+/*
 /*
 D0    GPIO16       GPIO0   D3
 D1    GPIO5        GPIO1   TX
@@ -67,6 +122,7 @@ TX    GPIO1        GPIO14  D5
 S3    GPIO10       GPIO15  D8
 S2    GPIO9        GPIO16  D0
 */
+
 /*  * /
 #if __cplusplus > 199711L 
     #define register
@@ -74,4 +130,4 @@ S2    GPIO9        GPIO16  D0
 #include <Adafruit_I2CDevice.h>
 #define FASTLED_INTERNAL
 #include <FastLED.h>
-/*  */
+/ *  */

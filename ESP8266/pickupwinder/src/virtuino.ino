@@ -23,6 +23,39 @@ void onReceived(char variableType, uint8_t variableIndex, String valueAsText){
         float value = valueAsText.toFloat();        // convert the value to float. The valueAsText have to be numerical
         if (variableIndex<V_memory_count) V[variableIndex]=value;              // copy the received value to arduino V memory array
     }
+    
+    if(variableIndex == 0){ // STOP
+        stopAll();
+    }else if(variableIndex == 1){ // RESET VALUES
+        resetValues();
+    }else if(variableIndex == 2){ // current position
+        
+    }else if(variableIndex == 3){ // desired position
+        
+    }else if(variableIndex == 4){ // remaining distance
+        
+    }else if(variableIndex == 5){ // current RPM
+        
+    }else if(variableIndex == 6){ // desired RPM
+        
+    }else if(variableIndex == 7){ // current turns
+        
+    }else if(variableIndex == 8){ // coil height
+        
+    }else if(variableIndex == 9){ // wire diameter
+        
+    }else if(variableIndex == 10){ // start / stop
+        if
+        winding_state = WINDING;
+    }else if(variableIndex == 20){ // 1 rev forward
+        
+    }else if(variableIndex == 21){ // 1 rev back
+        
+    }else if(variableIndex == 22){ // step forward
+        
+    }else if(variableIndex == 23){ // step back
+        
+    }
 }
 
 //==============================================================
@@ -31,8 +64,6 @@ String onRequested(char variableType, uint8_t variableIndex){
     if (variableType=='V') {
         if (variableIndex<V_memory_count)
             return String(V[variableIndex]);   // return the value of the arduino V memory array
-    }
-    if(variableIndex == 0){
     }
     return "";
 }

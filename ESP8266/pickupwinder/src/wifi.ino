@@ -17,11 +17,6 @@ void setupWiFi(){
     }
 }
 
-void runWiFi(){
-    runOTA();
-    runVirtuino();        // Necessary function to communicate with Virtuino. Client handler
-}
-
 void setupOTA(){
     ArduinoOTA.setHostname(hostname);
 
@@ -68,4 +63,9 @@ void setupOTA(){
 
 void runOTA(){
     ArduinoOTA.handle();
+}
+
+void runWiFi(){
+    runOTA();
+    runVirtuino();        // Necessary function to communicate with Virtuino. Client handler
 }
