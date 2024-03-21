@@ -7,14 +7,14 @@
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
-// Set your Static IP address
-IPAddress local_IP(192, 168, 0, 184);
-// Set your Gateway IP address
-IPAddress gateway(192, 168, 0, 1);
 
-IPAddress subnet(255, 255, 255, 0);
-IPAddress primaryDNS(8, 8, 8, 8);   //optional
-IPAddress secondaryDNS(8, 8, 4, 4); //optional
+// IPAddress local_IP(192, 168, 0, 184);
+
+// IPAddress gateway(192, 168, 0, 1);
+
+// IPAddress subnet(255, 255, 255, 0);
+// IPAddress primaryDNS(8, 8, 8, 8);   //optional
+// IPAddress secondaryDNS(8, 8, 4, 4); //optional
 
 void setupWiFi(){
     WiFi.mode(WIFI_STA);
