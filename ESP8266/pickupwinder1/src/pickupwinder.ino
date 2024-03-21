@@ -22,4 +22,20 @@ void loop() {
     runWiFi();
     
     runSteppers();
+    
+    switch(winder_state){
+        case IDLE:
+            
+        break;
+        case WINDING:
+            
+        break;
+        case PAUSE:
+            
+        break;
+        default:
+            
+        break;
+    }
+    
 }

@@ -12,46 +12,21 @@ MS1, MS2, MS3 - step size
 1, 1, 1 - 1/16 step  | 3200/rev
     
  */
-#define STEPS_PER_REV 200.0
 
-int maxSpeed1 = 3500, acc1 = 10000;
-int maxSpeed2 = 3500, acc2 = 10000;
-int desiredSpeed = 0, currentSpeed = 0;
+int maxSpeed1 = 9000, acc1 = 1000;
+int maxSpeed2 = 9000, acc2 = 1000;
 
 void setupSteppers(){
     stepper1.setMaxSpeed(maxSpeed1);    stepper1.setAcceleration(acc1);
     stepper2.setMaxSpeed(maxSpeed2);    stepper2.setAcceleration(acc2);
-    stepper1.setSpeed(desiredSpeed);
-    stepper2.setSpeed(desiredSpeed);
+    stepper1.setSpeed(STEPS_PER_REV * stepMultiply());
+    stepper2.setSpeed(STEPS_PER_REV * stepMultiply());
 }
 
 void runSteppers(){
-    switch(winder_state){
-        case IDLE:
-            if((int)V[2] || (int)V[3]){
-                stepper1.runSpeed();
-            }else if(stepper1.distanceToGo() != 0){
-                stepper1.run();
-            }
-        break;
-        case WINDING:
-            if(stepper1.distanceToGo() != 0){
-                stepper1.run();
-            }else{
-                winder_state = IDLE;
-                stepper1.setMaxSpeed(maxSpeed1);
-                currentTurns=0;
-                V[10] = 0;
-            }
-        break;
-        case PAUSE:
-            
-        break;
-        default:
-            
-        break;
-    }
-    V[4] = stepsToTurns(stepper1.currentPosition());
+    // if(stepper1.distanceToGo() > 0){
+        // stepper1.run();
+    // }
 }
 
 void stopAll(){
@@ -60,18 +35,19 @@ void stopAll(){
     stepper2.setSpeed(0);
 }
 
+
 float stepsToRPM(int x){
-    return x*(60.0/(STEPS_PER_REV * stepMultiply()));
+    return x*(60.0/200.0);
 }
 int RPMToSteps(float x){
-    return x*(STEPS_PER_REV * stepMultiply())/60.0;
+    return x*(200.0/60.0);
 }
 
 int turnsToSteps(float x){
-    return x*(STEPS_PER_REV * stepMultiply());
+    return x*200.0;
 }
 float stepsToTurns(int x){
-    return x/(STEPS_PER_REV * stepMultiply());
+    return x/200.0;
 }
 
 uint8_t stepMultiply(){

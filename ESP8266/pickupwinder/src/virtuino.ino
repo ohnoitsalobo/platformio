@@ -1,4 +1,4 @@
-boolean debug = false; //true;              // set this variable to false on the finale code to decrease the request time.
+boolean debug = false; //true;              // set this variable to false on the final code to decrease the request time.
 
 void setupVirtuino(){
     virtuino.begin(onReceived, onRequested, 256);   //Start Virtuino. Set the buffer to 256. With this buffer Virtuino can control about 28 pins (1 command = 9bytes) The T(text) commands with 20 characters need 20+6 bytes
@@ -23,24 +23,47 @@ void onReceived(char variableType, uint8_t variableIndex, String valueAsText){
         float value = valueAsText.toFloat();        // convert the value to float. The valueAsText have to be numerical
         if (variableIndex<V_memory_count) V[variableIndex]=value;              // copy the received value to arduino V memory array
     
+        int _1rev = STEPS_PER_REV * stepMultiply();
         if       (variableIndex == 0){   // run 1 rev forward
-            stepper1.move(STEPS_PER_REV * stepMultiply());
-        }if (variableIndex == 1){   // run 1 rev backward
-            stepper1.move(-STEPS_PER_REV * stepMultiply());
-        }if (variableIndex == 4){   // microstepping
-            uint8_t temp = (int)value;
-            if(temp = 0){
-                microstepping = ms_0;
-            }else if(temp = 1){
-                microstepping = ms_1;
-            }else if(temp = 2){
-                microstepping = ms_2;
-            }else if(temp = 3){
-                microstepping = ms_3;
-            }else if(temp = 4){
-                microstepping = ms_4;
+            if((int)value > 0) stepper1.move(_1rev);
+            
+            // _serial_.print("\n");
+            // _serial_.print(STEPS_PER_REV);
+            // _serial_.print("\t");
+            // _serial_.print(stepMultiply());
+            // _serial_.print("\t");
+            // _serial_.print(RPMToSteps(1));
+            // _serial_.print("\t");
+            // _serial_.print(stepsToRPM(800));
+            // _serial_.print("\t");
+            // _serial_.print(turnsToSteps(1));
+            // _serial_.print("\t");
+            // _serial_.print(stepsToTurns(800));
+            
+        }else if (variableIndex == 1){   // run 1 rev backward
+            if((int)value > 0) stepper1.move(-_1rev);
+        }else if (variableIndex == 2){  // run forward
+            if((int)value > 0) stepper1.setSpeed(1200);
+            else               stepper1.setSpeed(0);
+        }else if (variableIndex == 3){  // run backward
+            if((int)value > 0) stepper1.setSpeed(-1200);
+            else               stepper1.setSpeed(0);
+        }else if (variableIndex == 4){  // total steps moved
+            
+        }else if (variableIndex == 5){  // set RPM
+            desiredRPM = RPMToSteps((int)value);
+        }else if (variableIndex == 6){  // set number of turns
+            desiredTurns = turnsToSteps((int)value);
+        }else if (variableIndex == 10){  // set number of turns
+            if((int)value > 0){
+                winder_state = WINDING;
+                stepper1.setMaxSpeed(desiredRPM);
+                if(stepper1.distanceToGo() == 0){
+                    stepper1.move(desiredTurns);
+                }
+            }else{
+                winder_state = PAUSE;
             }
-            setMSPins();
         }
     }
 }
@@ -77,7 +100,7 @@ void virtuinoRun(){
     }
     client.flush();
     if (debug) _serial_.println("\nReceived data: "+virtuino.readBuffer);
-    String* response= virtuino.getResponse();    // get the text that has to be sent to Virtuino as reply. The library will check the inptuBuffer and it will create the response text
+    String* response= virtuino.getResponse();    // get the text that has to be sent to Virtuino as reply. The library will check the inputBuffer and it will create the response text
     if (debug) _serial_.println("Response : "+*response);
     client.print(*response);
     client.flush();
