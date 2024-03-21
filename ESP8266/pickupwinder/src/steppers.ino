@@ -13,8 +13,8 @@ MS1, MS2, MS3 - step size
     
  */
 
-int maxSpeed1 = 4000, acc1 = 100;
-int maxSpeed2 = 4000, acc2 = 100;
+int maxSpeed1 = 4000, acc1 = 400;
+int maxSpeed2 = 4000, acc2 = 400;
 
 void setupSteppers(){
     stepper1.setMaxSpeed(maxSpeed1);    stepper1.setAcceleration(acc1);
@@ -22,7 +22,15 @@ void setupSteppers(){
 }
 
 void runSteppers(){
-    
+    if (winder_state == IDLE){
+        if(V[2] > 0)
+            stepper1.move(1);
+        if(V[3] > 0)
+            stepper1.move(-1);
+    }
+    if(stepper1.distanceToGo() > 0){
+        stepper1.run();
+    }
 }
 
 void stopAll (){

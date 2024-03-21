@@ -30,6 +30,7 @@ enum  { IDLE, WINDING, PAUSE } winder_state = IDLE;
 enum  { ms_1, ms_2, ms_4, ms_8, ms_16} microstepping = ms_1;
 
 #include <AccelStepper.h>
+#define STEPS_PER_REV 200
 #define stepPin1  D1
 #define  dirPin1  D2
 #define stepPin2  D5
@@ -44,9 +45,9 @@ AccelStepper stepper2(AccelStepper::DRIVER, stepPin2, dirPin2);
 
 void setupPins(){
     pinMode( stepPin1, OUTPUT ); digitalWrite( stepPin1, LOW );
-    pinMode(  dirPin1, OUTPUT ); digitalWrite(  dirPin1, LOW );
+    pinMode(  dirPin1, OUTPUT ); //digitalWrite(  dirPin1, LOW );
     pinMode( stepPin2, OUTPUT ); digitalWrite( stepPin2, LOW );
-    pinMode(  dirPin2, OUTPUT ); digitalWrite(  dirPin2, LOW );
+    pinMode(  dirPin2, OUTPUT ); //digitalWrite(  dirPin2, LOW );
     pinMode(      MS1, OUTPUT ); digitalWrite(      MS1, LOW );
     pinMode(      MS2, OUTPUT ); digitalWrite(      MS2, LOW );
     pinMode(      MS3, OUTPUT ); digitalWrite(      MS3, LOW );
@@ -64,6 +65,19 @@ int turnsToSteps(float x){
 }
 float stepsToTurns(int x){
     return x/200.0;
+}
+
+uint8_t stepMultiply(){
+    if(microstepping == ms_16){
+        return 16;
+    }else if(microstepping == ms_8){
+        return 8;
+    }else if(microstepping == ms_4){
+        return 4;
+    }else if(microstepping == ms_2){
+        return 2;
+    }else
+        return 1;
 }
 
 long int currentSteps = 0;
@@ -87,22 +101,6 @@ void resetValues(){
 }
 /*
 
-V0 = emergency stop
-V1 = reset all values
-V2 = current position
-V3 = desired position
-V4 = distance to go
-V5 = current rpm
-V6 = desired RPM
-V7 = desired turns
-V8 = coil height
-V9 = wire diameter
-V10 = start/stop
-
-V20 = 1 rev forward
-V21 = 1 rev backward
-V22 = step forward
-V23 = step backward
 
 */
 

@@ -23,6 +23,8 @@ void setup() {
 void loop() {
     runWiFi();
     
+    runSteppers();
+    
     switch(winder_state){
         case IDLE:
             
