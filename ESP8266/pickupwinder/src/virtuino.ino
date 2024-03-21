@@ -27,8 +27,20 @@ void onReceived(char variableType, uint8_t variableIndex, String valueAsText){
             stepper1.move(STEPS_PER_REV * stepMultiply());
         }if (variableIndex == 1){   // run 1 rev backward
             stepper1.move(-STEPS_PER_REV * stepMultiply());
-        }if (variableIndex == 4){   // run 1 rev backward
-            microstepping = (int)value;
+        }if (variableIndex == 4){   // microstepping
+            uint8_t temp = (int)value;
+            if(temp = 0){
+                microstepping = ms_0;
+            }else if(temp = 1){
+                microstepping = ms_1;
+            }else if(temp = 2){
+                microstepping = ms_2;
+            }else if(temp = 3){
+                microstepping = ms_3;
+            }else if(temp = 4){
+                microstepping = ms_4;
+            }
+            setMSPins();
         }
     }
 }

@@ -27,7 +27,7 @@ float V[V_memory_count];           // This array is synchronized with Virtuino V
 float V_prev[V_memory_count];           // This array is synchronized with Virtuino V memory. You can change the type to int, long etc.
 
 enum  { IDLE, WINDING, PAUSE } winder_state = IDLE;
-enum  { ms_1, ms_2, ms_4, ms_8, ms_16} microstepping = ms_1;
+enum  { ms_0, ms_1, ms_2, ms_3, ms_4} microstepping = ms_1;
 
 #include <AccelStepper.h>
 #define STEPS_PER_REV 200
@@ -53,32 +53,6 @@ void setupPins(){
     pinMode(      MS3, OUTPUT ); digitalWrite(      MS3, LOW );
 }
 
-float stepsToRPM(int x){
-    return x*(60.0/200.0);
-}
-int RPMToSteps(float x){
-    return x*(200.0/60.0);
-}
-
-int turnsToSteps(float x){
-    return x*200.0;
-}
-float stepsToTurns(int x){
-    return x/200.0;
-}
-
-uint8_t stepMultiply(){
-    if(microstepping == ms_16){
-        return 16;
-    }else if(microstepping == ms_8){
-        return 8;
-    }else if(microstepping == ms_4){
-        return 4;
-    }else if(microstepping == ms_2){
-        return 2;
-    }else
-        return 1;
-}
 
 long int currentSteps = 0;
 long int desiredSteps = 0;

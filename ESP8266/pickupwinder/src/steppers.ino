@@ -40,6 +40,57 @@ void stopAll (){
 }
 
 
+float stepsToRPM(int x){
+    return x*(60.0/200.0);
+}
+int RPMToSteps(float x){
+    return x*(200.0/60.0);
+}
+
+int turnsToSteps(float x){
+    return x*200.0;
+}
+float stepsToTurns(int x){
+    return x/200.0;
+}
+
+uint8_t stepMultiply(){
+    if(microstepping == ms_4){
+        return 16;
+    }else if(microstepping == ms_3){
+        return 8;
+    }else if(microstepping == ms_2){
+        return 4;
+    }else if(microstepping == ms_1){
+        return 2;
+    }else
+        return 1;
+}
+
+void setMSPins(){
+    if(microstepping == ms_4){
+        digitalWrite(      MS1, HIGH );
+        digitalWrite(      MS2, HIGH );
+        digitalWrite(      MS3, HIGH );
+    }else if(microstepping == ms_3){
+        digitalWrite(      MS1, HIGH );
+        digitalWrite(      MS2, HIGH );
+        digitalWrite(      MS3, LOW );
+    }else if(microstepping == ms_2){
+        digitalWrite(      MS1, LOW );
+        digitalWrite(      MS2, HIGH );
+        digitalWrite(      MS3, LOW );
+    }else if(microstepping == ms_1){
+        digitalWrite(      MS1, HIGH );
+        digitalWrite(      MS2, LOW );
+        digitalWrite(      MS3, LOW );
+    }else{
+        digitalWrite(      MS1, LOW );
+        digitalWrite(      MS2, LOW );
+        digitalWrite(      MS3, LOW );
+    }
+}
+
 /*
 Defining & Configuring Motors
 AccelStepper mystepper(1, pinStep, pinDirection);
