@@ -37,17 +37,17 @@ void stopAll(){
 
 
 float stepsToRPM(int x){
-    return x*(60.0/200.0);
+    return x*(60.0/(STEPS_PER_REV * stepMultiply()));
 }
 int RPMToSteps(float x){
-    return x*(200.0/60.0);
+    return x*(STEPS_PER_REV * stepMultiply())/60.0;
 }
 
 int turnsToSteps(float x){
-    return x*200.0;
+    return x*(STEPS_PER_REV * stepMultiply());
 }
 float stepsToTurns(int x){
-    return x/200.0;
+    return x/(STEPS_PER_REV * stepMultiply());
 }
 
 uint8_t stepMultiply(){

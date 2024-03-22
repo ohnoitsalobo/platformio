@@ -12,7 +12,7 @@ MS1, MS2, MS3 - step size
 1, 1, 1 - 1/16 step  | 3200/rev
     
  */
-#define STEPS_PER_REV 200.0
+#define STEPS_PER_REV -200.0
 
 int maxSpeed1 = 3500, acc1 = 10000;
 int maxSpeed2 = 3500, acc2 = 10000;

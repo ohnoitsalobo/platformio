@@ -43,10 +43,10 @@ void onReceived(char variableType, uint8_t variableIndex, String valueAsText){
         }else if (variableIndex == 1){   // run 1 rev backward
             if((int)value > 0) stepper1.move(-_1rev);
         }else if (variableIndex == 2){  // run forward
-            if((int)value > 0) stepper1.setSpeed(1200);
+            if((int)value > 0) stepper1.setSpeed(6*STEPS_PER_REV);
             else               stepper1.setSpeed(0);
         }else if (variableIndex == 3){  // run backward
-            if((int)value > 0) stepper1.setSpeed(-1200);
+            if((int)value > 0) stepper1.setSpeed(-6*STEPS_PER_REV);
             else               stepper1.setSpeed(0);
         }else if (variableIndex == 4){  // total steps moved
             

@@ -1,4 +1,4 @@
-        //    STATE at boot | boot FAILS if
+//    STATE at boot | boot FAILS if
 #define D0 16  // 1 | -
 #define D1 5
 #define D2 4
