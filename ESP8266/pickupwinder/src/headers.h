@@ -3,7 +3,7 @@
 #define D1 5
 #define D2 4
 #define D3 0   // - | 0
-#define D4 2   // 1 | 0
+#define D4 2   // 1 | 0 // TX1
 #define D5 14
 #define D6 12
 #define D7 13
@@ -30,6 +30,8 @@ float V_prev[V_memory_count];           // This array is synchronized with Virtu
 enum  { IDLE, WINDING, PAUSE } winder_state = IDLE;
 enum  { ms_0, ms_1, ms_2, ms_3, ms_4} microstepping = ms_2;
 
+#include <elapsedMillis.h>
+
 #include <AccelStepper.h>
 #define stepPin1  D1
 #define  dirPin1  D2
@@ -48,12 +50,14 @@ void setupPins(){
     pinMode(  dirPin1, OUTPUT ); //digitalWrite(  dirPin1, LOW );
     pinMode( stepPin2, OUTPUT ); digitalWrite( stepPin2, LOW );
     pinMode(  dirPin2, OUTPUT ); //digitalWrite(  dirPin2, LOW );
-    pinMode(      MS1, OUTPUT ); digitalWrite(      MS1, LOW );
-    pinMode(      MS2, OUTPUT ); digitalWrite(      MS2, LOW );
-    pinMode(      MS3, OUTPUT ); digitalWrite(      MS3, LOW );
+    // pinMode(      MS1, OUTPUT ); digitalWrite(      MS1, LOW );
+    // pinMode(      MS2, OUTPUT ); digitalWrite(      MS2, LOW );
+    // pinMode(      MS3, OUTPUT ); digitalWrite(      MS3, LOW );
+    pinMode(      RX, INPUT );
 }
 
-
+uint32_t rpmInterrupt = 0, rpmInterrupt_prev = 0;
+uint32_t rpmCount = 0, rpmCount_prev = 0;
 long int currentSteps = 0;
 long int desiredSteps = 0;
 int currentRPM = 0;

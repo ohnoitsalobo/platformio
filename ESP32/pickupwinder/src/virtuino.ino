@@ -50,6 +50,12 @@ void onReceived(char variableType, uint8_t variableIndex, String valueAsText){
             }else{
                 winder_state = PAUSE;
             }
+        }else if (variableIndex == 11){   // change microstepping
+                 if((int)value == 0) { microstepping = ms_0; }
+            else if((int)value == 1) { microstepping = ms_1; }
+            else if((int)value == 2) { microstepping = ms_2; }
+            else if((int)value == 3) { microstepping = ms_3; }
+            else if((int)value == 4) { microstepping = ms_4; }
         }
     }
 }

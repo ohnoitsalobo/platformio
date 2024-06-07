@@ -1,8 +1,3 @@
-#ifndef STASSID
-#define STASSID "Home"
-#define STAPSK  "12345678"
-#endif
-#define hostname "pickupwinder"
 
 const char* ssid = STASSID;
 const char* password = STAPSK;
@@ -20,7 +15,7 @@ void setupWiFi(){
     WiFi.mode(WIFI_AP_STA);
     // WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS);
     // WiFi.begin(ssid, password);
-    WiFi.softAP(hostname);
+    WiFi.softAP(host);
     // while (WiFi.waitForConnectResult() != WL_CONNECTED ) {
         // _serial_.println("Connection Failed! Rebooting...");
         // delay(1000);
@@ -29,7 +24,7 @@ void setupWiFi(){
 }
 
 void setupOTA(){
-    ArduinoOTA.setHostname(hostname);
+    ArduinoOTA.setHostname(host);
 
     ArduinoOTA.onStart([]() {
         String type;
